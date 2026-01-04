@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use Faker\Factory as Faker;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -14,7 +15,7 @@ class CrawlerTaskItemSeeder extends Seeder
     public function run(): void
     {
         $tasks = DB::table('crawler_tasks')->get();
-
+        $faker = Faker::create();
         foreach ($tasks as $task) {
             for ($i = 1; $i <= 5; $i++) {
                 DB::table('crawler_task_items')->insert([
@@ -27,7 +28,7 @@ class CrawlerTaskItemSeeder extends Seeder
                         '诱拐',
                         '未成年',
                     ])->random(),
-                    'url' => fake()->url(),
+                    'url' => $faker->url(),
                     'crawler_machine' => 'bot-node-'.rand(1, 3),
                     'result_file' => "results/task_{$task->id}_{$i}.zip",
                     'status' => 'synced',
