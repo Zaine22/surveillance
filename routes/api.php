@@ -17,3 +17,8 @@ Route::post(
     '/crawler/task-items/upload',
     [CrawlerTaskItemController::class, 'upload']
 );
+
+Route::post(
+    '/crawler/trigger',
+    [CrawlerTaskItemController::class, 'trigger']
+);
