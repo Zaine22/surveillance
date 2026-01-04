@@ -65,34 +65,34 @@ class CrawlerTaskItemController extends Controller
     }
 
     public function upload(Request $request)
-    {
-        $request->validate([
-            'task_item_id' => 'required|uuid|exists:crawler_task_items,id',
-            'image' => 'required|image|max:10240',
-        ]);
+{
+    $request->validate([
+        'task_item_id' => 'required|uuid|exists:crawler_task_items,id',
+        'zip'          => 'required|file|mimetypes:application/zip,application/x-zip-compressed|max:51200',
+    ]);
 
-        $taskItem = DB::table('crawler_task_items')
-            ->where('id', $request->task_item_id)
-            ->first();
+    $taskItem = DB::table('crawler_task_items')
+        ->where('id', $request->task_item_id)
+        ->first();
 
-        $path = $request->file('image')->store(
-            'crawler_images/'.date('Y/m/d'),
-            'public'
-        );
+    $path = $request->file('zip')->store(
+        'crawler_zips/' . date('Y/m/d').'/'.$taskItem->id,
+        'public'
+    );
 
-        DB::table('crawler_task_items')
-            ->where('id', $taskItem->id)
-            ->update([
-                'result_file' => $path,
-                'status' => 'synced',
-                'updated_at' => now(),
-            ]);
-
-        return response()->json([
-            'message' => 'Image uploaded successfully',
-            'task_item_id' => $taskItem->id,
-            'url' => $taskItem->url,
+    DB::table('crawler_task_items')
+        ->where('id', $taskItem->id)
+        ->update([
             'result_file' => $path,
+            'status'      => 'synced',
+            'updated_at'  => now(),
         ]);
-    }
+
+    return response()->json([
+        'message'      => 'ZIP file uploaded successfully',
+        'task_item_id' => $taskItem->id,
+        'url'          => $taskItem->url,
+        'zip_file'     => $path,
+    ]);
+}
 }
