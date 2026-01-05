@@ -27,6 +27,7 @@ class CrawlerTaskItemController extends Controller
 
         $now = now();
         $rows = [];
+        $responseItems = [];
 
         foreach ($request->urls as $url) {
             $taskItemId = Str::uuid();
@@ -50,6 +51,10 @@ class CrawlerTaskItemController extends Controller
             ];
 
             CrawlTaskItemJob::dispatch($taskItemId);
+            $responseItems[] = [
+                'task_item_id' => (string) $taskItemId,
+                'url' => $url,
+            ];
         }
 
         DB::table('crawler_task_items')->insert($rows);
@@ -57,6 +62,7 @@ class CrawlerTaskItemController extends Controller
         return response()->json([
             'message' => 'Crawler task items stored',
             'task_id' => $task->id,
+            'items' => $responseItems,
             'inserted' => count($rows),
         ]);
     }
@@ -65,22 +71,17 @@ class CrawlerTaskItemController extends Controller
     {
         $request->validate([
             'task_item_id' => 'required|uuid|exists:crawler_task_items,id',
-            'zip' => 'required|file|mimetypes:application/zip,application/x-zip-compressed|max:51200',
+            'result_file' => 'required|string|max:2000',
         ]);
 
         $taskItem = DB::table('crawler_task_items')
             ->where('id', $request->task_item_id)
             ->first();
 
-        $path = $request->file('zip')->store(
-            'crawler_zips/'.date('Y/m/d').'/'.$taskItem->id,
-            'public'
-        );
-
         DB::table('crawler_task_items')
             ->where('id', $taskItem->id)
             ->update([
-                'result_file' => $path,
+                'result_file' => $request->result_file,
                 'status' => 'synced',
                 'updated_at' => now(),
             ]);
@@ -89,7 +90,7 @@ class CrawlerTaskItemController extends Controller
             'message' => 'ZIP file uploaded successfully',
             'task_item_id' => $taskItem->id,
             'url' => $taskItem->url,
-            'zip_file' => $path,
+            'zip_file' => $taskItem->result_file,
         ]);
     }
 
