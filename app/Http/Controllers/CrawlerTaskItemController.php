@@ -90,7 +90,7 @@ class CrawlerTaskItemController extends Controller
             'message' => 'ZIP file uploaded successfully',
             'task_item_id' => $taskItem->id,
             'url' => $taskItem->url,
-            'zip_file' => $taskItem->result_file,
+            'zip_file' => $request->result_file,
         ]);
     }
 
