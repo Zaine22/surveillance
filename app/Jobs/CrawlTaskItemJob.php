@@ -39,7 +39,7 @@ class CrawlTaskItemJob implements ShouldQueue
             ]);
 
         Http::timeout(300)->post(
-            'http://45.77.241.149/api/crawler/crawl/direct',
+            config('services.python.url').'/api/crawler/crawl/direct',
             [
                 'task_item_id' => $taskItem->id,
                 'url' => $taskItem->url,

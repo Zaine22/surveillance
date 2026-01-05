@@ -13,6 +13,9 @@ return [
     | a conventional file to locate the various service credentials.
     |
     */
+    'python' => [
+        'url' => env('PYTHON_API_BASE_URL'),
+    ],
 
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),

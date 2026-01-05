@@ -99,7 +99,7 @@ class CrawlerTaskItemController extends Controller
             'keyword' => 'required|string|max:100',
         ]);
         Http::timeout(5)->post(
-            'http://45.77.241.149/api/crawler/crawl',
+            config('services.python.url').'/api/crawler/crawl',
             [
                 'keyword' => $request->keyword,
             ]
