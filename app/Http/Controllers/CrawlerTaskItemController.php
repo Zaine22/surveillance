@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\CrawlTaskItemJob;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
 
 class CrawlerTaskItemController extends Controller
 {
@@ -28,10 +26,9 @@ class CrawlerTaskItemController extends Controller
         $now = now();
         $rows = [];
         $responseItems = [];
-        $jobIds = [];
 
         foreach ($request->urls as $url) {
-            $taskItemId = (string) Str::uuid();
+            $taskItemId = (string) \Illuminate\Support\Str::uuid();
 
             $rows[] = [
                 'id' => $taskItemId,
@@ -52,19 +49,12 @@ class CrawlerTaskItemController extends Controller
                 'updated_at' => $now,
             ];
 
-            $jobIds[] = $taskItemId;
-
             $responseItems[] = [
                 'task_item_id' => $taskItemId,
                 'url' => $url,
             ];
         }
-
         DB::table('crawler_task_items')->insert($rows);
-
-        foreach ($jobIds as $taskItemId) {
-            CrawlTaskItemJob::dispatch($taskItemId);
-        }
 
         return response()->json([
             'message' => 'Crawler task items stored',
