@@ -1,5 +1,4 @@
 <?php
-
 namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -24,7 +23,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CrawlerConfigSeeder::class,
             CrawlerTaskSeeder::class,
-            CrawlerTaskItemSeeder::class,
+            // CrawlerTaskItemSeeder::class,
         ]);
     }
 }
