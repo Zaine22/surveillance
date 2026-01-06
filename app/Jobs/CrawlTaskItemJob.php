@@ -16,7 +16,7 @@ class CrawlTaskItemJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     // ✅ retry only once
-    public $tries = 2;
+    public $tries = 10;
 
     // ✅ job-level timeout (must be < worker timeout)
     public $timeout = 420; // 7 minutes
