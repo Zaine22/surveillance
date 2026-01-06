@@ -45,7 +45,7 @@ class CrawlTaskItemJob implements ShouldQueue
             ->where('id', $this->taskItemId)
             ->first();
 
-        Http::timeout(360)
+        Http::timeout(5)
             ->acceptJson()
             ->asJson()
             ->post(

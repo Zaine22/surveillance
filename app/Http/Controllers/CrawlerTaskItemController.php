@@ -28,9 +28,11 @@ class CrawlerTaskItemController extends Controller
         $now = now();
         $rows = [];
         $responseItems = [];
+        $jobIds = [];
 
         foreach ($request->urls as $url) {
-            $taskItemId = Str::uuid();
+            $taskItemId = (string) Str::uuid();
+
             $rows[] = [
                 'id' => $taskItemId,
                 'task_id' => $task->id,
@@ -50,14 +52,19 @@ class CrawlerTaskItemController extends Controller
                 'updated_at' => $now,
             ];
 
-            CrawlTaskItemJob::dispatch($taskItemId);
+            $jobIds[] = $taskItemId;
+
             $responseItems[] = [
-                'task_item_id' => (string) $taskItemId,
+                'task_item_id' => $taskItemId,
                 'url' => $url,
             ];
         }
 
         DB::table('crawler_task_items')->insert($rows);
+
+        foreach ($jobIds as $taskItemId) {
+            CrawlTaskItemJob::dispatch($taskItemId);
+        }
 
         return response()->json([
             'message' => 'Crawler task items stored',
