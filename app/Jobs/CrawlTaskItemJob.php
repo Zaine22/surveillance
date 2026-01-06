@@ -9,6 +9,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Throwable;
 
 class CrawlTaskItemJob implements ShouldQueue
 {
@@ -21,7 +22,12 @@ class CrawlTaskItemJob implements ShouldQueue
 
     public $backoff = 30;
 
-    public function __construct(public string $taskItemId)
+    public function __construct(public string $taskItemId) {}
+
+    /**
+     * Execute the job.
+     */
+    public function handle(): void
     {
         $taskItem = DB::table('crawler_task_items')
             ->where('id', $this->taskItemId)
@@ -38,19 +44,29 @@ class CrawlTaskItemJob implements ShouldQueue
                 'updated_at' => now(),
             ]);
 
-        Http::timeout(300)->post(
-            config('services.python.url').'/api/crawler/crawl/direct',
-            [
-                'task_item_id' => $taskItem->id,
-                'url' => $taskItem->url,
-            ]
-        );
+        $response = Http::timeout(300)
+            ->acceptJson() // Accept: application/json
+            ->asJson()->post(
+                config('services.python.url').'/api/crawler/crawl/direct',
+                [
+                    'task_item_id' => $taskItem->id,
+                    'url' => $taskItem->url,
+                ]
+            );
+        if ($response->successful()) {
+            DB::table('crawler_task_items')
+                ->where('id', $taskItem->id)
+                ->update([
+                    'status' => 'completed',
+                    'updated_at' => now(),
+                ]);
+        } else {
+            throw new \Exception('Crawling failed with status: '.$response->status());
+        }
+
     }
 
-    /**
-     * Execute the job.
-     */
-    public function handle(\Throwable $e)
+    public function failed(Throwable $e): void
     {
         DB::table('crawler_task_items')
             ->where('id', $this->taskItemId)
