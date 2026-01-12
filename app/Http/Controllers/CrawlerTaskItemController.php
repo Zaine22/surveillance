@@ -10,13 +10,13 @@ class CrawlerTaskItemController extends Controller
 {
     public function store(Request $request)
     {
+
         $request->validate([
             'urls' => 'required|array|min:1|max:100',
             'urls.*' => 'required|string|max:2000',
         ]);
 
         $task = DB::table('crawler_tasks')->first();
-
         if (! $task) {
             return response()->json([
                 'error' => 'No crawler task found',
@@ -24,13 +24,13 @@ class CrawlerTaskItemController extends Controller
         }
 
         $now = now();
-        $rows = [];
         $responseItems = [];
 
         foreach ($request->urls as $url) {
+
             $taskItemId = (string) \Illuminate\Support\Str::uuid();
 
-            $rows[] = [
+            DB::table('crawler_task_items')->insert([
                 'id' => $taskItemId,
                 'task_id' => $task->id,
                 'keywords' => collect([
@@ -47,20 +47,46 @@ class CrawlerTaskItemController extends Controller
                 'error_message' => null,
                 'created_at' => $now,
                 'updated_at' => $now,
-            ];
+            ]);
+
+            try {
+                $response = Http::timeout(10)
+                    ->acceptJson()
+                    ->asJson()
+                    ->post(
+                        config('services.python.url').'/api/crawler/crawl/direct',
+                        [
+                            'task_item_id' => $taskItemId,
+                            'url' => $url,
+                        ]
+                    );
+
+                if (! $response->successful()) {
+                    throw new \Exception($response->body());
+                }
+
+            } catch (\Throwable $e) {
+
+                DB::table('crawler_task_items')
+                    ->where('id', $taskItemId)
+                    ->update([
+                        'status' => 'failed',
+                        'error_message' => substr($e->getMessage(), 0, 2000),
+                        'updated_at' => now(),
+                    ]);
+            }
 
             $responseItems[] = [
                 'task_item_id' => $taskItemId,
                 'url' => $url,
             ];
         }
-        DB::table('crawler_task_items')->insert($rows);
 
         return response()->json([
-            'message' => 'Crawler task items stored',
+            'message' => 'Crawler task items stored and dispatched immediately',
             'task_id' => $task->id,
             'items' => $responseItems,
-            'inserted' => count($rows),
+            'count' => count($responseItems),
         ]);
     }
 
