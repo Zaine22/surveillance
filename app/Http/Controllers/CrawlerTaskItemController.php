@@ -50,8 +50,8 @@ class CrawlerTaskItemController extends Controller
             ]);
 
             try {
-                $response = Http::timeout(10)
-                    ->acceptJson()
+                $response = Http::timeout(2)
+                    ->retry(0, 0)
                     ->asJson()
                     ->post(
                         config('services.python.url').'/api/crawler/crawl/direct',
