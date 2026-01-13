@@ -134,4 +134,24 @@ class CrawlerTaskItemController extends Controller
             'keyword' => $request->keyword,
         ]);
     }
+
+    public function results()
+    {
+        $items = DB::table('crawler_task_items')
+            ->orderBy('created_at', 'desc')
+            ->select([
+                'id',
+                'result_file',
+                'status',
+                'error_message',
+                'created_at',
+                'updated_at',
+            ])
+            ->limit(100)
+            ->get();
+
+        return response()->json([
+            'items' => $items,
+        ]);
+    }
 }
