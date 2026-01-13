@@ -141,6 +141,7 @@ class CrawlerTaskItemController extends Controller
             ->orderBy('created_at', 'desc')
             ->select([
                 'id',
+                'url',
                 'result_file',
                 'status',
                 'error_message',
