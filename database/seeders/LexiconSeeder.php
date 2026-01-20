@@ -25,35 +25,35 @@ class LexiconSeeder extends Seeder
         ]);
 
         $keywords = [
-            'child exploitation',
-            'online grooming',
-            'predatory behavior',
-            'inappropriate contact',
-            'age inappropriate',
-            'unsafe situation',
-            'risk to children',
-            'vulnerable minor',
-            'protection needed',
-            'safety concern',
-            'child helpline',
-            'report abuse',
-            'cyber tipline',
-            'safety hotline',
-            'emergency contact',
-            'child welfare',
-            'guardianship issues',
-            'custody problems',
-            'neglect signs',
-            'abuse indicators',
+            ['child exploitation', 'minor exploitation', 'child abuse'],
+            ['online grooming', 'child grooming', 'grooming behavior'],
+            ['predatory behavior', 'sexual predator', 'predatory conduct'],
+            ['inappropriate contact', 'inappropriate interaction', 'sexual contact'],
+            ['age inappropriate', 'underage content', 'minor involved'],
+            ['unsafe situation', 'dangerous situation', 'unsafe environment'],
+            ['risk to children', 'child endangerment', 'at risk minor'],
+            ['vulnerable minor', 'vulnerable child', 'at-risk child'],
+            ['protection needed', 'needs protection', 'child protection'],
+            ['safety concern', 'child safety issue', 'safeguarding concern'],
+            ['child helpline', 'children helpline', 'youth helpline'],
+            ['report abuse', 'report child abuse', 'abuse reporting'],
+            ['cyber tipline', 'cyber reporting hotline', 'online abuse tipline'],
+            ['safety hotline', 'child safety hotline', 'emergency hotline'],
+            ['emergency contact', 'emergency number', 'urgent contact'],
+            ['child welfare', 'children welfare', 'youth welfare'],
+            ['guardianship issues', 'custody dispute', 'legal guardian issue'],
+            ['custody problems', 'custody conflict', 'custody dispute'],
+            ['neglect signs', 'child neglect', 'neglect indicators'],
+            ['abuse indicators', 'signs of abuse', 'abuse warning signs'],
         ];
 
         $lexiconKeywords = [];
 
-        foreach ($keywords as $keyword) {
+        foreach ($keywords as $group) {
             $lexiconKeywords[] = [
                 'id' => Str::uuid(),
                 'lexicon_id' => $lexiconId,
-                'keywords' => $keyword,
+                'keywords' => json_encode($group),
                 'crawl_hit_count' => 0,
                 'case_count' => 0,
                 'status' => 'enabled',

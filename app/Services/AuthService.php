@@ -4,10 +4,8 @@ namespace App\Services;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
-use App\Services\SystemMailService;
 use Illuminate\Support\Facades\Log;
-use Symfony\Component\HttpKernel\Exception\HttpException;
+use Illuminate\Validation\ValidationException;
 
 class AuthService
 {
@@ -15,15 +13,16 @@ class AuthService
     {
         $this->mailService = $mailService;
     }
+
     public function register(array $data): array
     {
         $user = User::create([
-            'name'                  => $data['name'],
-            'email'                 => $data['email'],
-            'password'              => Hash::make($data['password']),
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
             'password_last_changed' => now(),
-            'department'            => $data['department'] ?? null,
-            'status'                => 'disabled',
+            'department' => $data['department'] ?? null,
+            'status' => 'disabled',
         ]);
 
         $token = $user->createToken('api_token')->plainTextToken;
@@ -33,8 +32,8 @@ class AuthService
 
     public function login(string $email, string $password): array
     {
-        $user = User::where('email', $email)->first();
 
+        $user = User::where('email', $email)->first();
         if (! $user) {
             throw ValidationException::withMessages([
                 'email' => ['Invalid credentials'],
@@ -42,7 +41,7 @@ class AuthService
         }
 
         if ($user->status !== 'enabled') {
-            return ['error' => 'User account is not verified yet!',];
+            return ['error' => 'User account is not verified yet!'];
         }
 
         if (! Hash::check($password, $user->password)) {
@@ -50,7 +49,6 @@ class AuthService
                 'password' => ['Invalid credentials'],
             ]);
         }
-
 
         $user->update([
             'last_login' => now(),
@@ -72,7 +70,7 @@ class AuthService
         }
 
         $user->update([
-            'password'              => Hash::make($newPassword),
+            'password' => Hash::make($newPassword),
             'password_last_changed' => now(),
         ]);
 
@@ -84,7 +82,6 @@ class AuthService
         $user->tokens()->delete();
     }
 
-
     public function sendOtp(string $email): array
     {
         try {
@@ -95,9 +92,11 @@ class AuthService
             $result = $this->generateOtp($user);
             Log::info("Generated OTP for user {$email}", ['otp' => $result['otp']]);
             $this->mailService->sendOtp($user->email, $result['otp']);
+
             return ['otp' => $result['otp']];
         } catch (\Exception $e) {
-            Log::error("Failed to send OTP email: " . $e->getMessage());
+            Log::error('Failed to send OTP email: '.$e->getMessage());
+
             return [
                 'error' => ['Failed to send OTP email. Please try again later.'],
             ];
@@ -135,8 +134,8 @@ class AuthService
         $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
         $user->update([
-            'otp'             => $otp,
-            'otp_created_at'  => now(),
+            'otp' => $otp,
+            'otp_created_at' => now(),
         ]);
 
         return $user;

@@ -15,7 +15,7 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasApiTokens, HasFactory, HasUuids, Notifiable;
 
-    /** 
+    /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
@@ -31,7 +31,7 @@ class User extends Authenticatable
         'status',
         'last_login',
         'otp',
-        'otp_created_at'
+        'otp_created_at',
     ];
 
     /**

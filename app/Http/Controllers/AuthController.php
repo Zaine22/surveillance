@@ -14,9 +14,9 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $data = $request->validate([
-            'name'       => 'required|string|max:255',
-            'email'      => 'required|email|unique:users,email',
-            'password'   => 'required|string|min:8',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:8',
             'department' => 'nullable|string',
         ]);
 
@@ -24,15 +24,15 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'User registered successfully',
-            'user'    => $result['user'],
-            'token'   => $result['token'],
+            'user' => $result['user'],
+            'token' => $result['token'],
         ], 201);
     }
 
     public function login(Request $request)
     {
         $data = $request->validate([
-            'email'    => 'required|email',
+            'email' => 'required|email',
             'password' => 'required',
         ]);
 
@@ -54,7 +54,7 @@ class AuthController extends Controller
     {
         $data = $request->validate([
             'current_password' => 'required',
-            'new_password'     => 'required|string|min:8',
+            'new_password' => 'required|string|min:8',
         ]);
 
         $this->authService->changePassword(
@@ -87,9 +87,10 @@ class AuthController extends Controller
                 'message' => $otp['error'],
             ], 400);
         }
+
         return response()->json([
             'message' => 'OTP generated successfully',
-            'otp'     => $otp['otp'],
+            'otp' => $otp['otp'],
         ]);
     }
 
@@ -97,7 +98,7 @@ class AuthController extends Controller
     {
         $data = $request->validate([
             'email' => 'required|email',
-            'otp'   => 'required|string|size:6',
+            'otp' => 'required|string|size:6',
         ]);
 
         $result = $this->authService->verifyOtp(
