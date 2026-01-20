@@ -23,9 +23,13 @@ return new class extends Migration
             $table->string('department', 100)->nullable();
 
             $table->string('roles', 255)->nullable();
+            $table->string('otp', 6)->nullable();
+            $table->timestamp('otp_created_at')->nullable();
 
             $table->enum('status', [
-                'enabled', 'disabled', 'password_expired',
+                'enabled',
+                'disabled',
+                'password_expired',
             ])->default('enabled');
 
             $table->timestamp('last_login')->nullable();
