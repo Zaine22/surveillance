@@ -115,4 +115,30 @@ class AuthController extends Controller
             'message' => 'OTP verified successfully',
         ]);
     }
+
+    public function checkPasswordExpiry(Request $request)
+    {
+        $isExpired = $this->authService->checkPasswordExpiry($request->user());
+
+        return response()->json([
+            'password_expired' => $isExpired,
+        ]);
+    }
+
+    public function updateUser(Request $request)
+    {
+        $data = $request->validate([
+            'name'       => 'sometimes|required|string|max:255',
+            'email'      => 'sometimes|required|email|unique:users,email,' . $request->user()->id,
+            'department' => 'sometimes|nullable|string',
+            'roles'      => 'sometimes|nullable|string',
+        ]);
+
+        $updatedUser = $this->authService->updateUser($request->user(), $data);
+
+        return response()->json([
+            'message' => 'User updated successfully',
+            'user'    => $updatedUser,
+        ]);
+    }
 }

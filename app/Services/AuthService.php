@@ -23,6 +23,7 @@ class AuthService
             'password'              => Hash::make($data['password']),
             'password_last_changed' => now(),
             'department'            => $data['department'] ?? null,
+            'roles'                 => $data['roles'] ?? 'user',
             'status'                => 'disabled',
         ]);
 
@@ -130,6 +131,16 @@ class AuthService
         return ['message' => 'OTP verified successfully.'];
     }
 
+    public function checkPasswordExpiry(User $user): bool
+    {
+        $expiryDays = (int) config('app.password_expiry_days', 90);
+        if (! $user->password_last_changed) {
+            return true;
+        }
+        $daysSinceChange = now()->diffInDays($user->password_last_changed);
+        return $daysSinceChange >= $expiryDays;
+    }
+
     public function generateOtp(User $user): User
     {
         $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -140,5 +151,11 @@ class AuthService
         ]);
 
         return $user;
+    }
+
+    public function updateUser(User $user, array $data): array
+    {
+        $user->update($data);
+        return $user->toArray();
     }
 }

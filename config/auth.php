@@ -112,4 +112,16 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Password Expiry Settings
+    |--------------------------------------------------------------------------
+    |
+    | Number of days before a user's password expires.
+    |
+    */
+
+    'password_expiry_days' => env('PASSWORD_EXPIRY_DAYS', 90),
+
+
 ];

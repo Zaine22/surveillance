@@ -42,6 +42,16 @@ Route::middleware('auth:sanctum')->group(
             '/logout',
             [AuthController::class, 'logout']
         );
+
+        Route::get(
+            '/check-password-expiry',
+            [AuthController::class, 'checkPasswordExpiry']
+        );
+
+        Route::put(
+            '/user',
+            [AuthController::class, 'updateUser']
+        );
     }
 );
 
