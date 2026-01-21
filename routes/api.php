@@ -1,10 +1,9 @@
 <?php
 
-use App\Http\Controllers\CrawlerTaskItemController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CrawlerTaskItemController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -14,7 +13,6 @@ Route::post(
     '/register',
     [AuthController::class, 'register']
 );
-
 
 Route::post(
     '/login',
@@ -54,8 +52,6 @@ Route::middleware('auth:sanctum')->group(
         );
     }
 );
-
-
 
 Route::post(
     '/crawler/task-items/urls',
