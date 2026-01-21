@@ -19,4 +19,9 @@ class CrawlerConfig extends Model
         'frequency_code',
         'status',
     ];
+
+    public function lexicon()
+    {
+        return $this->belongsTo(Lexicon::class);
+    }
 }

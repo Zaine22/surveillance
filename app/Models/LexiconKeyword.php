@@ -9,7 +9,7 @@ class LexiconKeyword extends Model
 {
     use HasUuids;
 
-    protected $table = 'lexicon_keyword';
+    protected $table = 'lexicon_keywords';
 
     protected $fillable = [
         'lexicon_id',
@@ -22,5 +22,11 @@ class LexiconKeyword extends Model
     protected $casts = [
         'crawl_hit_count' => 'integer',
         'case_count' => 'integer',
+        'keywords' => 'array',
     ];
+
+    public function lexicon()
+    {
+        return $this->belongsTo(Lexicon::class, 'lexicon_id');
+    }
 }

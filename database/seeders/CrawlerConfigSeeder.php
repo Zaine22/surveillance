@@ -36,9 +36,9 @@ class CrawlerConfigSeeder extends Seeder
 
         $keywords = [
             [
-                'id' => Str::uuid(),
+                'id' => (string) Str::uuid(),
                 'lexicon_id' => $lexicons[0]['id'],
-                'keywords' => 'underage,nudity,minor abuse',
+                'keywords' => json_encode(['underage', 'nudity', 'minor abuse']),
                 'crawl_hit_count' => 1240,
                 'case_count' => 412,
                 'status' => 'enabled',
@@ -46,9 +46,9 @@ class CrawlerConfigSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'id' => Str::uuid(),
+                'id' => (string) Str::uuid(),
                 'lexicon_id' => $lexicons[0]['id'],
-                'keywords' => 'child exploitation,explicit image',
+                'keywords' => json_encode(['child exploitation', 'explicit image']),
                 'crawl_hit_count' => 860,
                 'case_count' => 290,
                 'status' => 'enabled',
@@ -56,9 +56,9 @@ class CrawlerConfigSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'id' => Str::uuid(),
+                'id' => (string) Str::uuid(),
                 'lexicon_id' => $lexicons[1]['id'],
-                'keywords' => '诱拐,裸露,交易',
+                'keywords' => json_encode(['诱拐', '裸露', '交易']),
                 'crawl_hit_count' => 510,
                 'case_count' => 170,
                 'status' => 'enabled',
@@ -66,9 +66,9 @@ class CrawlerConfigSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'id' => Str::uuid(),
+                'id' => (string) Str::uuid(),
                 'lexicon_id' => $lexicons[1]['id'],
-                'keywords' => '未成年,成人视频',
+                'keywords' => json_encode(['未成年', '成人视频']),
                 'crawl_hit_count' => 380,
                 'case_count' => 130,
                 'status' => 'enabled',

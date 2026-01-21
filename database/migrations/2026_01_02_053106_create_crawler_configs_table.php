@@ -22,8 +22,7 @@ return new class extends Migration
                 ->cascadeOnDelete();
 
             $table->text('description')->nullable();
-            $table->string('frequency_code', 50)->nullable();
-
+            $table->enum('frequency_code', ['daily', 'weekly', 'monthly'])->default('daily');
             $table->enum('status', ['enabled', 'disabled'])
                 ->default('enabled');
             $table->timestamps();

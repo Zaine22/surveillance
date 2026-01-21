@@ -9,7 +9,7 @@ class GlobalWhitelist extends Model
 {
     use HasUuids;
 
-    protected $table = 'global_whitelist';
+    protected $table = 'global_whitelists';
 
     protected $fillable = [
         'url',

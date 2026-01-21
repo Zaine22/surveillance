@@ -18,7 +18,7 @@ return new class extends Migration
                 ->constrained('lexicons')
                 ->cascadeOnDelete();
 
-            $table->text('keywords');
+            $table->json('keywords');
             $table->integer('crawl_hit_count')->default(0);
             $table->integer('case_count')->default(0);
 

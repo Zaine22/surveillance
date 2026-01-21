@@ -9,11 +9,16 @@ class Lexicon extends Model
 {
     use HasUuids;
 
-    protected $table = 'lexicon';
+    protected $table = 'lexicons';
 
     protected $fillable = [
         'name',
         'remark',
         'status',
     ];
+
+    public function keywords()
+    {
+        return $this->hasMany(LexiconKeyword::class, 'lexicon_id');
+    }
 }
