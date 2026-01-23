@@ -33,6 +33,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/check-password-expiry', [AuthController::class, 'checkPasswordExpiry']);
     Route::put('/user', [AuthController::class, 'updateUser']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
+    Route::get('/users', [AuthController::class, 'index']);
 
     Route::apiResource('ai-models', AiModelController::class);
     Route::apiResource('ai-model-tasks', AiModelTaskController::class);
