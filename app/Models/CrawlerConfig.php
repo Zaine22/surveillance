@@ -20,6 +20,10 @@ class CrawlerConfig extends Model
         'status',
     ];
 
+    protected $casts = [
+        'sources' => 'array',
+    ];
+
     public function lexicon()
     {
         return $this->belongsTo(Lexicon::class);

@@ -17,11 +17,11 @@ return new class extends Migration
             $table->foreignUuid('task_id')
                 ->constrained('crawler_tasks')
                 ->cascadeOnDelete();
-            $table->string('url', 2048)->nullable();
+
             $table->string('keywords', 200)->nullable();
             $table->string('crawler_machine', 50)->nullable();
             $table->string('result_file', 255)->nullable();
-
+            $table->string('crawl_location', 2048)->nullable();
             $table->enum('status', [
                 'pending', 'crawling', 'syncing', 'synced', 'error',
             ])->default('pending');

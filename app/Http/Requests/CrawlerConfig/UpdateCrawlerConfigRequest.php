@@ -15,7 +15,8 @@ class UpdateCrawlerConfigRequest extends FormRequest
     {
         return [
             'name' => ['sometimes', 'string', 'max:100'],
-            'sources' => ['nullable', 'string', 'max:255'],
+            'sources' => 'required|array|min:1',
+            'sources.*' => 'required|string',
             'lexicon_id' => ['sometimes', 'uuid', 'exists:lexicons,id'],
             'description' => ['nullable', 'string'],
             'frequency_code' => ['sometimes', 'in:daily,weekly,monthly'],
