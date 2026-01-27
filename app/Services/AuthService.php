@@ -97,6 +97,7 @@ class AuthService
             if (! $user) {
                 throw ValidationException::withMessages(['error' => "User with email {$email} not found."]);
             }
+
             $result = $this->generateOtp($user);
             Log::info("Generated OTP for user {$email}", ['otp' => $result['otp']]);
             $this->mailService->sendOtp($user->email, $result['otp']);

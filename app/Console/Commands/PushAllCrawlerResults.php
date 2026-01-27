@@ -33,6 +33,7 @@ class PushAllCrawlerResults extends Command
                 'task_item_id' => (string) $item->id,
                 'task_id' => (string) $item->task_id,
                 'status' => $status,
+                'keywords' => (string) $item->keywords,
             ];
 
             if ($status === 'synced') {

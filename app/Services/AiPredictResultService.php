@@ -23,6 +23,7 @@ class AiPredictResultService
                 'ai_analysis_result' => $payload['ai_analysis_result'] ?? null,
                 'review_status' => 'pending',
                 'audit_status' => 'pending',
+                'keywords' => $payload['keywords'] ?? null,
             ]);
 
             foreach ($payload['items'] ?? [] as $item) {

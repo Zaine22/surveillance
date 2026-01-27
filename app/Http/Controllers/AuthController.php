@@ -81,7 +81,7 @@ class AuthController extends Controller
 
     public function sendOtp(Request $request)
     {
-        $email = $request->query('email');
+        $email = $request->email;
         $otp = $this->authService->sendOtp($email);
 
         if ($otp['error'] ?? false) {
