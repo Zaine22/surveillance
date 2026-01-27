@@ -34,11 +34,13 @@ class AuthController extends Controller
         $data = $request->validate([
             'email' => 'required|email',
             'password' => 'required',
+            'otp' => 'required',
         ]);
 
         $result = $this->authService->login(
             $data['email'],
-            $data['password']
+            $data['password'],
+            $data['otp']
         );
 
         if ($result['error'] ?? false) {
@@ -141,5 +143,12 @@ class AuthController extends Controller
             'message' => 'User updated successfully',
             'user' => $updatedUser,
         ]);
+    }
+
+    public function index(Request $request)
+    {
+        $users = $this->authService->getAllUsers($request);
+
+        return response()->json($users);
     }
 }

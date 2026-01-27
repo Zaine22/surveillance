@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -31,7 +32,7 @@ class AuthService
         return compact('user', 'token');
     }
 
-    public function login(string $email, string $password): array
+    public function login(string $email, string $password, string $otp): array
     {
 
         $user = User::where('email', $email)->first();
@@ -48,6 +49,12 @@ class AuthService
         if (! Hash::check($password, $user->password)) {
             throw ValidationException::withMessages([
                 'password' => ['Invalid credentials'],
+            ]);
+        }
+
+        if ($otp !== $user->otp) {
+            throw ValidationException::withMessages([
+                'otp' => ['Invalid OTP code.'],
             ]);
         }
 
@@ -158,5 +165,26 @@ class AuthService
         $user->update($data);
 
         return $user->toArray();
+    }
+
+    public function getAllUsers(Request $request): array
+    {
+        $pageSize = (int) $request->query('pageSize', 10);
+        $page = (int) $request->query('page', 1);
+
+        $users = User::query()
+            ->select(['id', 'name', 'email', 'status', 'created_at'])
+            ->orderByDesc('created_at')
+            ->paginate($pageSize, ['*'], 'page', $page);
+
+        return [
+            'data' => $users->items(),
+            'meta' => [
+                'current_page' => $users->currentPage(),
+                'pageSize' => $users->perPage(),
+                'total' => $users->total(),
+                'lastPage' => $users->lastPage(),
+            ],
+        ];
     }
 }
