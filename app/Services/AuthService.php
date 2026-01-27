@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Models\ValidationRecord;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -42,6 +43,12 @@ class AuthService
             ]);
         }
 
+        $validated_record = ValidationRecord::where('send_to', $email)
+            ->where('validate_type', 'login')
+            ->where('validate_code', $otp)
+            ->latest()
+            ->first();
+
         if ($user->status !== 'enabled') {
             return ['error' => 'User account is not verified yet!'];
         }
@@ -52,7 +59,19 @@ class AuthService
             ]);
         }
 
-        if ($otp !== $user->otp) {
+        if (! $validated_record) {
+            throw ValidationException::withMessages([
+                'otp' => ['Invalid or Wrong OTP code.'],
+            ]);
+        }
+
+        if ($validated_record->expired_at < now()) {
+            throw ValidationException::withMessages([
+                'otp' => ['Expired OTP code.'],
+            ]);
+        }
+
+        if ($otp !== $validated_record->validate_code) {
             throw ValidationException::withMessages([
                 'otp' => ['Invalid OTP code.'],
             ]);
@@ -97,11 +116,20 @@ class AuthService
             if (! $user) {
                 throw ValidationException::withMessages(['error' => "User with email {$email} not found."]);
             }
-            $result = $this->generateOtp($user);
-            Log::info("Generated OTP for user {$email}", ['otp' => $result['otp']]);
-            $this->mailService->sendOtp($user->email, $result['otp']);
+            $validated_record = ValidationRecord::where('send_to', $email)
+                ->where('validate_type', 'login')
+                ->where('expired_at', '>', now())
+                ->latest()
+                ->first();
 
-            return ['otp' => $result['otp']];
+            if ($validated_record) {
+                return ['message' => 'OTP already sent. Please check your email or wait for a while to get new otp.', 'otp' => $validated_record->validate_code];
+            }
+            $result = $this->generateOtp($user);
+            Log::info("Generated OTP for user {$email}", ['otp' => $result['validate_code']]);
+            $this->mailService->sendOtp($user->email, $result['validate_code']);
+
+            return ['otp' => $result['validate_code']];
         } catch (\Exception $e) {
             Log::error('Failed to send OTP email: '.$e->getMessage());
 
@@ -118,19 +146,26 @@ class AuthService
             throw ValidationException::withMessages(['error' => "User with email {$email} not found."]);
         }
 
-        if ($user->otp !== $otp) {
+        $validated_record = ValidationRecord::where('send_to', $email)
+            ->where('validate_type', 'login')
+            ->where('validate_code', $otp)
+            ->latest()
+            ->first();
+
+        if (! $validated_record) {
+            throw ValidationException::withMessages(['message' => 'No Record found', 'otp' => ['Invalid OTP code.']]);
+        }
+
+        if ($validated_record->validate_code !== $otp) {
             throw ValidationException::withMessages(['otp' => ['Invalid OTP code.']]);
         }
 
-        $otpAge = now()->diffInMinutes($user->otp_created_at);
-        if ($otpAge > 5) {
+        if ($validated_record->expired_at < now()) {
             throw ValidationException::withMessages(['otp' => ['OTP code has expired.']]);
         }
 
         // Clear OTP after successful verification
         $user->update([
-            'otp' => null,
-            'otp_created_at' => null,
             'status' => 'enabled',
         ]);
 
@@ -148,16 +183,19 @@ class AuthService
         return $daysSinceChange >= $expiryDays;
     }
 
-    public function generateOtp(User $user): User
+    public function generateOtp(User $user): ValidationRecord
     {
         $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
-        $user->update([
-            'otp' => $otp,
-            'otp_created_at' => now(),
+        $validation_record = ValidationRecord::create([
+            'send_type' => 'email',
+            'send_to' => $user->email,
+            'validate_type' => 'login',
+            'validate_code' => $otp,
+            'expired_at' => now()->addMinutes(5),
         ]);
 
-        return $user;
+        return $validation_record;
     }
 
     public function updateUser(User $user, array $data): array
