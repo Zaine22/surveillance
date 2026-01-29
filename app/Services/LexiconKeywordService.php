@@ -8,6 +8,9 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class LexiconKeywordService
 {
@@ -80,5 +83,52 @@ class LexiconKeywordService
                 preg_split('/[,|\n]/', $keywords)
             )
         )));
+    }
+
+    public function export(string $lexiconId): StreamedResponse
+    {
+        $data = LexiconKeyword::where('lexicon_id', $lexiconId)->get();
+
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Header row
+        $sheet->setCellValue('A1', 'Lexicon ID');
+        $sheet->setCellValue('B1', 'Keywords');
+        $sheet->setCellValue('C1', 'Crawl Hit Count');
+        $sheet->setCellValue('D1', 'Case Count');
+        $sheet->setCellValue('E1', 'Status');
+
+        $rowNumber = 2;
+
+        foreach ($data as $item) {
+            $sheet->setCellValue('A'.$rowNumber, $item->lexicon_id);
+            $sheet->setCellValue(
+                'B'.$rowNumber,
+                is_array($item->keywords)
+                    ? implode(',', $item->keywords)
+                    : $item->keywords
+            );
+            $sheet->setCellValue('C'.$rowNumber, $item->crawl_hit_count);
+            $sheet->setCellValue('D'.$rowNumber, $item->case_count);
+            $sheet->setCellValue('E'.$rowNumber, $item->status);
+
+            $rowNumber++;
+        }
+
+        $writer = new Xlsx($spreadsheet);
+
+        // ✅ Timestamp filename
+        $fileName = 'lexicon_keywords_'.now()->format('Y-m-d_H-i-s').'.xlsx';
+
+        return response()->streamDownload(
+            function () use ($writer) {
+                $writer->save('php://output');
+            },
+            $fileName,
+            [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ]
+        );
     }
 }
