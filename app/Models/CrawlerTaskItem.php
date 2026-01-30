@@ -20,4 +20,14 @@ class CrawlerTaskItem extends Model
         'status',
         'error_message',
     ];
+
+    public function task()
+    {
+        return $this->belongsTo(CrawlerTask::class, 'task_id');
+    }
+
+    public function crawlConfig()
+    {
+        return $this->task->crawlConfig();
+    }
 }

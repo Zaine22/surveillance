@@ -16,4 +16,9 @@ class CrawlerTask extends Model
         'lexicon_id',
         'status',
     ];
+
+    public function crawlConfig()
+    {
+        return $this->belongsTo(CrawlerConfig::class, 'crawler_config_id');
+    }
 }

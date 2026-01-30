@@ -21,6 +21,7 @@ class TaskManagerService
             $item->update([
                 'status' => 'syncing',
                 'result_file' => $filePath,
+                'crawl_location' => 'https:twitter.com/somepage',
             ]);
 
             $nasPath = $this->syncService->syncCrawlerFileToNas($item);
@@ -28,6 +29,7 @@ class TaskManagerService
             $item->update([
                 'status' => 'synced',
                 'result_file' => $nasPath,
+
             ]);
 
             $this->aiTaskManagerService->createFromCrawlerItem($item);

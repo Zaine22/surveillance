@@ -17,7 +17,8 @@ class PushAllCrawlerResults extends Command
     {
         $status = $this->argument('status');
 
-        $items = CrawlerTaskItem::all();
+        $items = CrawlerTaskItem::where('status', 'pending')
+            ->get();
 
         if ($items->isEmpty()) {
             $this->warn('No crawler task items found');
@@ -33,12 +34,12 @@ class PushAllCrawlerResults extends Command
                 'task_item_id' => (string) $item->id,
                 'task_id' => (string) $item->task_id,
                 'status' => $status,
-                'keywords' => (string) $item->keywords,
+                'keywords' => $item->keywords,
             ];
 
             if ($status === 'synced') {
                 $payload['result_file'] =
-                    '/results/'.$item->id.'.json';
+                '/results/'.$item->id.'.zip';
             } else {
                 $payload['error_message'] =
                     'Simulated crawler failure';
