@@ -35,6 +35,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/change-password', [AuthController::class, 'changePassword']);
     Route::get('/users', [AuthController::class, 'index']);
 
+    Route::post('/import/lexicon-keywords', [LexiconKeywordController::class, 'import']);
+    Route::post('/export/lexicon-keywords/{lexiconId}', [LexiconKeywordController::class, 'export']);
     Route::apiResource('ai-models', AiModelController::class);
     Route::apiResource('ai-model-tasks', AiModelTaskController::class);
     Route::apiResource('ai-predict-results', AiPredictResultController::class);
@@ -54,6 +56,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('system-data', SystemDataController::class);
     Route::apiResource('system-notices', SystemNoticeController::class);
     Route::apiResource('validation-records', ValidationRecordController::class);
+});
+
+Route::middleware('apikey')->group(function () {
+    Route::post('/caseFeedback', [CaseManagementController::class, 'netChineseCaseFeedback']);
+    Route::post('/newcaseCreate', [CaseManagementController::class, 'externalCaseCreate']);
+    Route::post('/caseScreenshot', [CaseManagementController::class, 'netChineseCaseScreenshot']);
 });
 
 Route::post('/crawler/task-items/urls', [CrawlerTaskItemController::class, 'store']);

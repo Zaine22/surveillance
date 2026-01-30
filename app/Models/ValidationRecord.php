@@ -9,7 +9,7 @@ class ValidationRecord extends Model
 {
     use HasUuids;
 
-    protected $table = 'validation_record';
+    protected $table = 'validation_records';
 
     protected $fillable = [
         'send_type',

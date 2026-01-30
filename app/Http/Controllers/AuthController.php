@@ -91,7 +91,7 @@ class AuthController extends Controller
         }
 
         return response()->json([
-            'message' => 'OTP generated successfully',
+            'message' => $otp['message'] ?? 'OTP generated successfully',
             'otp' => $otp['otp'],
         ]);
     }

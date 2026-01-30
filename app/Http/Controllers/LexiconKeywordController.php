@@ -8,6 +8,7 @@ use App\Http\Resources\LexiconKeywordResource;
 use App\Services\LexiconKeywordService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class LexiconKeywordController extends Controller
 {
@@ -73,5 +74,24 @@ class LexiconKeywordController extends Controller
             ['message' => 'Lexicon keyword deleted successfully'],
             200
         );
+    }
+
+    public function import()
+    {
+        request()->validate([
+            'file' => 'required|mimes:xlsx,xls,csv',
+        ]);
+
+        $file = request()->file('file');
+        $this->lexiconKeywordService->import($file);
+
+        return response()->json([
+            'message' => 'Lexicon keywords imported successfully',
+        ]);
+    }
+
+    public function export(string $lexiconId): StreamedResponse
+    {
+        return $this->lexiconKeywordService->export($lexiconId);
     }
 }
