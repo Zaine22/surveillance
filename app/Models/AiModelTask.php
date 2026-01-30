@@ -15,4 +15,14 @@ class AiModelTask extends Model
         'file_name',
         'status',
     ];
+
+    public function aiPredictResults()
+    {
+        return $this->hasMany(AiPredictResult::class);
+    }
+
+    public function crawlerTaskItem()
+    {
+        return $this->belongsTo(CrawlerTaskItem::class);
+    }
 }

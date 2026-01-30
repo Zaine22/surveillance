@@ -15,7 +15,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
 
             $table->string('name', 100);
-            $table->string('sources', 255)->nullable();
+            $table->json('sources')->nullable();
 
             $table->foreignUuid('lexicon_id')
                 ->constrained('lexicons')

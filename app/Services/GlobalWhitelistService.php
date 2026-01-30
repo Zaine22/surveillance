@@ -14,12 +14,48 @@ class GlobalWhitelistService
         return GlobalWhitelist::orderBy('created_at', 'desc')->get();
     }
 
+    // public function createMany(array $urls): Collection
+    // {
+    //     return DB::transaction(function () use ($urls) {
+
+    //         $normalizedUrls = collect($urls)
+    //             ->map(fn ($url) => rtrim(trim($url), '/'))
+    //             ->unique()
+    //             ->values();
+
+    //         $existingUrls = GlobalWhitelist::whereIn('url', $normalizedUrls)
+    //             ->pluck('url')
+    //             ->all();
+
+    //         $insertData = $normalizedUrls
+    //             ->diff($existingUrls)
+    //             ->map(fn ($url) => [
+    //                 'id' => (string) Str::uuid(),
+    //                 'url' => $url,
+    //                 'created_at' => now(),
+    //                 'updated_at' => now(),
+    //             ])
+    //             ->values()
+    //             ->toArray();
+
+    //         if (! empty($insertData)) {
+    //             GlobalWhitelist::insert($insertData);
+    //         }
+
+    //         return GlobalWhitelist::whereIn(
+    //             'url',
+    //             collect($insertData)->pluck('url')
+    //         )->get();
+    //     });
+    // }
+
     public function createMany(array $urls): Collection
     {
         return DB::transaction(function () use ($urls) {
 
             $normalizedUrls = collect($urls)
-                ->map(fn ($url) => rtrim(trim($url), '/'))
+                ->map(fn ($url) => strtolower(trim($url)))
+                ->map(fn ($url) => rtrim($url, '/'))
                 ->unique()
                 ->values();
 

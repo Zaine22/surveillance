@@ -9,7 +9,7 @@ class DataSyncRecord extends Model
 {
     use HasUuids;
 
-    protected $table = 'data_sync_record';
+    protected $table = 'data_sync_records';
 
     protected $fillable = [
         'source_path',

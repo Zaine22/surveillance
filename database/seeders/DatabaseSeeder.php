@@ -15,10 +15,11 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            CrawlerConfigSeeder::class,
-            CrawlerTaskSeeder::class,
-            CrawlerTaskItemSeeder::class,
+            // CrawlerConfigSeeder::class,
+            // CrawlerTaskSeeder::class,
+            // CrawlerTaskItemSeeder::class,
             LexiconSeeder::class,
+            AiModelSeeder::class,
         ]);
     }
 }
