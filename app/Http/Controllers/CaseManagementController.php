@@ -14,7 +14,7 @@ class CaseManagementController extends Controller
         $validated = request()->validate([
             'case_id' => 'required|string',
             'url' => 'required|url',
-            'is_ilLegal' => 'required|boolean',
+            'is_illegal' => 'required|boolean',
             'legal_basis' => 'nullable|string',
             'reason' => 'nullable|string',
         ]);
@@ -33,9 +33,23 @@ class CaseManagementController extends Controller
         ], 200);
     }
 
-    public function netChineseCaseCreate()
+    public function externalCaseCreate()
     {
-        return response()->json(['message' => 'API key valid. Access granted to net Chinese case creation.'], 200);
+        request()->validate([
+            'url' => 'required|url',
+            'leakReason' => 'required|string',
+        ]);
+
+        $result = $this->caseManagementService->createExternalCase(request()->only(['url', 'leakReason']));
+
+        if ($result === null) {
+            return response()->json([
+                'status' => 'error',
+                'message' => '外部案件创建失败',
+            ], 500);
+        }
+
+        return response()->json(['status' => 'success', 'message' => '已接收'], 201);
     }
 
     public function netChineseCaseScreenshot()

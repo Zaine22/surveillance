@@ -15,7 +15,9 @@ class ApiKeyMiddleware
         // store your key in .env
         if (! $apiKey || $apiKey !== config('app.api_key')) {
             return response()->json([
-                'message' => 'Unauthorized',
+                'status' => 'error',
+                'code' => 'Unauthorized',
+                'message' => 'API Key 無效或遺失',
             ], 401);
         }
 

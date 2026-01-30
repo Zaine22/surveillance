@@ -60,7 +60,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 Route::middleware('apikey')->group(function () {
     Route::post('/caseFeedback', [CaseManagementController::class, 'netChineseCaseFeedback']);
-    Route::post('/caseCreate', [CaseManagementController::class, 'netChineseCaseCreate']);
+    Route::post('/newcaseCreate', [CaseManagementController::class, 'externalCaseCreate']);
     Route::post('/caseScreenshot', [CaseManagementController::class, 'netChineseCaseScreenshot']);
 });
 
