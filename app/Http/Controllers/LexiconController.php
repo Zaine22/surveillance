@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Lexicon\StoreLexiconRequest;
 use App\Http\Requests\Lexicon\UpdateLexiconRequest;
 use App\Http\Resources\LexiconResource;
+use App\Http\Resources\LexiconResourceForAll;
 use App\Services\LexiconService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -17,7 +18,7 @@ class LexiconController extends Controller
     {
         $lexicons = $this->lexiconService->getAllLexicons();
 
-        return LexiconResource::collection($lexicons);
+        return LexiconResourceForAll::collection($lexicons);
     }
 
     public function store(StoreLexiconRequest $request): LexiconResource

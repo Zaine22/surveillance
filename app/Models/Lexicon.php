@@ -15,6 +15,7 @@ class Lexicon extends Model
         'name',
         'remark',
         'status',
+        'keywords',
     ];
 
     public function keywords()
