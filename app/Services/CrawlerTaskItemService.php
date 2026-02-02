@@ -30,7 +30,7 @@ class CrawlerTaskItemService
                 'error_message' => null,
             ]);
 
-            $this->dispatchService->dispatch($item);
+            // $this->dispatchService->dispatch($item);
         }
     }
 
