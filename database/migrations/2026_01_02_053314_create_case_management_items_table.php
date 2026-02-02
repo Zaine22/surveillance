@@ -22,6 +22,8 @@ return new class extends Migration
             $table->string('other_reason', 255)->nullable();
             $table->decimal('ai_score', 5, 2)->nullable();
             $table->string('keywords', 100)->nullable();
+            $table->date('issue_date')->nullable();
+            $table->date('due_date')->nullable();
             $table->timestamps();
         });
     }

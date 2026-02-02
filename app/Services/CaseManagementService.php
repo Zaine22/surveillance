@@ -7,6 +7,7 @@ use App\Models\CaseFeedback;
 use App\Models\CaseManagement;
 use App\Models\CaseManagementItem;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class CaseManagementService
@@ -69,5 +70,48 @@ class CaseManagementService
         ]);
 
         return $caseItem;
+    }
+
+    public function caseScreenShot(array $validated)
+    {
+
+        $case = CaseManagementItem::where('crawler_page_url', $validated['url'])->firstOrFail();
+
+        $case->update([
+            'issue_date' => $validated['issue_date'],
+            'due_date' => $validated['due_date'],
+        ]);
+
+        $response = Http::post(
+            'https://b503bc643702.ngrok-free.app/api/crawler/case/screenshot',
+            [
+                'case_management_id' => $case->case_management_id,
+                'case_management_item_id' => $case->id, // or item_id if you have it
+                'url' => $case->crawler_page_url,
+            ]
+        );
+
+        if ($response->failed()) {
+            return response()->json([
+                'message' => 'Case updated but crawler API failed',
+                'error' => $response->body(),
+            ], 500);
+        }
+
+        return response()->json([
+            'message' => 'Case updated successfully',
+            'data' => $case,
+        ]);
+    }
+
+    public function captureCaseScreenshot(string $id, array $data)
+    {
+        $case = CaseManagementItem::findOrFail($id);
+
+        $case->update([
+            'media_url' => $data['media_url'],
+        ]);
+
+        return $case;
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CaseFeedback;
 use App\Services\CaseManagementService;
+use Illuminate\Http\Request;
 
 class CaseManagementController extends Controller
 {
@@ -54,6 +55,25 @@ class CaseManagementController extends Controller
 
     public function netChineseCaseScreenshot()
     {
-        return response()->json(['message' => 'API key valid. Access granted to net Chinese case screenshot.'], 200);
+        $validated = request()->validate([
+            'issue_date' => 'required|date',
+            'due_date' => 'required|date|after_or_equal:issue_date',
+            'url' => 'required|url',
+        ]);
+
+        $result = $this->caseManagementService->caseScreenShot($validated);
+
+        return response()->json($result);
+    }
+
+    public function captureCaseScreenshot(string $caseItemId, Request $request)
+    {
+        $validated = $request->validate([
+            'media_url' => 'required|string',
+        ]);
+
+        $result = $this->caseManagementService->captureCaseScreenshot($caseItemId, $validated);
+
+        return response()->json(['status' => 'success', 'data' => $result]);
     }
 }

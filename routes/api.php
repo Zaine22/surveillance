@@ -64,6 +64,8 @@ Route::middleware('apikey')->group(function () {
     Route::post('/caseScreenshot', [CaseManagementController::class, 'netChineseCaseScreenshot']);
 });
 
+Route::post('/case/captureScreenshot/{caseItemId}', [CaseManagementController::class, 'captureCaseScreenshot']);
+
 Route::post('/crawler/task-items/urls', [CrawlerTaskItemController::class, 'store']);
 Route::post('/crawler/task-items/upload', [CrawlerTaskItemController::class, 'upload']);
 Route::post('/crawler/trigger', [CrawlerTaskItemController::class, 'trigger']);

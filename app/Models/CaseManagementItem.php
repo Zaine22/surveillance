@@ -21,6 +21,8 @@ class CaseManagementItem extends Model
         'other_reason',
         'ai_score',
         'keywords',
+        'issue_date',
+        'due_date',
     ];
 
     protected $casts = [
