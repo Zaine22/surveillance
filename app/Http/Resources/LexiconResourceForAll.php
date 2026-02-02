@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class LexiconResource extends JsonResource
+class LexiconResourceForAll extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -21,9 +21,9 @@ class LexiconResource extends JsonResource
             'status' => $this->status,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            'keywords' => LexiconKeywordResource::collection(
-                $this->whenLoaded('keywords')
-            ),
+            // 'keywords' => LexiconKeywordResource::collection(
+            //     $this->whenLoaded('keywords')
+            // ),
             'crawl_hit_count' => 3842,
             'case_count' => 3842,
         ];

@@ -6,6 +6,7 @@ use App\Models\AiPredictResult;
 use App\Models\CaseFeedback;
 use App\Models\CaseManagement;
 use App\Models\CaseManagementItem;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -106,10 +107,15 @@ class CaseManagementService
 
     public function captureCaseScreenshot(string $id, array $data)
     {
-        $case = CaseManagementItem::findOrFail($id);
+        try {
+            $case = CaseManagementItem::findOrFail($id);
+        } catch (ModelNotFoundException $e) {
+            throw new ModelNotFoundException('Case not found');
+        }
 
         $case->update([
             'media_url' => $data['media_url'],
+            'status' => $data['status'] ?? $case->status,
         ]);
 
         return $case;

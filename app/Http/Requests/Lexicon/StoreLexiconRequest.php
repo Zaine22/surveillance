@@ -25,6 +25,9 @@ class StoreLexiconRequest extends FormRequest
             'name' => ['required', 'string', 'max:100'],
             'remark' => ['nullable', 'string', 'max:500'],
             'status' => ['nullable', 'in:enabled,disabled'],
+            'keywords' => ['required', 'array'],
+            'keywords.*' => ['required', 'array'],
+            'keywords.*.*' => ['required', 'string', 'min:1', 'max:100'],
         ];
     }
 }

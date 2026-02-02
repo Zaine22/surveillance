@@ -70,6 +70,7 @@ class CaseManagementController extends Controller
     {
         $validated = $request->validate([
             'media_url' => 'required|string',
+            'status' => 'nullable|in:valid,invalid',
         ]);
 
         $result = $this->caseManagementService->captureCaseScreenshot($caseItemId, $validated);

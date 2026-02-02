@@ -15,56 +15,22 @@ class CrawlerTaskItemService
 
     public function createFromTask(CrawlerTask $task, CrawlerConfig $config, Lexicon $lexicon): void
     {
-        $rawKeywords = $lexicon->keywords()
+        $keywords = $lexicon->keywords()
             ->where('status', 'enabled')
             ->pluck('keywords')
-            ->toArray();
+            ->flatMap(fn ($keywords) => $keywords);
 
-        $keywords = collect($rawKeywords)
-            ->flatMap(function ($value) {
-                if (is_string($value)) {
-                    $decoded = json_decode($value, true);
+        foreach ($keywords as $keyword) {
 
-                    return is_array($decoded) ? $decoded : [$value];
-                }
+            $item = CrawlerTaskItem::create([
+                'task_id' => (string) $task->id,
+                'keywords' => $keyword,
+                'status' => 'pending',
+                'crawler_machine' => 'bot-node-'.rand(1, 3),
+                'error_message' => null,
+            ]);
 
-                if (is_array($value)) {
-                    return $value;
-                }
-
-                return [];
-            })
-            ->map(fn ($k) => is_string($k) ? trim($k) : null)
-            ->filter()
-            ->unique()
-            ->values()
-            ->toArray();
-
-        $crawlLocations = collect(
-            is_string($config->sources)
-                ? json_decode($config->sources, true) ?? [$config->sources]
-                : (is_array($config->sources) ? $config->sources : [])
-        )
-            ->map(fn ($url) => is_string($url) ? trim($url) : null)
-            ->filter()
-            ->unique()
-            ->values()
-            ->toArray();
-
-        foreach ($crawlLocations as $location) {
-            foreach ($keywords as $keyword) {
-
-                $item = CrawlerTaskItem::create([
-                    'task_id' => (string) $task->id,
-                    'keywords' => (string) $keyword,
-                    'crawl_location' => (string) $location,
-                    'status' => 'pending',
-                    'crawler_machine' => 'bot-node-'.rand(1, 3),
-                    'error_message' => null,
-                ]);
-
-                $this->dispatchService->dispatch($item);
-            }
+            // $this->dispatchService->dispatch($item);
         }
     }
 
