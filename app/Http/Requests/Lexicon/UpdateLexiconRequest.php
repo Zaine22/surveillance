@@ -22,9 +22,16 @@ class UpdateLexiconRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['string', 'max:100'],
+            'name' => ['sometimes', 'string', 'max:100'],
             'remark' => ['nullable', 'string', 'max:500'],
-            'status' => ['nullable', 'in:enabled,disabled'],
+            'status' => ['sometimes', 'in:enabled,disabled'],
+
+            'keywords' => ['required', 'array'],
+
+            'keywords.*.id' => ['required', 'string'],
+            'keywords.*.keywords' => ['required', 'array', 'min:1'],
+            'keywords.*.keywords.*' => ['string', 'min:1', 'max:100'],
+            'keywords.*.status' => ['required', 'in:enabled,disabled'],
         ];
     }
 }
