@@ -81,19 +81,32 @@ class AuthController extends Controller
 
     public function sendOtp(Request $request)
     {
-        $email = $request->email;
-        $otp = $this->authService->sendOtp($email);
+        // 1️⃣ Validate input
+        $request->validate([
+            'email' => 'required|email',
+        ]);
 
-        if ($otp['error'] ?? false) {
+        // 2️⃣ Call service
+        $result = $this->authService->sendOtp($request->email);
+
+        // 3️⃣ Handle error response
+        if (isset($result['error'])) {
             return response()->json([
-                'message' => $otp['error'],
+                'message' => $result['error'][0] ?? 'Failed to send OTP. Please try again later.',
             ], 400);
         }
 
-        return response()->json([
-            'message' => $otp['message'] ?? 'OTP generated successfully',
-            'otp' => $otp['otp'],
-        ]);
+        // 4️⃣ Prepare response
+        $response = [
+            'message' => $result['message'] ?? 'OTP sent successfully.',
+        ];
+
+        // ✅ Optional: include OTP only in local/dev environment
+        if (app()->environment('local') && isset($result['otp'])) {
+            $response['otp'] = $result['otp'];
+        }
+
+        return response()->json($response, 200);
     }
 
     public function verifyOtp(Request $request)

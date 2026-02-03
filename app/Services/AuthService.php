@@ -113,28 +113,47 @@ class AuthService
     {
         try {
             $user = User::where('email', $email)->first();
+
             if (! $user) {
-                throw ValidationException::withMessages(['error' => "User with email {$email} not found."]);
+                throw ValidationException::withMessages([
+                    'email' => 'User not found.',
+                ]);
             }
-            $validated_record = ValidationRecord::where('send_to', $email)
+
+            $existing = ValidationRecord::where('send_to', $email)
                 ->where('validate_type', 'login')
                 ->where('expired_at', '>', now())
                 ->latest()
                 ->first();
 
-            if ($validated_record) {
-                return ['message' => 'OTP already sent. Please check your email or wait for a while to get new otp.', 'otp' => $validated_record->validate_code];
+            if ($existing) {
+                return [
+                    'message' => 'OTP already sent. Please check your email.',
+                ];
             }
-            $result = $this->generateOtp($user);
-            Log::info("Generated OTP for user {$email}", ['otp' => $result->validate_code]);
-            $this->mailService->sendOtp($user->email, $result->validate_code);
 
-            return ['otp' => $result->validate_code];
-        } catch (\Exception $e) {
-            Log::error('Failed to send OTP email: '.$e->getMessage());
+            $record = $this->generateOtp($user);
+
+            Log::info('Generated OTP for login', [
+                'email' => $email,
+            ]);
+
+            $this->mailService->sendOtp(
+                $user->email,
+                $record->validate_code
+            );
 
             return [
-                'error' => ['Failed to send OTP email. Please try again later.'],
+                'message' => 'OTP sent successfully.',
+            ];
+        } catch (\Throwable $e) {
+            Log::error('OTP sending failed', [
+                'email' => $email,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'error' => ['Failed to send OTP. Please try again later.'],
             ];
         }
     }
