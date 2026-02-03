@@ -126,10 +126,10 @@ class AuthService
                 return ['message' => 'OTP already sent. Please check your email or wait for a while to get new otp.', 'otp' => $validated_record->validate_code];
             }
             $result = $this->generateOtp($user);
-            Log::info("Generated OTP for user {$email}", ['otp' => $result['validate_code']]);
-            $this->mailService->sendOtp($user->email, $result['validate_code']);
+            Log::info("Generated OTP for user {$email}", ['otp' => $result->validate_code]);
+            $this->mailService->sendOtp($user->email, $result->validate_code);
 
-            return ['otp' => $result['validate_code']];
+            return ['otp' => $result->validate_code];
         } catch (\Exception $e) {
             Log::error('Failed to send OTP email: '.$e->getMessage());
 
