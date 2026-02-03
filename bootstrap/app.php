@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'apikey' => \App\Http\Middleware\ApiKeyMiddleware::class,
         ]);
+        $middleware->append(\App\Http\Middleware\AllowAllOrigins::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
