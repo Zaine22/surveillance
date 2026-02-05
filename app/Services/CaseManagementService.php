@@ -84,7 +84,7 @@ class CaseManagementService
         ]);
 
         $response = Http::post(
-            'https://b503bc643702.ngrok-free.app/api/crawler/case/screenshot',
+            env('SCREENSHOT_URL'),
             [
                 'case_management_id' => $case->case_management_id,
                 'case_management_item_id' => $case->id, // or item_id if you have it
