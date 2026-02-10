@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services;
 
 use App\Models\CrawlerConfig;
@@ -18,19 +17,35 @@ class CrawlerTaskItemService
         $keywords = $lexicon->keywords()
             ->where('status', 'enabled')
             ->pluck('keywords')
-            ->flatMap(fn ($keywords) => $keywords);
+            ->flatMap(fn($keywords) => $keywords);
+
+        $sources = is_array($config->sources)
+            ? $config->sources
+            : (
+            is_string($config->sources)
+                ? json_decode($config->sources, true)
+                : []
+        );
 
         foreach ($keywords as $keyword) {
 
             $item = CrawlerTaskItem::create([
-                'task_id' => (string) $task->id,
-                'keywords' => $keyword,
-                'status' => 'pending',
-                'crawler_machine' => 'bot-node-'.rand(1, 3),
-                'error_message' => null,
+                'task_id'         => (string) $task->id,
+                'keywords'        => $keyword,
+                'status'          => 'pending',
+                'crawler_machine' => 'bot-node-' . rand(1, 3),
+                'error_message'   => null,
             ]);
 
-            // $this->dispatchService->dispatch($item);
+            $payload = [
+            'task_item_id'    => (string) $item->id,
+            'task_id'         => (string) $task->id,
+            'keyword'         => $keyword,
+            'sources'         => $sources,
+            'crawler_machine' => $item->crawler_machine,
+        ];
+
+            $this->dispatchService->dispatch($payload);
         }
     }
 
@@ -41,8 +56,8 @@ class CrawlerTaskItemService
         ?string $error = null
     ): void {
         CrawlerTaskItem::where('id', $id)->update([
-            'status' => $status,
-            'result_file' => $resultFile,
+            'status'        => $status,
+            'result_file'   => $resultFile,
             'error_message' => $error,
         ]);
     }

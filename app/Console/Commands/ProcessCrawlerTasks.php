@@ -51,7 +51,6 @@ class ProcessCrawlerTasks extends Command
                         ]
                     );
 
-                // 4️⃣ handle failure
                 if (! $response->successful()) {
                     throw new \Exception(
                         'Python crawler failed: '.$response->body()
@@ -60,7 +59,6 @@ class ProcessCrawlerTasks extends Command
 
             } catch (\Throwable $e) {
 
-                // 5️⃣ mark failed
                 DB::table('crawler_task_items')
                     ->where('id', $taskItem->id)
                     ->update([
