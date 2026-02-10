@@ -56,6 +56,7 @@ class CrawlerResultConsumeService
                     } else {
                         $this->taskManagerService->crawlerCompleted(
                             (string) $data['task_item_id'],
+                            (string) $data['crawler_machine'],
                             (string) ($data['result_file'] ?? '')
                         );
                     }

@@ -16,9 +16,8 @@ class CrawlerDispatchService
             '*',
             [
                 'task_item_id' => (string) $item->id,
-                'task_id' => (string) $item->task_id,
                 'keywords' => (string) $item->keywords,
-                'crawl_url' => (string) $item->crawl_location,
+                'crawl_location' => (string) $item->crawl_location,
             ]
         );
     }

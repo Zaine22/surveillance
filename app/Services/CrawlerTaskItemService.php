@@ -18,20 +18,32 @@ class CrawlerTaskItemService
         $keywords = $lexicon->keywords()
             ->where('status', 'enabled')
             ->pluck('keywords')
-            ->flatMap(fn ($keywords) => $keywords);
+            ->map(function ($keywords) {
+                return is_array($keywords)
+                    ? $keywords
+                    : json_decode($keywords, true);
+            })
+            ->filter()
+            ->values();
 
-        foreach ($keywords as $keyword) {
+        $sources = is_array($config->sources)
+            ? $config->sources
+            : json_decode($config->sources, true);
 
-            $item = CrawlerTaskItem::create([
-                'task_id' => (string) $task->id,
-                'keywords' => $keyword,
-                'status' => 'pending',
-                'crawler_machine' => 'bot-node-'.rand(1, 3),
-                'error_message' => null,
-            ]);
+        foreach ($sources as $source) {
+            foreach ($keywords as $keyword) {
 
-            // $this->dispatchService->dispatch($item);
+                $item = CrawlerTaskItem::create([
+                    'task_id' => (string) $task->id,
+                    'keywords' => json_encode(array_values($keyword)),
+                    'status' => 'pending',
+                    'crawl_location' => $source,
+                    'error_message' => null,
+                ]);
+                $this->dispatchService->dispatch($item);
+            }
         }
+
     }
 
     public function updateStatus(
