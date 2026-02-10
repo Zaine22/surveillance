@@ -34,6 +34,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('/user', [AuthController::class, 'updateUser']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
     Route::get('/users', [AuthController::class, 'index']);
+    Route::post('/users/create', [AuthController::class, 'createByAdmin']);
 
     Route::post('/import/lexicon-keywords', [LexiconKeywordController::class, 'import']);
     Route::post('/export/lexicon-keywords/{lexiconId}', [LexiconKeywordController::class, 'export']);

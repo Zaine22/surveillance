@@ -229,10 +229,24 @@ class AuthService
         $pageSize = (int) $request->query('pageSize', 10);
         $page = (int) $request->query('page', 1);
 
-        $users = User::query()
+        $query = User::query()
             ->select(['id', 'name', 'email', 'status', 'created_at'])
-            ->orderByDesc('created_at')
-            ->paginate($pageSize, ['*'], 'page', $page);
+            ->orderByDesc('created_at');
+
+        if ($request->filled('search')) {
+            $search = $request->query('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('role')) {
+            $role = $request->query('role');
+            $query->where('roles', $role);
+        }
+
+        $users = $query->paginate($pageSize, ['*'], 'page', $page);
 
         return [
             'data' => $users->items(),
@@ -243,5 +257,19 @@ class AuthService
                 'lastPage' => $users->lastPage(),
             ],
         ];
+    }
+
+    public function createUserByAdmin(array $data): array
+    {
+        $user = User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+            'department' => $data['department'] ?? null,
+            'roles' => $data['roles'] ?? 'user',
+            'status' => 'enabled',
+        ]);
+
+        return $user->toArray();
     }
 }

@@ -2,8 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Auth\ChangePasswordRequest;
+use App\Http\Requests\Auth\GetUsersRequest;
+use App\Http\Requests\Auth\LoginuserRequest;
+use App\Http\Requests\Auth\RegisterUserRequest;
+use App\Http\Requests\Auth\SendOtpRequest;
+use App\Http\Requests\Auth\StoreUserRequest;
+use App\Http\Requests\Auth\UpdateUserRequest;
+use App\Http\Requests\Auth\VerifyUserRequest;
 use App\Services\AuthService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -11,14 +20,9 @@ class AuthController extends Controller
         private readonly AuthService $authService
     ) {}
 
-    public function register(Request $request)
+    public function register(RegisterUserRequest $request)
     {
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8',
-            'department' => 'nullable|string',
-        ]);
+        $data = $request->validated();
 
         $result = $this->authService->register($data);
 
@@ -29,13 +33,21 @@ class AuthController extends Controller
         ], 201);
     }
 
-    public function login(Request $request)
+    public function login(LoginUserRequest $request)
     {
-        $data = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-            'otp' => 'required',
-        ]);
+        $data = $request->validated();
+
+        $result = $this->authService->login(
+            $data['email'],
+            $data['password'],
+            $data['otp']
+        );
+
+        if ($result['error'] ?? false) {
+            return response()->json([
+                'message' => $result['error'],
+            ], 403);
+        }
 
         $result = $this->authService->login(
             $data['email'],
@@ -52,12 +64,9 @@ class AuthController extends Controller
         return response()->json($result);
     }
 
-    public function changePassword(Request $request)
+    public function changePassword(ChangePasswordRequest $request)
     {
-        $data = $request->validate([
-            'current_password' => 'required',
-            'new_password' => 'required|string|min:8',
-        ]);
+        $data = $request->validated();
 
         $this->authService->changePassword(
             $request->user(),
@@ -79,15 +88,13 @@ class AuthController extends Controller
         ]);
     }
 
-    public function sendOtp(Request $request)
+    public function sendOtp(SendOtpRequest $request)
     {
         // 1️⃣ Validate input
-        $request->validate([
-            'email' => 'required|email',
-        ]);
+        $validate = $request->validated();
 
         // 2️⃣ Call service
-        $result = $this->authService->sendOtp($request->email);
+        $result = $this->authService->sendOtp($validate['email']);
 
         // 3️⃣ Handle error response
         if (isset($result['error'])) {
@@ -109,12 +116,9 @@ class AuthController extends Controller
         return response()->json($response, 200);
     }
 
-    public function verifyOtp(Request $request)
+    public function verifyOtp(VerifyUserRequest $request)
     {
-        $data = $request->validate([
-            'email' => 'required|email',
-            'otp' => 'required|string|size:6',
-        ]);
+        $data = $request->validated();
 
         $result = $this->authService->verifyOtp(
             $data['email'],
@@ -141,14 +145,9 @@ class AuthController extends Controller
         ]);
     }
 
-    public function updateUser(Request $request)
+    public function updateUser(UpdateUserRequest $request)
     {
-        $data = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'email' => 'sometimes|required|email|unique:users,email,'.$request->user()->id,
-            'department' => 'sometimes|nullable|string',
-            'roles' => 'sometimes|nullable|string',
-        ]);
+        $data = $request->validated();
 
         $updatedUser = $this->authService->updateUser($request->user(), $data);
 
@@ -158,10 +157,28 @@ class AuthController extends Controller
         ]);
     }
 
-    public function index(Request $request)
+    public function index(GetUsersRequest $request)
     {
         $users = $this->authService->getAllUsers($request);
 
         return response()->json($users);
+    }
+
+    public function createByAdmin(StoreUserRequest $request)
+    {
+        $data = $request->validated();
+
+        $user = $request->user();
+
+        Log::info('user'.$user);
+
+        $data['created_by'] = $user->id;
+
+        $user = $this->authService->createUserByAdmin($data);
+
+        return response()->json([
+            'message' => 'User created successfully',
+            'user' => $user,
+        ], 201);
     }
 }

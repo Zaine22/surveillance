@@ -9,7 +9,7 @@ class SystemNotice extends Model
 {
     use HasUuids;
 
-    protected $table = 'system_notice';
+    protected $table = 'system_notices';
 
     protected $fillable = [
         'status',

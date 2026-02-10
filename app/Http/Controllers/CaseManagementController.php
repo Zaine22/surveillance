@@ -2,23 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CaseManagement\ProceedCaseScreenshotRequest;
+use App\Http\Requests\CaseManagement\StoreExternalCaseRequest;
+use App\Http\Requests\CaseManagement\UpdateCaseScreenshotRequest;
 use App\Models\CaseFeedback;
 use App\Services\CaseManagementService;
-use Illuminate\Http\Request;
 
 class CaseManagementController extends Controller
 {
     public function __construct(private readonly CaseManagementService $caseManagementService) {}
 
-    public function netChineseCaseFeedback()
+    public function netChineseCaseFeedback(StoreCaseFeedbackRequest $request)
     {
-        $validated = request()->validate([
-            'case_id' => 'required|string',
-            'url' => 'required|url',
-            'is_illegal' => 'required|boolean',
-            'legal_basis' => 'nullable|string',
-            'reason' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
         $result = $this->caseManagementService->createCaseFeedback($validated);
         if ($result instanceof CaseFeedback === false) {
@@ -34,14 +30,11 @@ class CaseManagementController extends Controller
         ], 200);
     }
 
-    public function externalCaseCreate()
+    public function externalCaseCreate(StoreExternalCaseRequest $request)
     {
-        request()->validate([
-            'url' => 'required|url',
-            'leakReason' => 'required|string',
-        ]);
+        $validated = $request->validated();
 
-        $result = $this->caseManagementService->createExternalCase(request()->only(['url', 'leakReason']));
+        $result = $this->caseManagementService->createExternalCase($validated);
 
         if ($result === null) {
             return response()->json([
@@ -53,28 +46,21 @@ class CaseManagementController extends Controller
         return response()->json(['status' => 'success', 'message' => '已接收'], 201);
     }
 
-    public function netChineseCaseScreenshot()
+    public function netChineseCaseScreenshot(ProceedCaseScreenshotRequest $request)
     {
-        $validated = request()->validate([
-            'issue_date' => 'required|date',
-            'due_date' => 'required|date|after_or_equal:issue_date',
-            'url' => 'required|url',
-        ]);
+        $validated = $request->validated();
 
         $result = $this->caseManagementService->caseScreenShot($validated);
 
         return response()->json($result);
     }
 
-    public function captureCaseScreenshot(string $caseItemId, Request $request)
+    public function captureCaseScreenshot(string $caseItemId, UpdateCaseScreenshotRequest $request)
     {
-        $validated = $request->validate([
-            'media_url' => 'required|string',
-            'status' => 'nullable|in:valid,invalid',
-        ]);
+        $validated = $request->validated();
 
         $result = $this->caseManagementService->captureCaseScreenshot($caseItemId, $validated);
 
-        return response()->json(['status' => 'success', 'data' => $result]);
+        return response()->json($result);
     }
 }
