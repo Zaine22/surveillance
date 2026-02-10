@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services;
 
 use App\Models\CrawlerConfig;
@@ -17,36 +18,32 @@ class CrawlerTaskItemService
         $keywords = $lexicon->keywords()
             ->where('status', 'enabled')
             ->pluck('keywords')
-            ->flatMap(fn($keywords) => $keywords);
+            ->map(function ($keywords) {
+                return is_array($keywords)
+                    ? $keywords
+                    : json_decode($keywords, true);
+            })
+            ->filter()
+            ->values();
 
         $sources = is_array($config->sources)
             ? $config->sources
-            : (
-            is_string($config->sources)
-                ? json_decode($config->sources, true)
-                : []
-        );
+            : json_decode($config->sources, true);
 
-        foreach ($keywords as $keyword) {
+        foreach ($sources as $source) {
+            foreach ($keywords as $keyword) {
 
-            $item = CrawlerTaskItem::create([
-                'task_id'         => (string) $task->id,
-                'keywords'        => $keyword,
-                'status'          => 'pending',
-                'crawler_machine' => 'bot-node-' . rand(1, 3),
-                'error_message'   => null,
-            ]);
-
-            $payload = [
-            'task_item_id'    => (string) $item->id,
-            'task_id'         => (string) $task->id,
-            'keyword'         => $keyword,
-            'sources'         => $sources,
-            'crawler_machine' => $item->crawler_machine,
-        ];
-
-            $this->dispatchService->dispatch($payload);
+                $item = CrawlerTaskItem::create([
+                    'task_id' => (string) $task->id,
+                    'keywords' => json_encode(array_values($keyword)),
+                    'status' => 'pending',
+                    'crawl_location' => $source,
+                    'error_message' => null,
+                ]);
+                $this->dispatchService->dispatch($item);
+            }
         }
+
     }
 
     public function updateStatus(
@@ -56,8 +53,8 @@ class CrawlerTaskItemService
         ?string $error = null
     ): void {
         CrawlerTaskItem::where('id', $id)->update([
-            'status'        => $status,
-            'result_file'   => $resultFile,
+            'status' => $status,
+            'result_file' => $resultFile,
             'error_message' => $error,
         ]);
     }
