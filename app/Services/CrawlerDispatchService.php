@@ -18,6 +18,7 @@ class CrawlerDispatchService
                 'task_item_id' => (string) $item->id,
                 'keywords' => (string) $item->keywords,
                 'crawl_location' => (string) $item->crawl_location,
+                'type' => 'patrol',
             ]
         );
     }
