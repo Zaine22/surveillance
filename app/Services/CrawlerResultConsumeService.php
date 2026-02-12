@@ -93,8 +93,8 @@ class CrawlerResultConsumeService
                     } else {
                         $this->taskManagerService->crawlerCompleted(
                             (string) $taskItemId,
-                            (string) ($payload['crawler_machine'] ?? 'UNKNOWN'),
-                            (string) ($payload['result_file'] ?? 'not found')
+                            (string) ($payload['result_file'] ?? 'not found'),
+                            (string) ($payload['crawler_machine'] ?? 'UNKNOWN')
                         );
                     }
 
