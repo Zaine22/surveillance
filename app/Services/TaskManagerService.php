@@ -26,11 +26,11 @@ class TaskManagerService
                 'crawler_machine' => $crawler_machine,
             ]);
 
-            $nasPath = $this->syncService->syncCrawlerFileToNas($item);
+             $this->syncService->syncCrawlerFileToNas($item);
 
             $item->update([
                 'status' => 'synced',
-                'result_file' => $nasPath,
+                'result_file' => $filePath,
 
             ]);
 
