@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\CrawlerConfig;
 use App\Models\CrawlerTask;
 use App\Models\Lexicon;
+use App\Services\CrawlerTaskItemService;
 use Illuminate\Support\Facades\DB;
 
 class CrawlerTaskService

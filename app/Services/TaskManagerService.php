@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\CrawlerTaskItem;
+use App\Services\AiTaskManagerService;
+use App\Services\DataSyncOrchestratorService;
 use Illuminate\Support\Facades\DB;
 
 class TaskManagerService

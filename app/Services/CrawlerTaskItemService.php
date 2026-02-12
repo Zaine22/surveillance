@@ -6,6 +6,7 @@ use App\Models\CrawlerConfig;
 use App\Models\CrawlerTask;
 use App\Models\CrawlerTaskItem;
 use App\Models\Lexicon;
+use App\Services\CrawlerDispatchService;
 
 class CrawlerTaskItemService
 {

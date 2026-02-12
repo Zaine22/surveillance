@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\CrawlerConfig;
 use App\Models\Lexicon;
+use App\Services\CrawlerTaskService;
+use App\Services\GlobalWhitelistService;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class CrawlerConfigService

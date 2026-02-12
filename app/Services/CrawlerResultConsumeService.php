@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Services\TaskManagerService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 
@@ -57,7 +58,7 @@ class CrawlerResultConsumeService
                         $this->taskManagerService->crawlerCompleted(
                             (string) $data['task_item_id'],
                             (string) $data['crawler_machine'],
-                            (string) ($data['result_file'] ?? '')
+                            (string) ($data['result_file'] ?? 'not found')
                         );
                     }
 
