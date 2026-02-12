@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Lexicon\GetLexiconRequest;
 use App\Http\Requests\Lexicon\StoreLexiconRequest;
 use App\Http\Requests\Lexicon\UpdateLexiconRequest;
 use App\Http\Resources\LexiconResource;
@@ -14,9 +15,10 @@ class LexiconController extends Controller
 {
     public function __construct(protected LexiconService $lexiconService) {}
 
-    public function index(): AnonymousResourceCollection
+    public function index(GetLexiconRequest $request): AnonymousResourceCollection
     {
-        $lexicons = $this->lexiconService->getAllLexicons();
+        $validated = $request->validated();
+        $lexicons = $this->lexiconService->getAllLexicons($validated);
 
         return LexiconResourceForAll::collection($lexicons);
     }

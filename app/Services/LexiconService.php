@@ -10,11 +10,26 @@ use Illuminate\Support\Str;
 
 class LexiconService
 {
-    public function getAllLexicons(int $perPage = 15): LengthAwarePaginator
+    public function getAllLexicons(array $filters): LengthAwarePaginator
     {
-        return Lexicon::with('keywords')
-            ->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+        $page = $filters['page'] ?? 1;
+        $perPage = $filters['per_page'] ?? 15;
+        $search = $filters['search'] ?? null;
+        $status = $filters['status'] ?? null;
+
+        $query = Lexicon::with('keywords')
+            ->orderBy('created_at', 'desc');
+
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        return $query->paginate($perPage, ['*'], 'page', $page);
+
     }
 
     public function getLexiconById(string $id): ?Lexicon
