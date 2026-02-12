@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services;
 
 use App\Models\CrawlerConfig;
@@ -62,22 +61,29 @@ class CrawlerConfigService
             ->map(function ($url) {
                 $url = trim($url);
 
+                // Ensure scheme
                 if (! str_starts_with($url, 'http://') && ! str_starts_with($url, 'https://')) {
-                    $url = 'https://'.$url;
+                    $url = 'https://' . $url;
                 }
 
-                $host = parse_url($url, PHP_URL_HOST);
+                $parts = parse_url($url);
 
-                if (! $host) {
+                if (! isset($parts['host'])) {
                     return null;
                 }
 
-                return 'https://'.preg_replace('/^www\./', '', strtolower($host));
+                $scheme = $parts['scheme'] ?? 'https';
+                $host   = preg_replace('/^www\./', '', strtolower($parts['host']));
+                $path   = $parts['path'] ?? '';
+                $query  = isset($parts['query']) ? '?' . $parts['query'] : '';
+
+                return $scheme . '://' . $host . $path . $query;
             })
             ->filter()
             ->unique()
             ->values()
             ->toArray();
+
         $data['sources'] = $domains;
 
         $config = CrawlerConfig::create($data);
@@ -103,7 +109,7 @@ class CrawlerConfigService
     {
         $url = trim($url);
         if (! str_starts_with($url, 'http://') && ! str_starts_with($url, 'https://')) {
-            $url = 'https://'.$url;
+            $url = 'https://' . $url;
         }
         $host = parse_url($url, PHP_URL_HOST);
 
