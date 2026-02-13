@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Lexicon\GetLexiconRequest;
 use App\Http\Requests\Lexicon\StoreLexiconRequest;
 use App\Http\Requests\Lexicon\UpdateLexiconRequest;

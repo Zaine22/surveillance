@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\CrawlerConfig\StoreCrawlerConfigRequest;
 use App\Http\Requests\CrawlerConfig\UpdateCrawlerConfigRequest;
 use App\Http\Resources\CrawlerConfigResource;

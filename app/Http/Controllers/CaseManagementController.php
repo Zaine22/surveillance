@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\CaseManagement\ProceedCaseScreenshotRequest;
+use App\Http\Requests\CaseManagement\StoreCaseFeedbackRequest;
 use App\Http\Requests\CaseManagement\StoreExternalCaseRequest;
 use App\Http\Requests\CaseManagement\UpdateCaseScreenshotRequest;
 use App\Models\CaseFeedback;
