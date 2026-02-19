@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\AiModel;
 use App\Models\AiModelTask;
 use App\Models\CrawlerTaskItem;
+use App\Services\AiDispatchService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;

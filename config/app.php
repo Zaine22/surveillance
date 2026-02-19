@@ -27,7 +27,7 @@ return [
     */
 
     'env' => env('APP_ENV', 'production'),
-
+    'password_expiry_days' => env('PASSWORD_EXPIRY_DAYS', 90),
     /*
     |--------------------------------------------------------------------------
     | Application Debug Mode

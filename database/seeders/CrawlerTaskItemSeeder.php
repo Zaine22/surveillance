@@ -28,7 +28,7 @@ class CrawlerTaskItemSeeder extends Seeder
                         '诱拐',
                         '未成年',
                     ])->random(),
-                    'url' => $faker->url(),
+                    // 'url' => $faker->url(),
                     'crawler_machine' => 'bot-node-'.rand(1, 3),
                     'result_file' => "results/task_{$task->id}_{$i}.zip",
                     'status' => 'synced',

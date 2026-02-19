@@ -35,4 +35,10 @@ class AiPredictResult extends Model
         'audit_date' => 'datetime',
         'ai_analysis_date' => 'datetime',
     ];
+
+    public function aiModelTask()
+    {
+        return $this->belongsTo(AiModelTask::class);
+    }
+
 }

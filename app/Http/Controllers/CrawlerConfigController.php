@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
+use App\Http\Requests\CrawlerConfig\CrawlerConfigIndexRequest;
 use App\Http\Requests\CrawlerConfig\StoreCrawlerConfigRequest;
 use App\Http\Requests\CrawlerConfig\UpdateCrawlerConfigRequest;
 use App\Http\Resources\CrawlerConfigResource;
@@ -15,9 +17,9 @@ class CrawlerConfigController extends Controller
         protected CrawlerConfigService $crawlerConfigService
     ) {}
 
-    public function index(): AnonymousResourceCollection
+    public function index(CrawlerConfigIndexRequest $request): AnonymousResourceCollection
     {
-        $configs = $this->crawlerConfigService->getAllConfigs();
+        $configs = $this->crawlerConfigService->getAllConfigs($request->validated());
 
         return CrawlerConfigResource::collection($configs);
     }

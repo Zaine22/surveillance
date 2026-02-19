@@ -1,7 +1,7 @@
 <?php
-
 namespace App\Services;
 
+use App\Services\TaskManagerService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 
@@ -46,18 +46,55 @@ class CrawlerResultConsumeService
                 continue;
             }
 
+            // foreach ($messages[$this->stream] as $id => $data) {
+            //     try {
+            //         if (! empty($data['error_message'])) {
+            //             $this->taskManagerService->crawlerFailed(
+            //                 (string) $data['task_item_id'],
+            //                 (string) $data['error_message']
+            //             );
+            //         } else {
+            //             $this->taskManagerService->crawlerCompleted(
+            //                 (string) $data['task_item_id'],
+            //                 (string) $data['crawler_machine'],
+            //                 (string) ($data['result_file'] ?? 'not found')
+            //             );
+            //         }
+
+            //         Redis::xack($this->stream, $this->group, [$id]);
+
+            //     } catch (\Throwable $e) {
+            //         Log::error('Result consume failed', [
+            //             'redis_id' => $id,
+            //             'payload' => $data,
+            //             'error' => $e->getMessage(),
+            //         ]);
+            //     }
+            // }
             foreach ($messages[$this->stream] as $id => $data) {
                 try {
-                    if (! empty($data['error_message'])) {
+                    $payload = [];
+
+                    if (! empty($data['payload'])) {
+                        $payload = json_decode($data['payload'], true) ?? [];
+                    }
+
+                    $taskItemId = $payload['task_item_id'] ?? $data['task_item_id'] ?? null;
+
+                    if (! $taskItemId) {
+                        throw new \RuntimeException('task_item_id missing');
+                    }
+
+                    if (! empty($payload['error_message'])) {
                         $this->taskManagerService->crawlerFailed(
-                            (string) $data['task_item_id'],
-                            (string) $data['error_message']
+                            (string) $taskItemId,
+                            (string) $payload['error_message']
                         );
                     } else {
                         $this->taskManagerService->crawlerCompleted(
-                            (string) $data['task_item_id'],
-                            (string) $data['crawler_machine'],
-                            (string) ($data['result_file'] ?? '')
+                            (string) $taskItemId,
+                            (string) ($payload['result_file'] ?? 'not found'),
+                            (string) ($payload['crawler_machine'] ?? 'UNKNOWN')
                         );
                     }
 
@@ -66,11 +103,12 @@ class CrawlerResultConsumeService
                 } catch (\Throwable $e) {
                     Log::error('Result consume failed', [
                         'redis_id' => $id,
-                        'payload' => $data,
-                        'error' => $e->getMessage(),
+                        'raw_data' => $data,
+                        'error'    => $e->getMessage(),
                     ]);
                 }
             }
+
         }
     }
 }

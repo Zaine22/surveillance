@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\AiModelTask;
+use App\Services\AiPredictResultService;
 use Illuminate\Support\Facades\Redis;
 
 class AiResultConsumeService

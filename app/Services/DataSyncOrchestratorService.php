@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\CrawlerTaskItem;
 use App\Models\DataSyncRecord;
+use App\Services\RsyncService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Throwable;
