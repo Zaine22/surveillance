@@ -7,9 +7,24 @@ use Illuminate\Support\Facades\Log;
 
 class SystemNoticeService
 {
-    public function getAllNotices()
+    public function getAllNotices(array $filters = [])
     {
-        return SystemNotice::all();
+        $page = $filters['page'] ?? 1;
+        $perPage = $filters['per_page'] ?? 15;
+        $search = $filters['search'] ?? null;
+        $status = $filters['status'] ?? null;
+
+        $query = SystemNotice::query();
+
+        if ($search) {
+            $query->where('title', 'like', "%{$search}%");
+        }
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        return $query->orderBy('created_at', 'desc')->paginate($perPage, ['*'], 'page', $page);
     }
 
     public function getNoticeById($id)

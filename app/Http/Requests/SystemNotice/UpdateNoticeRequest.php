@@ -22,7 +22,11 @@ class UpdateNoticeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'title' => 'nullable|string|max:255',
+            'content' => 'nullable|string',
+            'status' => 'nullable|string|in:published,pending',
+            'publish_date' => 'nullable|date',
+            'expire_at' => 'nullable|date|after:published_date',
         ];
     }
 }

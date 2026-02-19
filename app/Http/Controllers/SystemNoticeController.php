@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\SystemNotice\StoreNoticeRequest;
+use App\Http\Requests\SystemNotice\GetAllNoticeRequest;
+use App\Http\Requests\SystemNotice\UpdateNoticeRequest;
 use App\Services\SystemNoticeService;
 
 class SystemNoticeController extends Controller
@@ -11,10 +13,13 @@ class SystemNoticeController extends Controller
         private readonly SystemNoticeService $systemNoticeService
     ) {}
 
-    public function index()
+    public function index(GetAllNoticeRequest $request)
     {
+        $validated = $request->validated();
+        $notices = $this->systemNoticeService->getAllNotices($validated);
         return response()->json([
-            'message' => '系统公告接口',
+            'message' => '系统公告列表',
+            'data' => $notices,
         ]);
     }
 
@@ -53,10 +58,13 @@ class SystemNoticeController extends Controller
         }
     }
 
-    public function update($id)
+    public function update($id, UpdateNoticeRequest $request)
     {
+        $validated = $request->validated();
+        $result = $this->systemNoticeService->updateNotice($id, $validated);
         return response()->json([
             'message' => "更新系统公告 {$id}",
+            'data' => $result,
         ]);
     }
 }
