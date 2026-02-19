@@ -7,18 +7,40 @@ use App\Services\CrawlerTaskService;
 use App\Services\GlobalWhitelistService;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-class CrawlerConfigService
+class CrawlerConfigService extends BaseFilterService
 {
     public function __construct(
         protected CrawlerTaskService $crawlerTaskService,
         protected GlobalWhitelistService $globalWhitelistService
     ) {}
 
-    public function getAllConfigs(int $perPage = 15): LengthAwarePaginator
+     public function getAllConfigs(array $filters): LengthAwarePaginator
     {
-        return CrawlerConfig::with('lexicon')
-            ->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+        $query = CrawlerConfig::with('lexicon');
+        if (!empty($filters['search'])) {
+
+    $search = strtolower($filters['search']);
+
+    $query->where(function ($q) use ($search) {
+
+        $q->whereRaw(
+            "LOWER(name) LIKE ?",
+            ["%{$search}%"]
+        )
+        ->orWhereHas('lexicon', function ($lexicon) use ($search) {
+            $lexicon->whereRaw(
+                "LOWER(name) LIKE ?",
+                ["%{$search}%"]
+             );
+            });
+        });
+    }
+        return $this->applyFilters(
+            $query,
+            $filters,
+            [],
+            true,
+        );
     }
 
     public function getConfigById(string $id): ?CrawlerConfig

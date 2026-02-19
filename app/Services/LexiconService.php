@@ -8,28 +8,39 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-class LexiconService
+class LexiconService extends BaseFilterService
 {
-    public function getAllLexicons(array $filters): LengthAwarePaginator
+    // public function getAllLexicons(array $filters): LengthAwarePaginator
+    // {
+    //     $page = $filters['page'] ?? 1;
+    //     $perPage = $filters['per_page'] ?? 15;
+    //     $search = $filters['search'] ?? null;
+    //     $status = $filters['status'] ?? null;
+
+    //     $query = Lexicon::with('keywords')
+    //         ->orderBy('created_at', 'desc');
+
+    //     if ($search) {
+    //         $query->where('name', 'like', "%{$search}%");
+    //     }
+
+    //     if ($status) {
+    //         $query->where('status', $status);
+    //     }
+
+    //     return $query->paginate($perPage, ['*'], 'page', $page);
+
+    // }
+     public function getAllLexicons(array $filters)
     {
-        $page = $filters['page'] ?? 1;
-        $perPage = $filters['per_page'] ?? 15;
-        $search = $filters['search'] ?? null;
-        $status = $filters['status'] ?? null;
+        $query = Lexicon::with('keywords');
 
-        $query = Lexicon::with('keywords')
-            ->orderBy('created_at', 'desc');
-
-        if ($search) {
-            $query->where('name', 'like', "%{$search}%");
-        }
-
-        if ($status) {
-            $query->where('status', $status);
-        }
-
-        return $query->paginate($perPage, ['*'], 'page', $page);
-
+        return $this->applyFilters(
+            $query,
+            $filters,
+            ['name','remark'],
+            true
+        );
     }
 
     public function getLexiconById(string $id): ?Lexicon
@@ -41,17 +52,13 @@ class LexiconService
     {
         return DB::transaction(function () use ($data) {
 
-            // 1. Extract keywords payload
             $keywordGroups = $data['keywords'] ?? [];
             unset($data['keywords']);
 
-            // 2. Create lexicon
             $lexicon = Lexicon::create($data);
 
-            // 3. Insert keyword groups
             foreach ($keywordGroups as $group) {
 
-                // safety check (must be array)
                 if (! is_array($group) || empty($group)) {
                     continue;
                 }

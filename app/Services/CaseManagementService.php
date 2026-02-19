@@ -10,10 +10,62 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
-class CaseManagementService
+class CaseManagementService extends BaseFilterService
 {
     public function __construct() {}
+
+        public function getAll(array $filters): LengthAwarePaginator
+    {
+        $query = CaseManagement::with([
+            'aiPredictResult.aiModelTask'
+        ]);
+
+        if (!empty($filters['search'])) {
+            $search = strtolower($filters['search']);
+
+            $query->where(function ($q) use ($search) {
+
+                $q->orWhereRaw(
+                    "LOWER(internal_case_no) LIKE ?",
+                    ["%{$search}%"]
+                )
+                ->orWhereRaw(
+                    "LOWER(external_case_no) LIKE ?",
+                    ["%{$search}%"]
+                )
+                ->orWhereRaw(
+                    "LOWER(keywords) LIKE ?",
+                    ["%{$search}%"]
+                )
+                ->orWhereHas('aiPredictResult.aiModelTask', function ($task) use ($search) {
+                    $task->whereRaw(
+                        "LOWER(file_name) LIKE ?",
+                        ["%{$search}%"]
+                    );
+                });
+            });
+        }
+
+        return $this->applyFilters(
+            $query,
+            $filters,
+            [],
+            true,
+            'created_at'
+        );
+    }
+
+    protected function getAllowedSortColumns(): array
+    {
+        return [
+            'created_at',
+            'status',
+            'internal_case_no',
+            'external_case_no',
+        ];
+    }
 
     public function createFromPredictResult(AiPredictResult $result): CaseManagement
     {

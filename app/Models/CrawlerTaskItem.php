@@ -26,8 +26,8 @@ class CrawlerTaskItem extends Model
         return $this->belongsTo(CrawlerTask::class, 'task_id');
     }
 
-    public function crawlConfig()
+    public function crawlerConfig()
     {
-        return $this->task->crawlConfig();
+        return $this->task->crawlerConfig();
     }
 }

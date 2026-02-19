@@ -19,4 +19,15 @@ class CaseManagement extends Model
         'status',
         'comment',
     ];
+
+    public function aiPredictResult()
+{
+    return $this->belongsTo(AiPredictResult::class);
+}
+public function aiModelTask()
+{
+    return $this->belongsTo(AiModelTask::class);
+}
+
+
 }

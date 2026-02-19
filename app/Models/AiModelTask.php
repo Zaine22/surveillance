@@ -16,7 +16,7 @@ class AiModelTask extends Model
         'status',
     ];
 
-    public function aiPredictResults()
+    public function predictResults()
     {
         return $this->hasMany(AiPredictResult::class);
     }

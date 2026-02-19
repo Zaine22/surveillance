@@ -17,8 +17,17 @@ class CrawlerTask extends Model
         'status',
     ];
 
-    public function crawlConfig()
+    public function crawlerConfig()
     {
         return $this->belongsTo(CrawlerConfig::class, 'crawler_config_id');
+    }
+
+    public function lexicon()
+    {
+        return $this->belongsTo(Lexicon::class, 'lexicon_id');
+    }
+    public function items()
+    {
+        return $this->hasMany(CrawlerTaskItem::class, 'task_id');
     }
 }
