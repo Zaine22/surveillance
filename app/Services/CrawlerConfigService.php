@@ -6,6 +6,8 @@ use App\Models\Lexicon;
 use App\Services\CrawlerTaskService;
 use App\Services\GlobalWhitelistService;
 use Illuminate\Pagination\LengthAwarePaginator;
+use App\Jobs\CrawlerScheduledJob;
+use Carbon\Carbon;
 
 class CrawlerConfigService extends BaseFilterService
 {
@@ -112,6 +114,14 @@ class CrawlerConfigService extends BaseFilterService
         $lexicon = Lexicon::findOrFail($data['lexicon_id']);
 
         $this->crawlerTaskService->createFromConfig($config, $lexicon);
+
+        if ($data['status'] === 'enabled' && ! empty($data['from']) && ! empty($data['to'])) {
+            $from = Carbon::parse($data['from']);
+            $to = Carbon::parse($data['to']);
+
+            CrawlerScheduledJob::dispatch($config->id, $data['frequency_code'], $to)
+                ->delay($from);
+        }
 
         return $config;
     }

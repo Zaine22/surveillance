@@ -21,6 +21,8 @@ class StoreCrawlerConfigRequest extends FormRequest
             'description' => ['nullable', 'string'],
             'frequency_code' => ['required', 'in:daily,weekly,monthly'],
             'status' => ['nullable', 'in:enabled,disabled'],
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date', 'after:from'],
         ];
     }
 }
