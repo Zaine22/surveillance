@@ -14,16 +14,15 @@ class TaskManagerService
         protected AiTaskManagerService $aiTaskManagerService
     ) {}
 
-    public function crawlerCompleted(string $itemId, string $filePath, string $crawler_machine): void
+    public function crawlerCompleted(string $itemId, string $filePath): void
     {
-        DB::transaction(function () use ($itemId, $filePath, $crawler_machine) {
+        DB::transaction(function () use ($itemId, $filePath) {
 
             $item = CrawlerTaskItem::lockForUpdate()->findOrFail($itemId);
 
             $item->update([
                 'status' => 'syncing',
                 'result_file' => $filePath,
-                'crawler_machine' => $crawler_machine,
             ]);
 
              $this->syncService->syncCrawlerFileToNas($item);
@@ -31,7 +30,6 @@ class TaskManagerService
             $item->update([
                 'status' => 'synced',
                 'result_file' => $filePath,
-
             ]);
 
             $this->aiTaskManagerService->createFromCrawlerItem($item);

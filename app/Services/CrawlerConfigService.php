@@ -78,12 +78,11 @@ class CrawlerConfigService extends BaseFilterService
 
     public function createConfig(array $data): CrawlerConfig
     {
-
         $domains = collect($data['sources'])
             ->map(function ($url) {
                 $url = trim($url);
 
-                // Ensure scheme
+
                 if (! str_starts_with($url, 'http://') && ! str_starts_with($url, 'https://')) {
                     $url = 'https://' . $url;
                 }
