@@ -1,13 +1,13 @@
 <?php
 namespace App\Services;
 
+use App\Jobs\CrawlerScheduledJob;
 use App\Models\CrawlerConfig;
 use App\Models\Lexicon;
 use App\Services\CrawlerTaskService;
 use App\Services\GlobalWhitelistService;
-use Illuminate\Pagination\LengthAwarePaginator;
-use App\Jobs\CrawlerScheduledJob;
 use Carbon\Carbon;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class CrawlerConfigService extends BaseFilterService
 {
@@ -16,32 +16,41 @@ class CrawlerConfigService extends BaseFilterService
         protected GlobalWhitelistService $globalWhitelistService
     ) {}
 
-     public function getAllConfigs(array $filters): LengthAwarePaginator
+    public function getAllConfigs(array $filters): LengthAwarePaginator
     {
-        $query = CrawlerConfig::with('lexicon');
-        if (!empty($filters['search'])) {
+        $query = CrawlerConfig::with('lexicon', 'tasks');
+        if (! empty($filters['search'])) {
 
-    $search = strtolower($filters['search']);
+            $search = strtolower($filters['search']);
 
-    $query->where(function ($q) use ($search) {
+            $query->where(function ($q) use ($search) {
 
-        $q->whereRaw(
-            "LOWER(name) LIKE ?",
-            ["%{$search}%"]
-        )
-        ->orWhereHas('lexicon', function ($lexicon) use ($search) {
-            $lexicon->whereRaw(
-                "LOWER(name) LIKE ?",
-                ["%{$search}%"]
-             );
+                $q->whereRaw(
+                    "LOWER(name) LIKE ?",
+                    ["%{$search}%"]
+                )
+                    ->orWhereHas('lexicon', function ($lexicon) use ($search) {
+                        $lexicon->whereRaw(
+                            "LOWER(name) LIKE ?",
+                            ["%{$search}%"]
+                        );
+                    });
             });
-        });
-    }
+        }
+        if (! empty($filters['status'])) {
+
+            $status = $filters['status'];
+
+            $query->whereHas('tasks', function ($q) use ($status) {
+                $q->where('status', $status);
+            });
+        }
+
         return $this->applyFilters(
             $query,
             $filters,
             [],
-            true,
+            false,
         );
     }
 
@@ -84,7 +93,6 @@ class CrawlerConfigService extends BaseFilterService
             ->map(function ($url) {
                 $url = trim($url);
 
-
                 if (! str_starts_with($url, 'http://') && ! str_starts_with($url, 'https://')) {
                     $url = 'https://' . $url;
                 }
@@ -117,7 +125,7 @@ class CrawlerConfigService extends BaseFilterService
 
         if ($data['status'] === 'enabled' && ! empty($data['from']) && ! empty($data['to'])) {
             $from = Carbon::parse($data['from']);
-            $to = Carbon::parse($data['to']);
+            $to   = Carbon::parse($data['to']);
 
             CrawlerScheduledJob::dispatch($config->id, $data['frequency_code'], $to)
                 ->delay($from);
