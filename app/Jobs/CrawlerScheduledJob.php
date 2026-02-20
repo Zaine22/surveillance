@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Services\CrawlerTaskService;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
