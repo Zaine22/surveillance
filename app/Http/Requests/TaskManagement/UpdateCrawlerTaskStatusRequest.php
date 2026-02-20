@@ -21,7 +21,7 @@ class UpdateCrawlerTaskStatusRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'action' => ['required', 'string', 'in:pause,start,delete'],
+            'action' => ['required', 'string', 'in:pause,resume,delete'],
         ];
     }
 
@@ -29,7 +29,7 @@ class UpdateCrawlerTaskStatusRequest extends FormRequest
     {
         return [
             'action.required' => 'Action is required.',
-            'action.in'       => 'Action must be pause, start, or delete.',
+            'action.in'       => 'Action must be pause, resume, or delete.',
         ];
     }
 }

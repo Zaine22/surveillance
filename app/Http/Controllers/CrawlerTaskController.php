@@ -52,12 +52,11 @@ class CrawlerTaskController extends Controller
         CrawlerTask $task
     ) {
         try {
-
-            $this->crawlerTaskService
+            $message = $this->crawlerTaskService
                 ->updateExecutionStatus($task, $request->action);
 
             return response()->json([
-                'message' => 'Task updated successfully',
+                'message' => $message,
             ]);
 
         } catch (\Exception $e) {

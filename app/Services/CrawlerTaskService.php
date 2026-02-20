@@ -151,7 +151,7 @@ class CrawlerTaskService extends BaseFilterService
             ->first();
     }
 
-    public function updateExecutionStatus(CrawlerTask $task, string $action): void
+    public function updateExecutionStatus(CrawlerTask $task, string $action): string
     {
         if ($task->status === 'completed' && $action !== 'delete') {
             throw new \Exception('Completed task cannot be modified.');
@@ -163,22 +163,25 @@ class CrawlerTaskService extends BaseFilterService
                 if ($task->status !== 'processing') {
                     throw new \Exception('Only processing tasks can be paused.');
                 }
-                $task->update(['status' => 'paused']);
-                break;
 
-            case 'start':
+                $task->update(['status' => 'paused']);
+                return 'Task paused successfully';
+
+            case 'resume':
                 if ($task->status !== 'paused') {
-                    throw new \Exception('Only paused tasks can be started.');
+                    throw new \Exception('Only paused tasks can be resumed.');
                 }
+
                 $task->update(['status' => 'processing']);
-                break;
+                return 'Task resumed successfully';
 
             case 'delete':
                 if ($task->status === 'processing') {
                     throw new \Exception('Cannot delete a running task.');
                 }
-                $task->delete();
-                break;
+
+                 $task->update(['status' => 'deleted']);
+                return 'Task deleted successfully';
 
             default:
                 throw new \Exception('Invalid action.');
