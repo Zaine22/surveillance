@@ -45,7 +45,7 @@ class CrawlerResultConsumeService
             if ($messages === false || empty($messages[$this->stream])) {
                 continue;
             }
-            
+
             foreach ($messages[$this->stream] as $id => $data) {
                 try {
                     $payload = [];
@@ -63,12 +63,14 @@ class CrawlerResultConsumeService
                     if (! empty($payload['error_message'])) {
                         $this->taskManagerService->crawlerFailed(
                             (string) $taskItemId,
-                            (string) $payload['error_message']
+                            (string) $payload['error_message'],
+                            (string) ($payload['crawler_machine'])
                         );
                     } else {
                         $this->taskManagerService->crawlerCompleted(
                             (string) $taskItemId,
                             (string) ($payload['result_file'] ?? 'not found'),
+                            (string) ($payload['crawler_machine']),
                         );
                     }
 

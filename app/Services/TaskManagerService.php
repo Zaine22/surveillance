@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services;
 
 use App\Models\CrawlerTaskItem;
@@ -14,31 +13,36 @@ class TaskManagerService
         protected AiTaskManagerService $aiTaskManagerService
     ) {}
 
-    public function crawlerCompleted(string $itemId, string $filePath): void
+    public function crawlerCompleted(string $itemId, string $filePath, string $crawlerMachine): void
     {
-        DB::transaction(function () use ($itemId, $filePath) {
+        DB::transaction(function () use ($itemId, $filePath, $crawlerMachine) {
 
             $item = CrawlerTaskItem::lockForUpdate()->findOrFail($itemId);
 
             $item->update([
-                'status' => 'syncing',
-                'result_file' => $filePath,
+                'status'          => 'syncing',
+                'result_file'     => $filePath,
+                'crawler_machine' => $crawlerMachine,
             ]);
 
-             $this->syncService->syncCrawlerFileToNas($item);
+            $nasPath = $this->syncService->syncCrawlerFileToNas($item);
 
             $item->update([
-                'status' => 'synced',
-                'result_file' => $filePath,
+                'status'      => 'synced',
+                'result_file' => $nasPath,
             ]);
 
             $this->aiTaskManagerService->createFromCrawlerItem($item);
         });
     }
 
-    public function crawlerFailed(string $itemId, ?string $error): void
+    public function crawlerFailed(string $itemId, ?string $error, ?string $crawlerMachine): void
     {
         CrawlerTaskItem::where('id', $itemId)
-            ->update(['status' => 'error', 'error_message' => $error]);
+            ->update([
+                'status'          => 'error',
+                'error_message'   => $error,
+                'crawler_machine' => $crawlerMachine,
+            ]);
     }
 }

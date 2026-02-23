@@ -10,8 +10,7 @@ use App\Services\CrawlerDispatchService;
 class CrawlerTaskItemService
 {
     public function __construct(
-        protected CrawlerDispatchService $dispatchService,
-        protected BotMachineService $botMachineService
+        protected CrawlerDispatchService $dispatchService
     ) {}
 
     public function createFromTask(CrawlerTask $task, CrawlerConfig $config, Lexicon $lexicon): void
@@ -38,14 +37,12 @@ class CrawlerTaskItemService
         foreach ($sources as $source) {
             foreach ($keywords as $keyword) {
 
-                $bot  = $this->botMachineService->getAvailableBot();
                 $item = CrawlerTaskItem::create([
-                    'task_id'         => (string) $task->id,
-                    'keywords'        => json_encode(array_values($keyword)),
-                    'status'          => 'pending',
-                    'crawl_location'  => $source,
-                    'crawler_machine' => $bot?->name,
-                    'error_message'   => null,
+                    'task_id'        => (string) $task->id,
+                    'keywords'       => json_encode(array_values($keyword)),
+                    'status'         => 'pending',
+                    'crawl_location' => $source,
+                    'error_message'  => null,
                 ]);
                 $this->dispatchService->dispatch($item);
             }
