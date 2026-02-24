@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services;
 
 use App\Models\AiModel;
@@ -35,16 +34,20 @@ class AiTaskManagerService
             $model = AiModel::where('status', 'enabled')->firstOrFail();
 
             $task = AiModelTask::create([
-                'id' => (string) Str::uuid(),
-                'ai_model_id' => $model->id,
+                'id'                   => (string) Str::uuid(),
+                'ai_model_id'          => $model->id,
                 'crawler_task_item_id' => $item->id,
-                'file_name' => basename($item->result_file),
-                'status' => 'pending',
+                'file_name'            => basename($item->result_file),
+                'status'               => 'pending',
             ]);
 
+            $params = [
+                'dir_path'   => $task->file_name,
+                'image_type' => 'png',
+            ];
+
             $this->dispatchService->dispatch(
-                $task,
-                $item->result_file
+                $task, $params
             );
 
             $task->update([

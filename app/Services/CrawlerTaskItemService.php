@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services;
 
 use App\Models\CrawlerConfig;
@@ -11,7 +10,7 @@ use App\Services\CrawlerDispatchService;
 class CrawlerTaskItemService
 {
     public function __construct(
-        protected CrawlerDispatchService $dispatchService
+        protected CrawlerDispatchService $dispatchService,
     ) {}
 
     public function createFromTask(CrawlerTask $task, CrawlerConfig $config, Lexicon $lexicon): void
@@ -27,19 +26,23 @@ class CrawlerTaskItemService
             ->filter()
             ->values();
 
-        $sources = is_array($config->sources)
-            ? $config->sources
-            : json_decode($config->sources, true);
+        $sources = [];
+
+        if (! empty($config->sources)) {
+            $sources = is_array($config->sources)
+                ? $config->sources
+                : json_decode($config->sources, true) ?? [];
+        }
 
         foreach ($sources as $source) {
             foreach ($keywords as $keyword) {
 
                 $item = CrawlerTaskItem::create([
-                    'task_id' => (string) $task->id,
-                    'keywords' => json_encode(array_values($keyword)),
-                    'status' => 'pending',
+                    'task_id'        => (string) $task->id,
+                    'keywords'       => json_encode(array_values($keyword)),
+                    'status'         => 'pending',
                     'crawl_location' => $source,
-                    'error_message' => null,
+                    'error_message'  => null,
                 ]);
                 $this->dispatchService->dispatch($item);
             }
@@ -47,16 +50,46 @@ class CrawlerTaskItemService
 
     }
 
-    public function updateStatus(
-        string $id,
-        string $status,
-        ?string $resultFile = null,
-        ?string $error = null
-    ): void {
-        CrawlerTaskItem::where('id', $id)->update([
-            'status' => $status,
-            'result_file' => $resultFile,
-            'error_message' => $error,
+    public function retry(CrawlerTaskItem $item): array
+    {
+        if ($item->status !== 'error') {
+            return [
+                'success' => false,
+                'message' => 'Only failed items can be retried.',
+            ];
+        }
+
+        $item->update([
+            'status'        => 'pending',
+            'error_message' => null,
         ]);
+
+        $this->dispatchService->dispatch($item);
+
+        return [
+            'success'      => true,
+            'message'      => 'Task item retried successfully.',
+            'task_item_id' => $item->id,
+            'status'       => $item->status,
+        ];
+    }
+    public function delete(CrawlerTaskItem $item): array
+    {
+        if ($item->status === 'crawling') {
+            return [
+                'success' => false,
+                'message' => 'Cannot delete item while crawling.',
+            ];
+        }
+
+        $id = $item->id;
+
+        $item->delete();
+
+        return [
+            'success'      => true,
+            'message'      => 'Task item deleted successfully.',
+            'task_item_id' => $id,
+        ];
     }
 }

@@ -1,5 +1,4 @@
 <?php
-
 namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -18,8 +17,9 @@ class DatabaseSeeder extends Seeder
             // CrawlerConfigSeeder::class,
             // CrawlerTaskSeeder::class,
             // CrawlerTaskItemSeeder::class,
-            LexiconSeeder::class,
-            AiModelSeeder::class,
+            // LexiconSeeder::class,
+            // AiModelSeeder::class,
+            BotSeeder::class,
         ]);
     }
 }

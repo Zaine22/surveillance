@@ -46,31 +46,6 @@ class CrawlerResultConsumeService
                 continue;
             }
 
-            // foreach ($messages[$this->stream] as $id => $data) {
-            //     try {
-            //         if (! empty($data['error_message'])) {
-            //             $this->taskManagerService->crawlerFailed(
-            //                 (string) $data['task_item_id'],
-            //                 (string) $data['error_message']
-            //             );
-            //         } else {
-            //             $this->taskManagerService->crawlerCompleted(
-            //                 (string) $data['task_item_id'],
-            //                 (string) $data['crawler_machine'],
-            //                 (string) ($data['result_file'] ?? 'not found')
-            //             );
-            //         }
-
-            //         Redis::xack($this->stream, $this->group, [$id]);
-
-            //     } catch (\Throwable $e) {
-            //         Log::error('Result consume failed', [
-            //             'redis_id' => $id,
-            //             'payload' => $data,
-            //             'error' => $e->getMessage(),
-            //         ]);
-            //     }
-            // }
             foreach ($messages[$this->stream] as $id => $data) {
                 try {
                     $payload = [];
@@ -88,13 +63,14 @@ class CrawlerResultConsumeService
                     if (! empty($payload['error_message'])) {
                         $this->taskManagerService->crawlerFailed(
                             (string) $taskItemId,
-                            (string) $payload['error_message']
+                            (string) $payload['error_message'],
+                            (string) ($payload['crawler_machine'])
                         );
                     } else {
                         $this->taskManagerService->crawlerCompleted(
                             (string) $taskItemId,
                             (string) ($payload['result_file'] ?? 'not found'),
-                            (string) ($payload['crawler_machine'] ?? 'UNKNOWN')
+                            (string) ($payload['crawler_machine']),
                         );
                     }
 

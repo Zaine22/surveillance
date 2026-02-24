@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services;
 
 use App\Models\CrawlerTaskItem;
@@ -15,10 +14,10 @@ class CrawlerDispatchService
             $this->stream,
             '*',
             [
-                'task_item_id' => (string) $item->id,
-                'keywords' => (string) $item->keywords,
+                'task_item_id'   => (string) $item->id,
+                'keywords'       => (string) $item->keywords,
                 'crawl_location' => (string) $item->crawl_location,
-                'type' => 'patrol',
+                'type'           => 'patrol',
             ]
         );
     }

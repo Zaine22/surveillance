@@ -48,7 +48,23 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('case-management-items', CaseManagementItemController::class);
     Route::apiResource('crawler-configs', CrawlerConfigController::class);
     Route::apiResource('crawler-tasks', CrawlerTaskController::class);
+    Route::patch(
+        'crawler-tasks/{task}/status',
+        [CrawlerTaskController::class, 'updateStatus']
+    );
+    Route::get(
+        'crawler-tasks/{task}/failed-items',
+        [CrawlerTaskController::class, 'failedTasks']
+    );
     Route::apiResource('crawler-task-items', CrawlerTaskItemController::class);
+    Route::patch(
+        'crawler-task-items/{item}/retry',
+        [CrawlerTaskItemController::class, 'retry']
+    );
+    Route::delete(
+        'crawler-task-items/{item}/delete',
+        [CrawlerTaskItemController::class, 'delete']
+    );
     Route::apiResource('data-sync-records', DataSyncRecordController::class);
     Route::apiResource('global-whitelists', GlobalWhitelistController::class);
     Route::apiResource('lexicons', LexiconController::class);

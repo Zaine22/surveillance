@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services;
 
 use App\Models\CrawlerConfig;
@@ -29,8 +28,8 @@ class CrawlerTaskService extends BaseFilterService
 
             $task = CrawlerTask::create([
                 'crawler_config_id' => $config->id,
-                'lexicon_id' => $lexicon->id,
-                'status' => 'pending',
+                'lexicon_id'        => $lexicon->id,
+                'status'            => 'pending',
             ]);
 
             $this->itemService->createFromTask($task, $config, $lexicon);
@@ -56,20 +55,19 @@ class CrawlerTaskService extends BaseFilterService
         $task->update(['status' => 'completed']);
     }
 
-
-        public function baseQuery(array $filters)
+    public function baseQuery(array $filters)
     {
         $query = CrawlerTask::with('crawlerConfig')
             ->withCount([
                 'items as total_tasks',
-                'items as pending_count'   => fn($q) => $q->where('status', 'pending'),
-                'items as crawling_count'   => fn($q) => $q->where('status', 'crawling'),
-                'items as syncing_count' => fn($q) => $q->where('status', 'syncing'),
-                'items as error_count'    => fn($q) => $q->where('status', 'error'),
-                'items as synced_count'    => fn($q) => $q->where('status', 'synced'),
+                'items as pending_count'  => fn($q)  => $q->where('status', 'pending'),
+                'items as crawling_count' => fn($q) => $q->where('status', 'crawling'),
+                'items as syncing_count'  => fn($q)  => $q->where('status', 'syncing'),
+                'items as error_count'    => fn($q)    => $q->where('status', 'error'),
+                'items as synced_count'   => fn($q)   => $q->where('status', 'synced'),
             ]);
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = strtolower($filters['search']);
 
             $query->whereHas('crawlerConfig', function ($q) use ($search) {
@@ -80,33 +78,33 @@ class CrawlerTaskService extends BaseFilterService
         return $query;
     }
     public function getTaskItemSummary(array $filters)
-{
-    $itemQuery = CrawlerTaskItem::query()
-        ->whereHas('task', function ($task) use ($filters) {
+    {
+        $itemQuery = CrawlerTaskItem::query()
+            ->whereHas('task', function ($task) use ($filters) {
 
-            if (!empty($filters['search'])) {
-                $search = strtolower($filters['search']);
+                if (! empty($filters['search'])) {
+                    $search = strtolower($filters['search']);
 
-                $task->whereHas('crawlerConfig', function ($q) use ($search) {
-                    $q->whereRaw("LOWER(name) LIKE ?", ["%{$search}%"]);
-                });
-            }
+                    $task->whereHas('crawlerConfig', function ($q) use ($search) {
+                        $q->whereRaw("LOWER(name) LIKE ?", ["%{$search}%"]);
+                    });
+                }
 
-            if (!empty($filters['status'])) {
-                $task->where('status', $filters['status']);
-            }
+                if (! empty($filters['status'])) {
+                    $task->where('status', $filters['status']);
+                }
 
-            if (!empty($filters['from_date'])) {
-                $task->whereDate('created_at', '>=', $filters['from_date']);
-            }
+                if (! empty($filters['from_date'])) {
+                    $task->whereDate('created_at', '>=', $filters['from_date']);
+                }
 
-            if (!empty($filters['to_date'])) {
-                $task->whereDate('created_at', '<=', $filters['to_date']);
-            }
-        });
+                if (! empty($filters['to_date'])) {
+                    $task->whereDate('created_at', '<=', $filters['to_date']);
+                }
+            });
 
-    return $itemQuery
-        ->selectRaw("
+        return $itemQuery
+            ->selectRaw("
             COUNT(*) as total_tasks,
             SUM(status = 'pending')  as total_pending,
             SUM(status = 'crawling') as total_crawling,
@@ -114,34 +112,34 @@ class CrawlerTaskService extends BaseFilterService
             SUM(status = 'synced')   as total_synced,
             SUM(status = 'error')    as total_error
         ")
-        ->first();
-}
-public function getSummary(array $filters)
-{
-    $query = CrawlerTask::query();
-
-    if (!empty($filters['search'])) {
-        $search = strtolower($filters['search']);
-
-        $query->whereHas('crawlerConfig', function ($q) use ($search) {
-            $q->whereRaw("LOWER(name) LIKE ?", ["%{$search}%"]);
-        });
+            ->first();
     }
+    public function getSummary(array $filters)
+    {
+        $query = CrawlerTask::query();
 
-    if (!empty($filters['status'])) {
-        $query->where('status', $filters['status']);
-    }
+        if (! empty($filters['search'])) {
+            $search = strtolower($filters['search']);
 
-    if (!empty($filters['from_date'])) {
-        $query->whereDate('created_at', '>=', $filters['from_date']);
-    }
+            $query->whereHas('crawlerConfig', function ($q) use ($search) {
+                $q->whereRaw("LOWER(name) LIKE ?", ["%{$search}%"]);
+            });
+        }
 
-    if (!empty($filters['to_date'])) {
-        $query->whereDate('created_at', '<=', $filters['to_date']);
-    }
+        if (! empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
 
-    return $query
-        ->selectRaw("
+        if (! empty($filters['from_date'])) {
+            $query->whereDate('created_at', '>=', $filters['from_date']);
+        }
+
+        if (! empty($filters['to_date'])) {
+            $query->whereDate('created_at', '<=', $filters['to_date']);
+        }
+
+        return $query
+            ->selectRaw("
             COUNT(*) as total_tasks,
             SUM(status = 'pending') as pending,
             SUM(status = 'processing') as processing,
@@ -150,7 +148,51 @@ public function getSummary(array $filters)
             SUM(status = 'paused') as paused,
             SUM(status = 'deleted') as deleted
         ")
-        ->first();
-}
+            ->first();
+    }
+
+    public function updateExecutionStatus(CrawlerTask $task, string $action): string
+    {
+        if ($task->status === 'completed' && $action !== 'delete') {
+            throw new \Exception('Completed task cannot be modified.');
+        }
+
+        switch ($action) {
+
+            case 'pause':
+                if ($task->status !== 'processing') {
+                    throw new \Exception('Only processing tasks can be paused.');
+                }
+
+                $task->update(['status' => 'paused']);
+                return 'Task paused successfully';
+
+            case 'resume':
+                if ($task->status !== 'paused') {
+                    throw new \Exception('Only paused tasks can be resumed.');
+                }
+
+                $task->update(['status' => 'processing']);
+                return 'Task resumed successfully';
+
+            case 'delete':
+                if ($task->status === 'processing') {
+                    throw new \Exception('Cannot delete a running task.');
+                }
+
+                $task->update(['status' => 'deleted']);
+                return 'Task deleted successfully';
+
+            default:
+                throw new \Exception('Invalid action.');
+        }
+    }
+
+    public function getFailedTasks(CrawlerTask $task)
+    {
+        return $task->items()
+            ->where('status', 'error')
+            ->get();
+    }
 
 }

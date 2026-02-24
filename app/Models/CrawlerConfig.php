@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -27,5 +26,9 @@ class CrawlerConfig extends Model
     public function lexicon()
     {
         return $this->belongsTo(Lexicon::class);
+    }
+    public function tasks()
+    {
+        return $this->hasMany(CrawlerTask::class);
     }
 }

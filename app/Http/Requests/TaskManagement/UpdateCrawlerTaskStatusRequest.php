@@ -1,10 +1,9 @@
 <?php
-
-namespace App\Http\Requests\CaseManagement;
+namespace App\Http\Requests\TaskManagement;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreExternalCaseRequest extends FormRequest
+class UpdateCrawlerTaskStatusRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,18 +21,15 @@ class StoreExternalCaseRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'url' => 'required|url',
-            'leakReason' => 'required|string',
+            'action' => ['required', 'string', 'in:pause,resume,delete'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'url.required' => 'URL不能为空',
-            'url.url' => 'URL格式不正确',
-            'leakReason.required' => '泄露原因不能为空',
-            'leakReason.string' => '泄露原因必须是字符串',
+            'action.required' => 'Action is required.',
+            'action.in'       => 'Action must be pause, resume, or delete.',
         ];
     }
 }
