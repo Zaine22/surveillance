@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services;
 
 use App\Models\AiModelTask;
@@ -9,14 +8,21 @@ class AiDispatchService
 {
     protected string $stream = 'ai:task:stream';
 
-    public function __construct() {}
+    public function __construct()
+    {}
 
-    public function dispatch(AiModelTask $task, string $filePath): void
+    public function dispatch(AiModelTask $task, array $params): void
     {
+
+        Redis::hMSet("ai_task:{$task->id}", [
+            'status'    => 'pending',
+            'params'    => json_encode($params, JSON_UNESCAPED_UNICODE),
+            'timestamp' => now()->toDateTimeString(),
+        ]);
+
         Redis::xadd($this->stream, '*', [
-            'ai_model_task_id' => $task->id,
-            'ai_model_id' => $task->ai_model_id,
-            'file_path' => $filePath,
+            'event'   => 'new',
+            'task_id' => (string) $task->id,
         ]);
     }
 }

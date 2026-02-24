@@ -180,12 +180,19 @@ class CrawlerTaskService extends BaseFilterService
                     throw new \Exception('Cannot delete a running task.');
                 }
 
-                 $task->update(['status' => 'deleted']);
+                $task->update(['status' => 'deleted']);
                 return 'Task deleted successfully';
 
             default:
                 throw new \Exception('Invalid action.');
         }
+    }
+
+    public function getFailedTasks(CrawlerTask $task)
+    {
+        return $task->items()
+            ->where('status', 'error')
+            ->get();
     }
 
 }

@@ -10,7 +10,7 @@ use App\Services\CrawlerDispatchService;
 class CrawlerTaskItemService
 {
     public function __construct(
-        protected CrawlerDispatchService $dispatchService
+        protected CrawlerDispatchService $dispatchService,
     ) {}
 
     public function createFromTask(CrawlerTask $task, CrawlerConfig $config, Lexicon $lexicon): void
@@ -50,16 +50,46 @@ class CrawlerTaskItemService
 
     }
 
-    public function updateStatus(
-        string $id,
-        string $status,
-        ?string $resultFile = null,
-        ?string $error = null
-    ): void {
-        CrawlerTaskItem::where('id', $id)->update([
-            'status'        => $status,
-            'result_file'   => $resultFile,
-            'error_message' => $error,
+    public function retry(CrawlerTaskItem $item): array
+    {
+        if ($item->status !== 'error') {
+            return [
+                'success' => false,
+                'message' => 'Only failed items can be retried.',
+            ];
+        }
+
+        $item->update([
+            'status'        => 'pending',
+            'error_message' => null,
         ]);
+
+        $this->dispatchService->dispatch($item);
+
+        return [
+            'success'      => true,
+            'message'      => 'Task item retried successfully.',
+            'task_item_id' => $item->id,
+            'status'       => $item->status,
+        ];
+    }
+    public function delete(CrawlerTaskItem $item): array
+    {
+        if ($item->status === 'crawling') {
+            return [
+                'success' => false,
+                'message' => 'Cannot delete item while crawling.',
+            ];
+        }
+
+        $id = $item->id;
+
+        $item->delete();
+
+        return [
+            'success'      => true,
+            'message'      => 'Task item deleted successfully.',
+            'task_item_id' => $id,
+        ];
     }
 }

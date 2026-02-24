@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\TaskManagement\CrawlerTaskIndexRequest;
 use App\Http\Requests\TaskManagement\UpdateCrawlerTaskStatusRequest;
 use App\Http\Resources\CrawlerTaskIndexResource;
+use App\Http\Resources\FailedCrawlerTaskItemResource;
 use App\Models\CrawlerTask;
 use App\Services\CrawlerTaskService;
 
@@ -65,6 +66,15 @@ class CrawlerTaskController extends Controller
                 'message' => $e->getMessage(),
             ], 400);
         }
+    }
+
+    public function failedTasks(CrawlerTask $task)
+    {
+        $failedTasks = $this->crawlerTaskService->getFailedTasks($task);
+
+        return response()->json([
+            'data' => FailedCrawlerTaskItemResource::collection($failedTasks),
+        ]);
     }
 
 }
