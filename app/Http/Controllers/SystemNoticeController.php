@@ -59,6 +59,15 @@ class SystemNoticeController extends Controller
         }
     }
 
+    public function getActiveNotices() {
+        $result = $this->systemNoticeService->getActiveNotices();
+
+        return response()->json([
+            'message' => '获取当前有效的系统公告',
+            'data' => $result,
+        ]);
+    }
+
     public function update($id, UpdateNoticeRequest $request)
     {
         $validated = $request->validated();

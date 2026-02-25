@@ -4,6 +4,9 @@ namespace App\Services;
 
 use App\Models\SystemNotice;
 use Illuminate\Support\Facades\Log;
+use App\Events\SystemNoticeEvent;
+use App\Jobs\PublishSystemNoticeJob;
+use App\Jobs\ExpireSystemNoticeJob;
 
 class SystemNoticeService
 {
@@ -46,6 +49,18 @@ class SystemNoticeService
     {
         $systemNotice = SystemNotice::create($data);
 
+        // Publish Job
+        if ($systemNotice->publish_date > now()) {
+            PublishSystemNoticeJob::dispatch($systemNotice->id)
+            ->delay($systemNotice->publish_date);
+        }
+
+        // Expire Job
+        if ($systemNotice->expire_at > now()) {
+            ExpireSystemNoticeJob::dispatch($systemNotice->id)
+            ->delay($systemNotice->expire_at);
+        }
+
         return $systemNotice;
     }
 
@@ -59,5 +74,14 @@ class SystemNoticeService
         }
 
         return null;
+    }
+
+    public function getActiveNotices()
+    {
+        return SystemNotice::where('status', 'published')
+            ->where('publish_date', '<=', now())
+            ->where('expire_at', '>', now())
+            ->orderBy('publish_date', 'desc')
+            ->get();
     }
 }
