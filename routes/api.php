@@ -41,6 +41,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('ai-models', AiModelController::class);
     Route::apiResource('ai-model-tasks', AiModelTaskController::class);
     Route::apiResource('ai-predict-results', AiPredictResultController::class);
+    Route::get(
+        'ai-predict-results/{result}/items',
+        [AiPredictResultController::class, 'getResultItems']
+    );
+    Route::patch(
+        'ai-predict-results/{result}/evidence-review',
+        [AiPredictResultController::class, 'evidenceReview']
+    );
     Route::apiResource('ai-predict-result-items', AiPredictResultItemController::class);
     Route::apiResource('audit-ratios', AuditRatioController::class);
     Route::apiResource('bot-machines', BotMachineController::class);
@@ -48,10 +56,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('case-management-items', CaseManagementItemController::class);
     Route::apiResource('crawler-configs', CrawlerConfigController::class);
     Route::apiResource('crawler-tasks', CrawlerTaskController::class);
-    Route::patch(
-        'crawler-tasks/{task}/status',
-        [CrawlerTaskController::class, 'updateStatus']
-    );
+
     Route::get(
         'crawler-tasks/{task}/failed-items',
         [CrawlerTaskController::class, 'failedTasks']

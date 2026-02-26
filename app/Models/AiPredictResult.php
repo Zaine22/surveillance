@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -29,16 +28,26 @@ class AiPredictResult extends Model
     ];
 
     protected $casts = [
-        'ai_score' => 'decimal:2',
+        'ai_score'           => 'decimal:2',
         'ai_analysis_detail' => 'array',
-        'review_date' => 'datetime',
-        'audit_date' => 'datetime',
-        'ai_analysis_date' => 'datetime',
+        'review_date'        => 'datetime',
+        'audit_date'         => 'datetime',
+        'ai_analysis_date'   => 'datetime',
     ];
 
     public function aiModelTask()
     {
         return $this->belongsTo(AiModelTask::class);
+    }
+
+    public function items()
+    {
+        return $this->hasMany(AiPredictResultItem::class);
+    }
+
+    public function caseManagement()
+    {
+        return $this->hasOne(CaseManagement::class);
     }
 
 }

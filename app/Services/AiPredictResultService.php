@@ -4,6 +4,7 @@ namespace App\Services;
 use App\Models\AiModelTask;
 use App\Models\AiPredictResult;
 use App\Models\AiPredictResultItem;
+use App\Models\CaseManagementItem;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -50,6 +51,20 @@ class AiPredictResultService extends BaseFilterService
             false,
             'created_at'
         );
+    }
+    public function findById(string $id): AiPredictResult
+    {
+        return AiPredictResult::query()
+            ->with([
+                'items',
+                'caseManagement.items',
+            ])
+            ->findOrFail($id);
+    }
+
+    public function getResultItems(AiPredictResult $result)
+    {
+        return $result->items()->get();
     }
 
     protected function getAllowedSortColumns(): array
@@ -199,6 +214,62 @@ class AiPredictResultService extends BaseFilterService
             }
 
             return $result;
+        });
+    }
+
+    public function evidenceReview(string $resultId, array $items): void
+    {
+        DB::transaction(function () use ($resultId, $items) {
+
+            $result = AiPredictResult::with('caseManagement')
+                ->findOrFail($resultId);
+
+            $case = $result->caseManagement;
+
+            foreach ($items as $data) {
+
+                $item = AiPredictResultItem::where(
+                    'ai_predict_result_id',
+                    $resultId
+                )
+                    ->where('id', $data['id'])
+                    ->firstOrFail();
+
+                $item->update([
+                    'status'       => $data['decision'],
+                    'reason'       => $data['decision'] === 'invalid'
+                        ? $data['reason']
+                        : null,
+                    'other_reason' => (
+                        $data['decision'] === 'invalid'
+                        && $data['reason'] === 'Other'
+                    )
+                        ? $data['other_reason']
+                        : null,
+                ]);
+
+                if ($data['decision'] === 'invalid') {
+
+                    CaseManagementItem::create([
+                        'case_management_id' => $case->id,
+                        'media_url'          => $item->media_url,
+                        'crawler_page_url'   => $item->crawler_page_url,
+                        'ai_result'          => $item->ai_result,
+                        'status'             => 'invalid',
+                        'reason'             => $data['reason'],
+                        'other_reason'       => $data['reason'] === 'Other'
+                            ? $data['other_reason']
+                            : null,
+                        'ai_score'           => $item->ai_score,
+                        'keywords'           => $item->keywords,
+                        'issue_date'         => now(),
+                    ]);
+                }
+            }
+
+            $case->update([
+                'status' => 'created',
+            ]);
         });
     }
 }

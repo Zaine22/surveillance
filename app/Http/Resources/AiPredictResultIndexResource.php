@@ -1,11 +1,10 @@
 <?php
-
 namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class AiPredictResultResource extends JsonResource
+class AiPredictResultIndexResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -14,7 +13,7 @@ class AiPredictResultResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-           return [
+        return [
             'id'                 => $this->id,
             'file_name'          => optional($this->aiModelTask)->file_name,
             'keywords'           => $this->keywords,

@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -28,4 +27,9 @@ class CaseManagementItem extends Model
     protected $casts = [
         'ai_score' => 'decimal:2',
     ];
+
+    public function case ()
+    {
+        return $this->belongsTo(CaseManagement::class, 'case_management_id');
+    }
 }

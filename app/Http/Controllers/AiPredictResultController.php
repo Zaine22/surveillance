@@ -1,16 +1,19 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AiPredictResult\AiPredictResultIndexRequest;
-use App\Http\Resources\AiPredictResultResource;
+use App\Http\Requests\AiPredictResult\UpdateAiPredictResultRequest;
+use App\Http\Resources\AiPredictResultIndexResource;
+use App\Http\Resources\AiPredictResultShowResource;
+use App\Models\AiPredictResult;
 use App\Services\AiPredictResultService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class AiPredictResultController extends Controller
 {
-     public function __construct(
+    public function __construct(
         protected AiPredictResultService $service
     ) {}
 
@@ -21,6 +24,47 @@ class AiPredictResultController extends Controller
             $request->validated()
         );
 
-        return AiPredictResultResource::collection($results);
+        return AiPredictResultIndexResource::collection($results);
     }
+
+    public function show(
+        string $id
+    ): AiPredictResultShowResource {
+
+        $result = $this->service->findById($id);
+
+        return new AiPredictResultShowResource($result);
+    }
+
+    public function getResultItems(AiPredictResult $result)
+    {
+
+        if (! $result) {
+            return response()->json([
+                'message' => 'Predict result not found',
+            ], 404);
+        }
+
+        $items = $this->service->getResultItems($result);
+
+        return response()->json([
+            'data' => AiPredictResultIndexResource::collection($items),
+        ]);
+    }
+
+    public function update(
+        UpdateAiPredictResultRequest $request,
+        string $id
+    ): JsonResponse {
+
+        $this->service->evidenceReview(
+            $id,
+            $request->validated()['items']
+        );
+
+        return response()->json([
+            'message' => 'Evidence review completed.',
+        ]);
+    }
+
 }

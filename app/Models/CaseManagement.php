@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -20,14 +19,14 @@ class CaseManagement extends Model
         'comment',
     ];
 
-    public function aiPredictResult()
-{
-    return $this->belongsTo(AiPredictResult::class);
-}
-public function aiModelTask()
-{
-    return $this->belongsTo(AiModelTask::class);
-}
+    public function result()
+    {
+        return $this->belongsTo(AiPredictResult::class);
+    }
 
+    public function items()
+    {
+        return $this->hasMany(CaseManagementItem::class);
+    }
 
 }

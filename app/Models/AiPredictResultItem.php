@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -26,4 +25,10 @@ class AiPredictResultItem extends Model
     protected $casts = [
         'ai_score' => 'decimal:2',
     ];
+
+    public function result()
+    {
+        return $this->belongsTo(AiPredictResult::class, 'ai_predict_result_id');
+    }
+
 }
