@@ -56,6 +56,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
         'crawler-tasks/{task}/failed-items',
         [CrawlerTaskController::class, 'failedTasks']
     );
+    Route::get(
+        'crawler-tasks/{task}/task-items',
+        [CrawlerTaskController::class, 'getAllTaskItems']
+    );
     Route::apiResource('crawler-task-items', CrawlerTaskItemController::class);
     Route::patch(
         'crawler-task-items/{item}/retry',

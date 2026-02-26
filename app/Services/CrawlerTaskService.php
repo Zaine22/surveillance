@@ -22,6 +22,27 @@ class CrawlerTaskService extends BaseFilterService
         return $this->applyFilters($query, $filters, [], true);
     }
 
+    public function getAllTaskItems(CrawlerTask $task, array $filters): LengthAwarePaginator
+    {
+        $query = CrawlerTaskItem::query()
+            ->where('task_id', $task->id)
+
+            ->when(! empty($filters['search']), function ($q) use ($filters) {
+                $search = strtolower($filters['search']);
+
+                $q->whereRaw(
+                    'LOWER(keywords) LIKE ?',
+                    ["%{$search}%"]
+                );
+            });
+
+        if (! empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        return $query->paginate(10);
+    }
+
     public function createFromConfig(CrawlerConfig $config, Lexicon $lexicon): CrawlerTask
     {
         return DB::transaction(function () use ($config, $lexicon) {
@@ -76,6 +97,19 @@ class CrawlerTaskService extends BaseFilterService
         }
 
         return $query;
+    }
+    public function getSingleTaskItemSummary(CrawlerTask $task)
+    {
+        return CrawlerTaskItem::where('task_id', $task->id)
+            ->selectRaw("
+            COUNT(*) as total_tasks,
+            SUM(status = 'pending')  as total_pending,
+            SUM(status = 'crawling') as total_crawling,
+            SUM(status = 'syncing')  as total_syncing,
+            SUM(status = 'synced')   as total_synced,
+            SUM(status = 'error')    as total_error
+        ")
+            ->first();
     }
     public function getTaskItemSummary(array $filters)
     {
