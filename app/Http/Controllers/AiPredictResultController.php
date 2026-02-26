@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AiPredictResult\AiPredictResultIndexRequest;
 use App\Http\Requests\AiPredictResult\UpdateAiPredictResultRequest;
+use App\Http\Resources\AiPredictResultAuditResource;
 use App\Http\Resources\AiPredictResultIndexResource;
 use App\Http\Resources\AiPredictResultShowResource;
 use App\Models\AiPredictResult;
+use App\Models\AiPredictResultAudit;
 use App\Services\AiPredictResultService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -64,6 +66,22 @@ class AiPredictResultController extends Controller
 
         return response()->json([
             'message' => 'Evidence review completed.',
+        ]);
+    }
+
+    public function getAudits(AiPredictResult $result)
+    {
+        $audits = AiPredictResultAudit::query()
+            ->where('ai_predict_result_id', $result->id)
+            ->with([
+                'result.aiModelTask',
+                'auditor',
+            ])
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'audits' => AiPredictResultAuditResource::collection($audits),
         ]);
     }
 

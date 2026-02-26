@@ -42,6 +42,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('ai-model-tasks', AiModelTaskController::class);
     Route::apiResource('ai-predict-results', AiPredictResultController::class);
     Route::get(
+        'ai-predict-results/{result}/audits',
+        [AiPredictResultController::class, 'getAudits']
+    );
+    Route::get(
         'ai-predict-results/{result}/items',
         [AiPredictResultController::class, 'getResultItems']
     );

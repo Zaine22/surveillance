@@ -50,4 +50,22 @@ class AiPredictResult extends Model
         return $this->hasOne(CaseManagement::class);
     }
 
+    public function result()
+    {
+        return $this->belongsTo(AiPredictResult::class);
+    }
+
+    public function auditor()
+    {
+        return $this->belongsTo(User::class, 'auditor_id');
+    }
+
+    public function audits()
+    {
+        return $this->hasMany(
+            AiPredictResultAudit::class,
+            'ai_predict_result_id'
+        );
+    }
+
 }

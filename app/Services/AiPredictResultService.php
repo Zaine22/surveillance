@@ -3,6 +3,7 @@ namespace App\Services;
 
 use App\Models\AiModelTask;
 use App\Models\AiPredictResult;
+use App\Models\AiPredictResultAudit;
 use App\Models\AiPredictResultItem;
 use App\Models\CaseManagementItem;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -217,16 +218,100 @@ class AiPredictResultService extends BaseFilterService
         });
     }
 
-    public function evidenceReview(string $resultId, array $items): void
+    // public function evidenceReview(string $resultId, array $items): void
+    // {
+    //     DB::transaction(function () use ($resultId, $items) {
+
+    //         $result = AiPredictResult::with('caseManagement')
+    //             ->findOrFail($resultId);
+
+    //         $case = $result->caseManagement;
+
+    //         $validCount   = 0;
+    //         $invalidCount = 0;
+
+    //         foreach ($items as $data) {
+
+    //             $item = AiPredictResultItem::where(
+    //                 'ai_predict_result_id',
+    //                 $resultId
+    //             )
+    //                 ->where('id', $data['id'])
+    //                 ->firstOrFail();
+
+    //             $item->update([
+    //                 'status'       => $data['decision'],
+    //                 'reason'       => $data['decision'] === 'invalid'
+    //                     ? $data['reason']
+    //                     : null,
+    //                 'other_reason' => (
+    //                     $data['decision'] === 'invalid'
+    //                     && $data['reason'] === 'Other'
+    //                 )
+    //                     ? $data['other_reason']
+    //                     : null,
+    //             ]);
+
+    //             if ($data['decision'] === 'invalid') {
+
+    //                 CaseManagementItem::create([
+    //                     'case_management_id' => $case->id,
+    //                     'media_url'          => $item->media_url,
+    //                     'crawler_page_url'   => $item->crawler_page_url,
+    //                     'ai_result'          => $item->ai_result,
+    //                     'status'             => 'invalid',
+    //                     'reason'             => $data['reason'],
+    //                     'other_reason'       => $data['reason'] === 'Other'
+    //                         ? $data['other_reason']
+    //                         : null,
+    //                     'ai_score'           => $item->ai_score,
+    //                     'keywords'           => $item->keywords,
+    //                     'issue_date'         => now(),
+    //                 ]);
+    //             }
+    //             $finalDecision = match (true) {
+    //                 $invalidCount === 0 => 'approved',
+    //                 $validCount === 0   => 'rejected',
+    //                 default             => 'partial',
+    //             };
+
+    //             $result->update([
+    //                 'review_status' => $finalDecision,
+    //             ]);
+
+    //             AiPredictResultAudit::create([
+    //                 'ai_predict_result_id' => $resultId,
+    //                 'auditor_id'           => auth()->id(),
+    //                 'decision'             => $finalDecision,
+    //                 'valid_count'          => $validCount,
+    //                 'invalid_count'        => $invalidCount,
+    //                 'summary'              => "Valid: {$validCount}, Invalid: {$invalidCount}",
+    //             ]);
+    //         }
+
+    //         return $result->fresh([
+    //             'items',
+    //             'caseManagement.items',
+    //             'audits.auditor',
+    //         ]);
+    //     });
+    // }
+
+    public function evidenceReview(string $resultId, array $items): AiPredictResult
     {
-        DB::transaction(function () use ($resultId, $items) {
+        return DB::transaction(function () use ($resultId, $items) {
 
             $result = AiPredictResult::with('caseManagement')
                 ->findOrFail($resultId);
 
             $case = $result->caseManagement;
 
+            $validCount   = 0;
+            $invalidCount = 0;
+
             foreach ($items as $data) {
+
+                $decision = strtolower($data['decision']);
 
                 $item = AiPredictResultItem::where(
                     'ai_predict_result_id',
@@ -236,19 +321,25 @@ class AiPredictResultService extends BaseFilterService
                     ->firstOrFail();
 
                 $item->update([
-                    'status'       => $data['decision'],
-                    'reason'       => $data['decision'] === 'invalid'
-                        ? $data['reason']
+                    'status'       => $decision,
+                    'reason'       => $decision === 'invalid'
+                        ? ($data['reason'] ?? null)
                         : null,
                     'other_reason' => (
-                        $data['decision'] === 'invalid'
-                        && $data['reason'] === 'Other'
+                        $decision === 'invalid'
+                        && ($data['reason'] ?? null) === 'Other'
                     )
-                        ? $data['other_reason']
+                        ? ($data['other_reason'] ?? null)
                         : null,
                 ]);
 
-                if ($data['decision'] === 'invalid') {
+                if ($decision === 'valid') {
+                    $validCount++;
+                }
+
+                if ($decision === 'invalid') {
+
+                    $invalidCount++;
 
                     CaseManagementItem::create([
                         'case_management_id' => $case->id,
@@ -256,9 +347,9 @@ class AiPredictResultService extends BaseFilterService
                         'crawler_page_url'   => $item->crawler_page_url,
                         'ai_result'          => $item->ai_result,
                         'status'             => 'invalid',
-                        'reason'             => $data['reason'],
-                        'other_reason'       => $data['reason'] === 'Other'
-                            ? $data['other_reason']
+                        'reason'             => $data['reason'] ?? null,
+                        'other_reason'       => ($data['reason'] ?? null) === 'Other'
+                            ? ($data['other_reason'] ?? null)
                             : null,
                         'ai_score'           => $item->ai_score,
                         'keywords'           => $item->keywords,
@@ -267,8 +358,27 @@ class AiPredictResultService extends BaseFilterService
                 }
             }
 
-            $case->update([
-                'status' => 'created',
+            $finalDecision = $invalidCount > 0
+                ? 'rejected'
+                : 'approved';
+
+            $result->update([
+                'review_status' => $finalDecision,
+            ]);
+
+            AiPredictResultAudit::create([
+                'ai_predict_result_id' => $resultId,
+                'auditor_id'           => auth()->id(),
+                'decision'             => $finalDecision,
+                'valid_count'          => $validCount,
+                'invalid_count'        => $invalidCount,
+                'summary'              => "Valid: {$validCount}, Invalid: {$invalidCount}",
+            ]);
+
+            return $result->fresh([
+                'items',
+                'caseManagement.items',
+                'audits.auditor',
             ]);
         });
     }

@@ -19,7 +19,8 @@ class DatabaseSeeder extends Seeder
             // CrawlerTaskItemSeeder::class,
             // LexiconSeeder::class,
             // AiModelSeeder::class,
-            BotSeeder::class,
+            // BotSeeder::class,
+            SurveillanceSystemSeeder::class,
         ]);
     }
 }
