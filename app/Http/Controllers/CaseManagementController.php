@@ -48,7 +48,7 @@ class CaseManagementController extends Controller
             ], 500);
         }
 
-        return response()->json(['status' => 'success', 'message' => '已接收'], 201);
+        return response()->json(['status' => 'success', 'message' => '已接收'], 200);
     }
 
     public function netChineseCaseScreenshot(ProceedCaseScreenshotRequest $request)

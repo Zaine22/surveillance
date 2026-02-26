@@ -69,6 +69,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         'crawler-task-items/{item}/delete',
         [CrawlerTaskItemController::class, 'delete']
     );
+
+    Route::get('system-notices/active', [SystemNoticeController::class, 'getActiveNotices']);
     Route::apiResource('data-sync-records', DataSyncRecordController::class);
     Route::apiResource('global-whitelists', GlobalWhitelistController::class);
     Route::apiResource('lexicons', LexiconController::class);

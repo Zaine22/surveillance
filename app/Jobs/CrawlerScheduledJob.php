@@ -8,6 +8,9 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use App\Models\CrawlerConfig;
+use App\Models\Lexicon;
+use App\Services\CrawlerTaskService;
 
 class CrawlerScheduledJob implements ShouldQueue
 {
@@ -32,8 +35,21 @@ class CrawlerScheduledJob implements ShouldQueue
             return; // Stop scheduling
         }
 
+        $config = CrawlerConfig::find($this->configId);
+
+        if (!$config) {
+            return; // Stop scheduling if config is not found
+        }
+
+        $lexicon = Lexicon::find($config->lexicon_id);
+
+        if(!$lexicon) {
+            return; // Stop scheduling if lexicon is not found
+        }
+
+
         // 🔥 Run your crawler logic here
-        app(CrawlerTaskService::class)->run($this->configId);
+        app(CrawlerTaskService::class)->createFromConfig($config, $lexicon);
 
         // 📅 Schedule next run
         $nextRun = match ($this->frequency) {

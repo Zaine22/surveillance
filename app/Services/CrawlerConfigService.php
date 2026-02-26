@@ -119,9 +119,9 @@ class CrawlerConfigService extends BaseFilterService
 
         $config = CrawlerConfig::create($data);
         $this->globalWhitelistService->createMany($domains);
-        $lexicon = Lexicon::findOrFail($data['lexicon_id']);
+        // $lexicon = Lexicon::findOrFail($data['lexicon_id']);
 
-        $this->crawlerTaskService->createFromConfig($config, $lexicon);
+        // $this->crawlerTaskService->createFromConfig($config, $lexicon);
 
         if ($data['status'] === 'enabled' && ! empty($data['from']) && ! empty($data['to'])) {
             $from = Carbon::parse($data['from']);
