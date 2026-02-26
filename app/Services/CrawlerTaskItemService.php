@@ -49,6 +49,49 @@ class CrawlerTaskItemService
         }
 
     }
+    public function start(CrawlerTaskItem $item): array
+    {
+        if ($item->status !== 'pending') {
+            return [
+                'success' => false,
+                'message' => 'Only pending items can be started.',
+            ];
+        }
+
+        $item->update([
+            'status' => 'crawling',
+        ]);
+
+        $this->dispatchService->dispatch($item);
+
+        return [
+            'success'      => true,
+            'message'      => 'Task item started successfully.',
+            'task_item_id' => $item->id,
+            'status'       => $item->status,
+        ];
+    }
+
+    public function pause(CrawlerTaskItem $item): array
+    {
+        if (! in_array($item->status, ['crawling', 'syncing'])) {
+            return [
+                'success' => false,
+                'message' => 'Only crawling or syncing items can be paused.',
+            ];
+        }
+
+        $item->update([
+            'status' => 'pending',
+        ]);
+
+        return [
+            'success'      => true,
+            'message'      => 'Crawling paused.',
+            'task_item_id' => $item->id,
+            'status'       => $item->status,
+        ];
+    }
 
     public function retry(CrawlerTaskItem $item): array
     {
@@ -62,6 +105,7 @@ class CrawlerTaskItemService
         $item->update([
             'status'        => 'pending',
             'error_message' => null,
+            'result_file'   => null,
         ]);
 
         $this->dispatchService->dispatch($item);

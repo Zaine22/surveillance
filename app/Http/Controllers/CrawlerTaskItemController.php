@@ -11,14 +11,32 @@ class CrawlerTaskItemController extends Controller
         protected CrawlerTaskItemService $crawlerTaskItemService
     ) {}
 
-    public function retry(CrawlerTaskItem $item)
+    public function start(CrawlerTaskItem $item)
     {
-        return $this->crawlerTaskItemService->retry($item);
+        return response()->json(
+            $this->crawlerTaskItemService->start($item)
+        );
     }
 
-    public function delete(CrawlerTaskItem $item)
+    public function pause(CrawlerTaskItem $item)
     {
-        return $this->crawlerTaskItemService->delete($item);
+        return response()->json(
+            $this->crawlerTaskItemService->pause($item)
+        );
+    }
+
+    public function retry(CrawlerTaskItem $item)
+    {
+        return response()->json(
+            $this->crawlerTaskItemService->retry($item)
+        );
+    }
+
+    public function destroy(CrawlerTaskItem $item)
+    {
+        return response()->json(
+            $this->crawlerTaskItemService->delete($item)
+        );
     }
     // public function store(Request $request)
     // {

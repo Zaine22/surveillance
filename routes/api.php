@@ -61,14 +61,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
         [CrawlerTaskController::class, 'getAllTaskItems']
     );
     Route::apiResource('crawler-task-items', CrawlerTaskItemController::class);
-    Route::patch(
-        'crawler-task-items/{item}/retry',
-        [CrawlerTaskItemController::class, 'retry']
-    );
-    Route::delete(
-        'crawler-task-items/{item}/delete',
-        [CrawlerTaskItemController::class, 'delete']
-    );
+    Route::prefix('crawler-task-items')->group(function () {
+        Route::post('{item}/start', [CrawlerTaskItemController::class, 'start']);
+        Route::post('{item}/pause', [CrawlerTaskItemController::class, 'pause']);
+        Route::post('{item}/retry', [CrawlerTaskItemController::class, 'retry']);
+        Route::delete('{item}', [CrawlerTaskItemController::class, 'destroy']);
+    });
 
     Route::get('system-notices/active', [SystemNoticeController::class, 'getActiveNotices']);
     Route::apiResource('data-sync-records', DataSyncRecordController::class);
