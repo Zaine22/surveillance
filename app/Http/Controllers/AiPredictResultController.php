@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AiPredictResult\AiPredictResultIndexRequest;
 use App\Http\Requests\AiPredictResult\UpdateAiPredictResultRequest;
+use App\Http\Resources\AiPredictResultAuditResource;
 use App\Http\Resources\AiPredictResultIndexResource;
 use App\Http\Resources\AiPredictResultShowResource;
 use App\Models\AiPredictResult;
@@ -80,6 +81,8 @@ class AiPredictResultController extends Controller
         if ($type === 'audits') {
 
             $results = AiPredictResultAudit::latest()->get();
+
+            $results = AiPredictResultAuditResource::collection($results);
 
         } else {
 
