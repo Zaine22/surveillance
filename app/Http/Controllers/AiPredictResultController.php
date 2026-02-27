@@ -79,8 +79,7 @@ class AiPredictResultController extends Controller
 
         if ($type === 'audits') {
 
-            $results = AiPredictResultAudit::latest()
-                ->get();
+            $results = AiPredictResultAudit::latest()->get();
 
         } else {
 
@@ -92,10 +91,19 @@ class AiPredictResultController extends Controller
                 ->get();
         }
 
+        if ($results->isEmpty()) {
+            return response()->json([
+                'type'    => $type,
+                'message' => 'No data found',
+                'results' => [],
+            ], 200);
+        }
+
         return response()->json([
             'type'    => $type,
+            'message' => 'Data retrieved successfully',
             'results' => $results,
-        ]);
+        ], 200);
     }
 
 }
