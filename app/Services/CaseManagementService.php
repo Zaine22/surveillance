@@ -1,28 +1,28 @@
 <?php
-
 namespace App\Services;
 
 use App\Models\AiPredictResult;
 use App\Models\CaseFeedback;
 use App\Models\CaseManagement;
 use App\Models\CaseManagementItem;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class CaseManagementService extends BaseFilterService
 {
-    public function __construct() {}
+    public function __construct()
+    {}
 
-        public function getAll(array $filters): LengthAwarePaginator
+    public function getAll(array $filters): LengthAwarePaginator
     {
         $query = CaseManagement::with([
-            'aiPredictResult.aiModelTask'
+            'aiPredictResult.aiModelTask',
         ]);
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = strtolower($filters['search']);
 
             $query->where(function ($q) use ($search) {
@@ -31,20 +31,20 @@ class CaseManagementService extends BaseFilterService
                     "LOWER(internal_case_no) LIKE ?",
                     ["%{$search}%"]
                 )
-                ->orWhereRaw(
-                    "LOWER(external_case_no) LIKE ?",
-                    ["%{$search}%"]
-                )
-                ->orWhereRaw(
-                    "LOWER(keywords) LIKE ?",
-                    ["%{$search}%"]
-                )
-                ->orWhereHas('aiPredictResult.aiModelTask', function ($task) use ($search) {
-                    $task->whereRaw(
-                        "LOWER(file_name) LIKE ?",
+                    ->orWhereRaw(
+                        "LOWER(external_case_no) LIKE ?",
                         ["%{$search}%"]
-                    );
-                });
+                    )
+                    ->orWhereRaw(
+                        "LOWER(keywords) LIKE ?",
+                        ["%{$search}%"]
+                    )
+                    ->orWhereHas('aiPredictResult.aiModelTask', function ($task) use ($search) {
+                        $task->whereRaw(
+                            "LOWER(file_name) LIKE ?",
+                            ["%{$search}%"]
+                        );
+                    });
             });
         }
 
@@ -72,22 +72,23 @@ class CaseManagementService extends BaseFilterService
         return DB::transaction(function () use ($result) {
 
             $case = CaseManagement::create([
-                'id' => (string) Str::uuid(),
+                'id'                   => (string) Str::uuid(),
                 'ai_predict_result_id' => $result->id,
-                'keywords' => $result->keywords,
-                'status' => 'created',
+                'keywords'             => $result->keywords,
+                'internal_case_no'     => 'INT-' . strtoupper(uniqid()),
+                'status'               => 'created',
             ]);
 
-            foreach ($result->items as $item) {
-                CaseManagementItem::create([
-                    'id' => (string) Str::uuid(),
-                    'case_management_id' => $case->id,
-                    'media_url' => $item->media_url,
-                    'crawler_page_url' => $item->crawler_page_url,
-                    'ai_result' => $item->ai_result,
-                    'status' => $item->status,
-                ]);
-            }
+            // foreach ($result->items as $item) {
+            //     CaseManagementItem::create([
+            //         'id' => (string) Str::uuid(),
+            //         'case_management_id' => $case->id,
+            //         'media_url' => $item->media_url,
+            //         'crawler_page_url' => $item->crawler_page_url,
+            //         'ai_result' => $item->ai_result,
+            //         'status' => $item->status,
+            //     ]);
+            // }
 
             return $case;
         });
@@ -98,10 +99,10 @@ class CaseManagementService extends BaseFilterService
         $case = CaseFeedback::updateOrCreate(
             ['case_id' => $data['case_id']],
             [
-                'url' => $data['url'],
-                'is_illegal' => $data['is_illegal'],
+                'url'         => $data['url'],
+                'is_illegal'  => $data['is_illegal'],
                 'legal_basis' => $data['legal_basis'] ?? null,
-                'reason' => $data['reason'] ?? null,
+                'reason'      => $data['reason'] ?? null,
             ]
         );
 
@@ -110,16 +111,16 @@ class CaseManagementService extends BaseFilterService
 
     public function createExternalCase(array $data): CaseManagementItem
     {
-        $external_case_id = 'EXT-'.strtoupper(uniqid());
-        $case = CaseManagement::create([
+        $external_case_id = 'EXT-' . strtoupper(uniqid());
+        $case             = CaseManagement::create([
             'external_case_no' => $external_case_id,
         ]);
 
         $caseItem = CaseManagementItem::create([
             'case_management_id' => $case->id,
-            'crawler_page_url' => $data['url'],
-            'status' => 'valid',
-            'reason' => $data['leakReason'],
+            'crawler_page_url'   => $data['url'],
+            'status'             => 'valid',
+            'reason'             => $data['leakReason'],
         ]);
 
         return $caseItem;
@@ -132,28 +133,28 @@ class CaseManagementService extends BaseFilterService
 
         $case->update([
             'issue_date' => $validated['issue_date'],
-            'due_date' => $validated['due_date'],
+            'due_date'   => $validated['due_date'],
         ]);
 
         $response = Http::post(
             env('SCREENSHOT_URL'),
             [
-                'case_management_id' => $case->case_management_id,
+                'case_management_id'      => $case->case_management_id,
                 'case_management_item_id' => $case->id, // or item_id if you have it
-                'url' => $case->crawler_page_url,
+                'url'                     => $case->crawler_page_url,
             ]
         );
 
         if ($response->failed()) {
             return response()->json([
                 'message' => 'Case updated but crawler API failed',
-                'error' => $response->body(),
+                'error'   => $response->body(),
             ], 500);
         }
 
         return response()->json([
             'message' => 'Case updated successfully',
-            'data' => $case,
+            'data'    => $case,
         ]);
     }
 
@@ -167,7 +168,7 @@ class CaseManagementService extends BaseFilterService
 
         $case->update([
             'media_url' => $data['media_url'],
-            'status' => $data['status'] ?? $case->status,
+            'status'    => $data['status'] ?? $case->status,
         ]);
 
         return $case;

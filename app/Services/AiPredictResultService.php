@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 
 class AiPredictResultService extends BaseFilterService
 {
-    public function __construct()
+    public function __construct(protected CaseManagementService $service)
     {}
 
     public function getAll(array $filters): LengthAwarePaginator
@@ -164,6 +164,8 @@ class AiPredictResultService extends BaseFilterService
                 'audit_status'       => 'pending',
                 'keywords'           => $task->crawlerTaskItem->keywords ?? null,
             ]);
+
+            $this->service->createFromPredictResult($result);
 
             foreach ($victims as $victim) {
 

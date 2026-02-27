@@ -41,9 +41,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('ai-models', AiModelController::class);
     Route::apiResource('ai-model-tasks', AiModelTaskController::class);
     Route::apiResource('ai-predict-results', AiPredictResultController::class);
-    Route::get(
-        'ai-predict-results/{result}/audits',
-        [AiPredictResultController::class, 'getAudits']
+    Route::get('audits', [AiPredictResultController::class, 'getAudits']
     );
     Route::get(
         'ai-predict-results/{result}/items',
@@ -51,7 +49,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     );
     Route::patch(
         'ai-predict-results/{result}/evidence-review',
-        [AiPredictResultController::class, 'evidenceReview']
+        [AiPredictResultController::class, 'update']
     );
     Route::apiResource('ai-predict-result-items', AiPredictResultItemController::class);
     Route::apiResource('audit-ratios', AuditRatioController::class);
