@@ -22,7 +22,9 @@ class AiPredictResultIndexResource extends JsonResource
             'review_status'      => $this->review_status,
             'audit_status'       => $this->audit_status,
             'ai_analysis_result' => $this->ai_analysis_result,
+            'ai_analysis_detail' => $this->ai_analysis_detail,
             'created_at'         => $this->created_at,
+
         ];
     }
 }

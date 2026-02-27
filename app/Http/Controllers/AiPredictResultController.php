@@ -92,6 +92,7 @@ class AiPredictResultController extends Controller
             )
                 ->latest()
                 ->get();
+                $results = AiPredictResultIndexResource::collection($results);
         }
 
         if ($results->isEmpty()) {
