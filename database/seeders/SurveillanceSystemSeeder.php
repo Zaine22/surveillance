@@ -136,22 +136,22 @@ class SurveillanceSystemSeeder extends Seeder
                 'updated_at' => now(),
             ]);
 
-            for ($i = 1; $i <= 3; $i++) {
-                DB::table('case_management_items')->insert([
-                    'id' => Str::uuid(),
-                    'case_management_id' => $caseId,
-                    'media_url' => "https://cdn.example.com/case_$i.jpg",
-                    'crawler_page_url' => 'https://example.com/page',
-                    'ai_result' => 'abnormal',
-                    'status' => 'valid',
-                    'ai_score' => rand(70, 99),
-                    'keywords' => 'keyword_1',
-                    'issue_date' => Carbon::now(),
-                    'due_date' => Carbon::now()->addDays(7),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
+            // for ($i = 1; $i <= 3; $i++) {
+            //     DB::table('case_management_items')->insert([
+            //         'id' => Str::uuid(),
+            //         'case_management_id' => $caseId,
+            //         'media_url' => "https://cdn.example.com/case_$i.jpg",
+            //         'crawler_page_url' => 'https://example.com/page',
+            //         'ai_result' => 'abnormal',
+            //         'status' => 'valid',
+            //         'ai_score' => rand(70, 99),
+            //         'keywords' => 'keyword_1',
+            //         'issue_date' => Carbon::now(),
+            //         'due_date' => Carbon::now()->addDays(7),
+            //         'created_at' => now(),
+            //         'updated_at' => now(),
+            //     ]);
+            // }
             for ($i = 1; $i <= 3; $i++) {
                 DB::table('data_sync_records')->insert([
                     'id' => Str::uuid(),
