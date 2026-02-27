@@ -16,6 +16,7 @@ class CrawlerTaskShowResource extends JsonResource
         return [
             'id'          => $this->id,
             'lexicon_id'  => $this->lexicon_id,
+            'config_name' => $this->crawlerConfig?->name,
             'keywords'    => $this->lexicon?->keywords->pluck('keywords')->flatten()->unique()->values(),
             'source_list' => $this->crawlerConfig?->sources,
         ];
