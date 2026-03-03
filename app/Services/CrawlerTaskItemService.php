@@ -85,6 +85,8 @@ class CrawlerTaskItemService
             ];
         }
 
+        $this->dispatchService->dispatchPauseItems($item);
+
         $item->update([
             'status' => 'pending',
         ]);

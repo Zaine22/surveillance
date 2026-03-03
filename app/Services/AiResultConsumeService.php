@@ -17,7 +17,19 @@ class AiResultConsumeService
 
     public function consume(): void
     {
-        $this->createGroupIfNotExists();
+        try {
+            Redis::executeRaw([
+                'XGROUP', 'CREATE',
+                $this->stream,
+                $this->group,
+                '0',
+                'MKSTREAM',
+            ]);
+        } catch (\Throwable $e) {
+            // group already exists
+        }
+
+        Log::info('AiResultConsumeService started');
 
         while (true) {
 

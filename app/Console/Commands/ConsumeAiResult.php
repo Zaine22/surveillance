@@ -1,20 +1,25 @@
 <?php
-
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Services\AiResultConsumeService;
+use Illuminate\Console\Command;
 
 class ConsumeAiResult extends Command
 {
-    protected $signature = 'ai:consume-results';
+    protected $signature   = 'ai:consume-results';
     protected $description = 'Consume AI result stream from Redis';
 
-    public function handle(AiResultConsumeService $service): int
+    public function __construct(
+        protected AiResultConsumeService $service
+    ) {
+        parent::__construct();
+    }
+
+    public function handle(): int
     {
         $this->info('AI Result Consumer Started...');
 
-        $service->consume();
+        $this->service->consume();
 
         return Command::SUCCESS;
     }
