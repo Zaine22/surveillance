@@ -93,6 +93,7 @@ class CrawlerTaskController extends Controller
 
         return response()->json([
             'message' => 'Task started successfully',
+            'status'  => $task->fresh()->status,
         ]);
     }
 
@@ -102,6 +103,7 @@ class CrawlerTaskController extends Controller
 
         return response()->json([
             'message' => 'Task paused successfully',
+            'status'  => $task->fresh()->status,
         ]);
     }
 
@@ -111,6 +113,7 @@ class CrawlerTaskController extends Controller
 
         return response()->json([
             'message' => 'Task resumed successfully',
+            'status'  => $task->fresh()->status,
         ]);
     }
 
