@@ -45,6 +45,10 @@ class CrawlerTaskItemService
                     'error_message'  => null,
                 ]);
                 $this->dispatchService->dispatch($item);
+
+                $item->update([
+                    'status' => 'crawling',
+                ]);
             }
         }
 

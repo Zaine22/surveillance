@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\DB;
 class CrawlerTaskService extends BaseFilterService
 {
     public function __construct(
-        protected CrawlerTaskItemService $itemService
+        protected CrawlerTaskItemService $itemService,
+        protected CrawlerDispatchService $dispatchService,
     ) {}
 
     public function getAllTasks(array $filters): LengthAwarePaginator
@@ -55,6 +56,9 @@ class CrawlerTaskService extends BaseFilterService
 
             $this->itemService->createFromTask($task, $config, $lexicon);
 
+            $task->update([
+                'status' => 'processing',
+            ]);
             return $task;
         });
     }
@@ -227,6 +231,85 @@ class CrawlerTaskService extends BaseFilterService
         return $task->items()
             ->where('status', 'error')
             ->get();
+    }
+
+    public function start(CrawlerTask $task): void
+    {
+        if ($task->status !== 'pending') {
+            throw new \RuntimeException('Only pending tasks can be started.');
+        }
+
+        DB::transaction(function () use ($task) {
+
+            $items = $task->items()
+                ->where('status', 'pending')
+                ->get();
+
+            foreach ($items as $item) {
+
+                $this->dispatchService->dispatch($item);
+
+                $item->update([
+                    'status' => 'crawling',
+                ]);
+            }
+
+            $task->update([
+                'status' => 'processing',
+            ]);
+        });
+    }
+    public function pause(CrawlerTask $task): void
+    {
+        if ($task->status !== 'processing') {
+            throw new \RuntimeException('Only processing tasks can be paused.');
+        }
+
+        DB::transaction(function () use ($task) {
+
+            $items = $task->items()
+                ->where('status', 'crawling')
+                ->get();
+
+            foreach ($items as $item) {
+
+                $this->dispatchService->dispatchPauseItems($item);
+
+                $item->update([
+                    'status' => 'pending',
+                ]);
+            }
+
+            $task->update([
+                'status' => 'paused',
+            ]);
+        });
+    }
+    public function resume(CrawlerTask $task): void
+    {
+        if ($task->status !== 'paused') {
+            throw new \RuntimeException('Only paused tasks can be resumed.');
+        }
+
+        DB::transaction(function () use ($task) {
+
+            $items = $task->items()
+                ->whereIn('status', ['pending', 'error'])
+                ->get();
+
+            foreach ($items as $item) {
+
+                $this->dispatchService->dispatch($item);
+
+                $item->update([
+                    'status' => 'crawling',
+                ]);
+            }
+
+            $task->update([
+                'status' => 'processing',
+            ]);
+        });
     }
 
 }

@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TaskManagement\CrawlerTaskIndexRequest;
 use App\Http\Requests\TaskManagement\CrawlerTaskItemsRequest;
-use App\Http\Requests\TaskManagement\UpdateCrawlerTaskStatusRequest;
 use App\Http\Resources\CrawlerTaskIndexResource;
 use App\Http\Resources\CrawlerTaskItemsIndexResource;
 use App\Http\Resources\CrawlerTaskShowResource;
@@ -78,25 +77,6 @@ class CrawlerTaskController extends Controller
             'data' => CrawlerTaskItemsIndexResource::collection($items->items()),
         ]);
     }
-    public function updateStatus(
-        UpdateCrawlerTaskStatusRequest $request,
-        CrawlerTask $task
-    ) {
-        try {
-            $message = $this->crawlerTaskService
-                ->updateExecutionStatus($task, $request->action);
-
-            return response()->json([
-                'message' => $message,
-            ]);
-
-        } catch (\Exception $e) {
-
-            return response()->json([
-                'message' => $e->getMessage(),
-            ], 400);
-        }
-    }
 
     public function failedTasks(CrawlerTask $task)
     {
@@ -104,6 +84,33 @@ class CrawlerTaskController extends Controller
 
         return response()->json([
             'data' => FailedCrawlerTaskItemResource::collection($failedTasks),
+        ]);
+    }
+
+    public function start(CrawlerTask $task)
+    {
+        $this->crawlerTaskService->start($task);
+
+        return response()->json([
+            'message' => 'Task started successfully',
+        ]);
+    }
+
+    public function pause(CrawlerTask $task)
+    {
+        $this->crawlerTaskService->pause($task);
+
+        return response()->json([
+            'message' => 'Task paused successfully',
+        ]);
+    }
+
+    public function resume(CrawlerTask $task)
+    {
+        $this->crawlerTaskService->resume($task);
+
+        return response()->json([
+            'message' => 'Task resumed successfully',
         ]);
     }
 

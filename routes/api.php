@@ -59,15 +59,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('crawler-configs', CrawlerConfigController::class);
     Route::apiResource('crawler-tasks', CrawlerTaskController::class);
 
-    Route::get(
-        'crawler-tasks/{task}/failed-items',
-        [CrawlerTaskController::class, 'failedTasks']
-    );
-    Route::get(
-        'crawler-tasks/{task}/task-items',
-        [CrawlerTaskController::class, 'getAllTaskItems']
-    );
+    Route::prefix('crawler-tasks')->group(function () {
+        Route::post('{task}/start', [CrawlerTaskController::class, 'start']);
+        Route::post('{task}/pause', [CrawlerTaskController::class, 'pause']);
+        Route::post('{task}/resume', [CrawlerTaskController::class, 'resume']);
+        Route::get('{task}/failed-items', [CrawlerTaskController::class, 'failedTasks']);
+        Route::get('{task}/task-items', [CrawlerTaskController::class, 'getAllTaskItems']);
+    });
+
     Route::apiResource('crawler-task-items', CrawlerTaskItemController::class);
+
     Route::prefix('crawler-task-items')->group(function () {
         Route::post('{item}/start', [CrawlerTaskItemController::class, 'start']);
         Route::post('{item}/pause', [CrawlerTaskItemController::class, 'pause']);
@@ -93,7 +94,6 @@ Route::middleware('apikey')->group(function () {
 });
 
 Route::post('/case/captureScreenshot/{caseItemId}', [CaseManagementController::class, 'captureCaseScreenshot']);
-
 Route::post('/crawler/task-items/urls', [CrawlerTaskItemController::class, 'store']);
 Route::post('/crawler/task-items/upload', [CrawlerTaskItemController::class, 'upload']);
 Route::post('/crawler/trigger', [CrawlerTaskItemController::class, 'trigger']);

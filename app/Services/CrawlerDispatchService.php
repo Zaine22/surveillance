@@ -21,4 +21,17 @@ class CrawlerDispatchService
             ]
         );
     }
+
+    public function dispatchPauseItems(CrawlerTaskItem $item): void
+    {
+
+        Redis::xadd(
+            $this->stream,
+            '*',
+            [
+                'task_item_id' => (string) $item->id,
+                'type'         => 'non-patrol',
+            ]
+        );
+    }
 }
