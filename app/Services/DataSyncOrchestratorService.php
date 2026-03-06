@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services;
 
 use App\Models\CrawlerTaskItem;
@@ -18,24 +19,41 @@ class DataSyncOrchestratorService
     {
         return DB::transaction(function () use ($item) {
 
-            $fileName = basename($item->result_file);
+            $sourcePath = $item->result_file;
 
-            $target = storage_path('app/public/nas/' . $fileName);
+            // Handle URL-based source paths (e.g., http://45.77.241.149/static/zips/file.zip)
+            if (filter_var($sourcePath, FILTER_VALIDATE_URL)) {
+                // Get the path after the domain (e.g., /static/zips/file.zip)
+                $path = parse_url($sourcePath, PHP_URL_PATH);
+
+                // Map the web path /static/ to the SFTP jail path /storage/
+                // Use a regex to only match it at the start of the path
+                $sourcePath = preg_replace('/^\/static\//', '/storage/', $path);
+
+                Log::info('Converted URL to remote filesystem path', [
+                    'original' => $item->result_file,
+                    'mapped' => $sourcePath,
+                ]);
+            }
+
+            $fileName = basename($sourcePath);
+
+            $target = storage_path('app/public/nas/'.$fileName);
 
             $record = DataSyncRecord::create([
-                'id'          => (string) Str::uuid(),
+                'id' => (string) Str::uuid(),
                 'source_path' => $item->result_file,
                 'target_path' => $target,
-                'file_name'   => $fileName,
-                'status'      => 'transferring',
+                'file_name' => $fileName,
+                'status' => 'transferring',
                 'retry_count' => 0,
-                'max_retry'   => 3,
-                'started_at'  => now(),
+                'max_retry' => 3,
+                'started_at' => now(),
             ]);
 
             try {
                 $this->rsyncService->syncCrawlerFileToNas(
-                    $item->result_file,
+                    $sourcePath,
                     $target
                 );
 
@@ -45,7 +63,7 @@ class DataSyncOrchestratorService
                 ]);
 
                 $record->update([
-                    'status'      => 'completed',
+                    'status' => 'completed',
                     'finished_at' => now(),
                 ]);
 
@@ -58,10 +76,10 @@ class DataSyncOrchestratorService
                 ]);
 
                 $record->update([
-                    'status'        => 'failed',
-                    'retry_count'   => $record->retry_count + 1,
+                    'status' => 'failed',
+                    'retry_count' => $record->retry_count + 1,
                     'error_message' => $e->getMessage(),
-                    'finished_at'   => now(),
+                    'finished_at' => now(),
                 ]);
 
                 throw $e;
