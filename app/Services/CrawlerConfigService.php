@@ -90,26 +90,26 @@ class CrawlerConfigService extends BaseFilterService
     public function createConfig(array $data): CrawlerConfig
     {
         $domains = collect($data['sources'])
-            ->map(function ($url) {
-                $url = trim($url);
+            // ->map(function ($url) {
+            //     $url = trim($url);
 
-                if (! str_starts_with($url, 'http://') && ! str_starts_with($url, 'https://')) {
-                    $url = 'https://' . $url;
-                }
+            //     if (! str_starts_with($url, 'http://') && ! str_starts_with($url, 'https://')) {
+            //         $url = 'https://' . $url;
+            //     }
 
-                $parts = parse_url($url);
+            //     $parts = parse_url($url);
 
-                if (! isset($parts['host'])) {
-                    return null;
-                }
+            //     if (! isset($parts['host'])) {
+            //         return null;
+            //     }
 
-                $scheme = $parts['scheme'] ?? 'https';
-                $host   = preg_replace('/^www\./', '', strtolower($parts['host']));
-                $path   = $parts['path'] ?? '';
-                $query  = isset($parts['query']) ? '?' . $parts['query'] : '';
+            //     $scheme = $parts['scheme'] ?? 'https';
+            //     $host   = preg_replace('/^www\./', '', strtolower($parts['host']));
+            //     $path   = $parts['path'] ?? '';
+            //     $query  = isset($parts['query']) ? '?' . $parts['query'] : '';
 
-                return $scheme . '://' . $host . $path . $query;
-            })
+            //     return $scheme . '://' . $host . $path . $query;
+            // })
             ->filter()
             ->unique()
             ->values()
