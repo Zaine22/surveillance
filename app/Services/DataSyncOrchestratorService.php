@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\CrawlerTaskItem;
 use App\Models\DataSyncRecord;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -39,6 +40,11 @@ class DataSyncOrchestratorService
                     $target
                 );
 
+                Log::info('File sync orchestration successful', [
+                    'item_id' => $item->id,
+                    'target_path' => $target,
+                ]);
+
                 $record->update([
                     'status' => 'completed',
                     'finished_at' => now(),
@@ -47,6 +53,10 @@ class DataSyncOrchestratorService
                 return $target;
 
             } catch (Throwable $e) {
+                Log::error('File sync orchestration failed', [
+                    'item_id' => $item->id,
+                    'error' => $e->getMessage(),
+                ]);
 
                 $record->update([
                     'status' => 'failed',
