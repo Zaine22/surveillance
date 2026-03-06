@@ -13,10 +13,10 @@ return [
     | a conventional file to locate the various service credentials.
     |
     */
-    'python'   => [
+    'python' => [
         'url' => env('PYTHON_API_BASE_URL'),
     ],
-    'ai'       => [
+    'ai' => [
         'metrics_url' => env('AI_METRICS_URL'),
     ],
 
@@ -24,21 +24,28 @@ return [
         'key' => env('POSTMARK_API_KEY'),
     ],
 
-    'resend'   => [
+    'resend' => [
         'key' => env('RESEND_API_KEY'),
     ],
 
-    'ses'      => [
-        'key'    => env('AWS_ACCESS_KEY_ID'),
+    'ses' => [
+        'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
-    'slack'    => [
+    'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
-            'channel'              => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
+            'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
+    ],
+
+    'crawler' => [
+        'host' => env('CRAWLER_SFTP_HOST', '45.77.241.149'),
+        'username' => env('CRAWLER_SFTP_USERNAME', 'php_louis'),
+        'password' => env('CRAWLER_SFTP_PASSWORD'),
+        'port' => env('CRAWLER_SFTP_PORT', 22),
     ],
 
 ];

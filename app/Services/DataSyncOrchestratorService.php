@@ -18,13 +18,15 @@ class DataSyncOrchestratorService
     {
         return DB::transaction(function () use ($item) {
 
-            $target = '/nas/'.basename($item->result_file);
+            $fileName = basename($item->result_file);
+            // Sync to project storage
+            $target = storage_path('app/public/nas/'.$fileName);
 
             $record = DataSyncRecord::create([
                 'id' => (string) Str::uuid(),
                 'source_path' => $item->result_file,
                 'target_path' => $target,
-                'file_name' => basename($item->result_file),
+                'file_name' => $fileName,
                 'status' => 'transferring',
                 'retry_count' => 0,
                 'max_retry' => 3,
@@ -32,7 +34,7 @@ class DataSyncOrchestratorService
             ]);
 
             try {
-                $this->rsyncService->sync(
+                $this->rsyncService->syncCrawlerFileToNas(
                     $item->result_file,
                     $target
                 );
