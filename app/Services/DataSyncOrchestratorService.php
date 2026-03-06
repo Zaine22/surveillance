@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\CrawlerTaskItem;
 use App\Models\DataSyncRecord;
-use App\Services\RsyncService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Throwable;
@@ -19,13 +18,15 @@ class DataSyncOrchestratorService
     {
         return DB::transaction(function () use ($item) {
 
-            $target = '/nas/'.basename($item->result_file);
+            $fileName = basename($item->result_file);
+            // Sync to project storage
+            $target = storage_path('app/public/nas/'.$fileName);
 
             $record = DataSyncRecord::create([
                 'id' => (string) Str::uuid(),
                 'source_path' => $item->result_file,
                 'target_path' => $target,
-                'file_name' => basename($item->result_file),
+                'file_name' => $fileName,
                 'status' => 'transferring',
                 'retry_count' => 0,
                 'max_retry' => 3,
@@ -33,7 +34,7 @@ class DataSyncOrchestratorService
             ]);
 
             try {
-                $this->rsyncService->sync(
+                $this->rsyncService->syncCrawlerFileToNas(
                     $item->result_file,
                     $target
                 );
@@ -48,7 +49,7 @@ class DataSyncOrchestratorService
             } catch (Throwable $e) {
 
                 $record->update([
-                    'status' => 'error',
+                    'status' => 'failed',
                     'retry_count' => $record->retry_count + 1,
                     'error_message' => $e->getMessage(),
                     'finished_at' => now(),
