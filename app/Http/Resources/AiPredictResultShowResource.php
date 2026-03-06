@@ -31,7 +31,7 @@ class AiPredictResultShowResource extends JsonResource
                 $this->whenLoaded('items')
             ),
             'case_management'    => $this->whenLoaded('caseManagement', function () {
-                return new CaseManagementResource($this->caseManagement);
+                return new CaseManagementIndexResource($this->caseManagement);
             }),
         ];
     }

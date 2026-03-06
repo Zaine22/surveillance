@@ -29,4 +29,9 @@ class CaseManagement extends Model
         return $this->hasMany(CaseManagementItem::class);
     }
 
+    public function aiPredictResult()
+    {
+        return $this->hasOne(AiPredictResult::class, 'id', 'ai_predict_result_id');
+    }
+
 }
