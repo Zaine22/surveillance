@@ -10,7 +10,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use App\Models\CrawlerConfig;
 use App\Models\Lexicon;
-use App\Services\CrawlerTaskService;
 
 class CrawlerScheduledJob implements ShouldQueue
 {
