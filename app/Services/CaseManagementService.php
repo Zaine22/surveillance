@@ -67,6 +67,15 @@ class CaseManagementService extends BaseFilterService
         ];
     }
 
+    public function findById(string $id): CaseManagement
+    {
+        return CaseManagement::query()
+            ->with([
+                'items',
+            ])
+            ->findOrFail($id);
+    }
+
     public function createFromPredictResult(AiPredictResult $result): CaseManagement
     {
         return DB::transaction(function () use ($result) {

@@ -1,7 +1,7 @@
 <?php
+
 namespace App\Services;
 
-use App\Models\AiModelTask;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 
@@ -17,6 +17,7 @@ class AiResultConsumeService
 
     public function consume(): void
     {
+        // Create group if not exists
         try {
             Redis::executeRaw([
                 'XGROUP', 'CREATE',
@@ -26,96 +27,66 @@ class AiResultConsumeService
                 'MKSTREAM',
             ]);
         } catch (\Throwable $e) {
-            // group already exists
+            // Group already exists
         }
 
         Log::info('AiResultConsumeService started');
 
         while (true) {
+            try {
 
-            $messages = Redis::xreadgroup(
-                'GROUP', $this->group, $this->consumer,
-                'BLOCK', 5000,
-                'COUNT', 10,
-                'STREAMS', $this->stream, '>'
-            );
+                $messages = Redis::xreadgroup(
+                    $this->group,
+                    $this->consumer,
+                    [$this->stream => '>'],
+                    10,   // COUNT
+                    5     // BLOCK (seconds)
+                );
 
-            if (empty($messages[$this->stream])) {
-                continue;
-            }
-
-            foreach ($messages[$this->stream] as $messageId => $data) {
-
-                try {
-
-                    $taskId = $data['task_id'] ?? null;
-
-                    if (! $taskId) {
-                        Redis::xack($this->stream, $this->group, [$messageId]);
-                        continue;
-                    }
-
-                    $task = AiModelTask::find($taskId);
-
-                    if (! $task instanceof AiModelTask) {
-                        Redis::xack($this->stream, $this->group, [$messageId]);
-                        continue;
-                    }
-
-                    if ($task->status === 'completed') {
-                        Redis::xack($this->stream, $this->group, [$messageId]);
-                        continue;
-                    }
-
-                    $resultJson = $data['result'] ?? null;
-
-                    if (! $resultJson) {
-                        Redis::xack($this->stream, $this->group, [$messageId]);
-                        continue;
-                    }
-
-                    $result = json_decode($resultJson, true);
-
-                    if (! is_array($result)) {
-                        Log::warning('Invalid AI result JSON', [
-                            'task_id' => $taskId,
-                            'payload' => $resultJson,
-                        ]);
-                        Redis::xack($this->stream, $this->group, [$messageId]);
-                        continue;
-                    }
-
-                    $this->resultService->saveFromAiCallback($task, $result);
-
-                    $task->status = 'completed';
-                    $task->save();
-
-                    Redis::xack($this->stream, $this->group, [$messageId]);
-
-                } catch (\Throwable $e) {
-
-                    Log::error('AI Result Consume Error', [
-                        'error'      => $e->getMessage(),
-                        'message_id' => $messageId,
-                        'data'       => $data ?? [],
-                    ]);
-
+                if ($messages === false || empty($messages[$this->stream])) {
+                    continue;
                 }
-            }
-        }
-    }
 
-    protected function createGroupIfNotExists(): void
-    {
-        try {
-            Redis::xgroup(
-                'CREATE',
-                $this->stream,
-                $this->group,
-                '0',
-                'MKSTREAM'
-            );
-        } catch (\Throwable $e) {
+                foreach ($messages[$this->stream] as $id => $data) {
+
+                    try {
+
+                        $payload = [];
+
+                        if (!empty($data['payload'])) {
+                            $payload = json_decode($data['payload'], true) ?? [];
+                        }
+
+                        $taskId = $payload['task_id'] ?? $data['task_id'] ?? null;
+
+                        if (!$taskId) {
+                            throw new \RuntimeException('task_id missing');
+                        }
+
+                        // Call your domain service
+                        $this->resultService->handle((string) $taskId, $payload);
+
+                        // ACK message after success
+                        Redis::xack($this->stream, $this->group, [$id]);
+
+                    } catch (\Throwable $e) {
+
+                        Log::error('AI result process failed', [
+                            'redis_id' => $id,
+                            'raw_data' => $data,
+                            'error'    => $e->getMessage(),
+                        ]);
+                    }
+                }
+
+            } catch (\Throwable $e) {
+
+                Log::critical('AI consumer crashed', [
+                    'error' => $e->getMessage(),
+                ]);
+
+                sleep(2); // prevent CPU spike if Redis down
+            }
         }
     }
 }

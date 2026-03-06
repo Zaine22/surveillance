@@ -91,6 +91,7 @@ class CrawlerConfigService extends BaseFilterService
     {
         $domains = collect($data['sources'])
             ->map(function ($url) {
+
                 $url = trim($url);
 
                 if (! str_starts_with($url, 'http://') && ! str_starts_with($url, 'https://')) {
@@ -99,16 +100,16 @@ class CrawlerConfigService extends BaseFilterService
 
                 $parts = parse_url($url);
 
-                if (! isset($parts['host'])) {
+                if (empty($parts['host'])) {
                     return null;
                 }
 
                 $scheme = $parts['scheme'] ?? 'https';
-                $host   = preg_replace('/^www\./', '', strtolower($parts['host']));
+                $host   = strtolower(preg_replace('/^www\./', '', $parts['host']));
                 $path   = $parts['path'] ?? '';
                 $query  = isset($parts['query']) ? '?' . $parts['query'] : '';
 
-                return $scheme . '://' . $host . $path . $query;
+                return "{$scheme}://{$host}{$path}{$query}";
             })
             ->filter()
             ->unique()

@@ -54,7 +54,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('ai-predict-result-items', AiPredictResultItemController::class);
     Route::apiResource('audit-ratios', AuditRatioController::class);
     Route::apiResource('bot-machines', BotMachineController::class);
-    Route::apiResource('case-management', CaseManagementController::class);
+    Route::apiResource('case-managements', CaseManagementController::class);
     Route::apiResource('case-management-items', CaseManagementItemController::class);
     Route::apiResource('crawler-configs', CrawlerConfigController::class);
     Route::apiResource('crawler-tasks', CrawlerTaskController::class);

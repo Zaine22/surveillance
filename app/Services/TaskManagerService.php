@@ -65,27 +65,27 @@ class TaskManagerService
                 'crawler_machine' => $crawlerMachine,
             ]);
 
-            // Sync file (side effect)
-            $nasPath = $this->syncService->syncCrawlerFileToNas($item);
+            // // Sync file (side effect)
+            // $nasPath = $this->syncService->syncCrawlerFileToNas($item);
 
-            // Finalize item
-            $item->update([
-                'status'      => 'synced',
-                'result_file' => $nasPath,
-            ]);
+            // // Finalize item
+            // $item->update([
+            //     'status'      => 'synced',
+            //     'result_file' => $nasPath,
+            // ]);
 
-            // Create AI task
-            $this->aiTaskManagerService->createFromCrawlerItem($item);
+            // // Create AI task
+            // $this->aiTaskManagerService->createFromCrawlerItem($item);
 
-            // Auto-complete ONLY if processing
-            if (
-                $task->status === 'processing' &&
-                $task->items()
-                ->whereNotIn('status', ['synced', 'error'])
-                ->count() === 0
-            ) {
-                $task->update(['status' => 'completed']);
-            }
+            // // Auto-complete ONLY if processing
+            // if (
+            //     $task->status === 'processing' &&
+            //     $task->items()
+            //     ->whereNotIn('status', ['synced', 'error'])
+            //     ->count() === 0
+            // ) {
+            //     $task->update(['status' => 'completed']);
+            // }
         });
     }
 

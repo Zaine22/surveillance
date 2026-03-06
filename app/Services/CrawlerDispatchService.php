@@ -30,7 +30,7 @@ class CrawlerDispatchService
             '*',
             [
                 'task_item_id' => (string) $item->id,
-                'type'         => 'non-patrol',
+                'type'         => 'non_patrol',
             ]
         );
     }

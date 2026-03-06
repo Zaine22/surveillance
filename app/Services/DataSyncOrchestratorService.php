@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services;
 
 use App\Models\CrawlerTaskItem;
@@ -20,18 +19,18 @@ class DataSyncOrchestratorService
         return DB::transaction(function () use ($item) {
 
             $fileName = basename($item->result_file);
-            // Sync to project storage
-            $target = storage_path('app/public/nas/'.$fileName);
+
+            $target = storage_path('app/public/nas/' . $fileName);
 
             $record = DataSyncRecord::create([
-                'id' => (string) Str::uuid(),
+                'id'          => (string) Str::uuid(),
                 'source_path' => $item->result_file,
                 'target_path' => $target,
-                'file_name' => $fileName,
-                'status' => 'transferring',
+                'file_name'   => $fileName,
+                'status'      => 'transferring',
                 'retry_count' => 0,
-                'max_retry' => 3,
-                'started_at' => now(),
+                'max_retry'   => 3,
+                'started_at'  => now(),
             ]);
 
             try {
@@ -46,7 +45,7 @@ class DataSyncOrchestratorService
                 ]);
 
                 $record->update([
-                    'status' => 'completed',
+                    'status'      => 'completed',
                     'finished_at' => now(),
                 ]);
 
@@ -59,10 +58,10 @@ class DataSyncOrchestratorService
                 ]);
 
                 $record->update([
-                    'status' => 'failed',
-                    'retry_count' => $record->retry_count + 1,
+                    'status'        => 'failed',
+                    'retry_count'   => $record->retry_count + 1,
                     'error_message' => $e->getMessage(),
-                    'finished_at' => now(),
+                    'finished_at'   => now(),
                 ]);
 
                 throw $e;

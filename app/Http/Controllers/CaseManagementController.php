@@ -8,8 +8,9 @@ use App\Http\Requests\CaseManagement\ProceedCaseScreenshotRequest;
 use App\Http\Requests\CaseManagement\StoreCaseFeedbackRequest;
 use App\Http\Requests\CaseManagement\StoreExternalCaseRequest;
 use App\Http\Requests\CaseManagement\UpdateCaseScreenshotRequest;
-use App\Http\Resources\CaseManagementResource;
+use App\Http\Resources\CaseManagementIndexResource;
 use App\Models\CaseFeedback;
+use App\Models\CaseManagement;
 use App\Services\CaseManagementService;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
@@ -76,6 +77,16 @@ class CaseManagementController extends Controller
             $request->validated()
         );
 
-        return CaseManagementResource::collection($cases);
+        return CaseManagementIndexResource::collection($cases);
+    }
+
+     public function show(
+        string $id
+    ): CaseManagementIndexResource
+     {
+
+        $result = $this->caseManagementService->findById($id);
+
+        return new CaseManagementIndexResource($result);
     }
 }
