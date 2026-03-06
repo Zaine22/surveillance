@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\CrawlerTaskItem;
 use App\Models\DataSyncRecord;
-use App\Services\RsyncService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Throwable;
@@ -48,7 +47,7 @@ class DataSyncOrchestratorService
             } catch (Throwable $e) {
 
                 $record->update([
-                    'status' => 'error',
+                    'status' => 'failed',
                     'retry_count' => $record->retry_count + 1,
                     'error_message' => $e->getMessage(),
                     'finished_at' => now(),
