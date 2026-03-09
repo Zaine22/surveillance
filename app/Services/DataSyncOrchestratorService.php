@@ -31,7 +31,7 @@ class DataSyncOrchestratorService
 
             // Map the web path /static/ to the SFTP jail path /storage/
             // Use a regex to only match it at the start of the path
-            $sourcePath = preg_replace('/^\/static\//', '/storage/', $path);
+            $sourcePath = preg_replace('/^\/static\//', 'storage/', $path);
 
             Log::info('Converted URL to remote filesystem path', [
                 'original' => $item->result_file,

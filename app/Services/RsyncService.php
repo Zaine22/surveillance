@@ -81,6 +81,9 @@ class RsyncService
             '-p',
             $config['password'],
             'sftp',
+            '-o', 'BatchMode=yes',
+            '-o', 'StrictHostKeyChecking=no',
+            '-o', 'UserKnownHostsFile=/dev/null',
             '-o', 'ConnectTimeout=30',
             sprintf('%s@%s', $config['username'], $config['host']),
         ];
