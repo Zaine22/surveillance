@@ -17,7 +17,26 @@ class DataSyncOrchestratorService
 
     public function syncCrawlerFileToNas(CrawlerTaskItem $item): string
     {
+        // 1. Create the sync record
+        $record = DB::transaction(function () use ($item, $target) {
+            return DataSyncRecord::create([
+                'id' => (string) Str::uuid(),
+                'source_path' => $item->result_file,
+                'target_path' => $target,
+                'file_name' => basename($target),
+                'status' => 'transferring',
+                'retry_count' => 0,
+                'max_retry' => 3,
+                'started_at' => now(),
+            ]);
+        });
+        
         $sourcePath = $item->result_file;
+        Log::info('started syncing ===>');
+
+        Log::info('Source path', [
+            'source_path' => $sourcePath,
+        ]);
 
         // Handle URL-based source paths (e.g., http://45.77.241.149/static/zips/file.zip)
         if (filter_var($sourcePath, FILTER_VALIDATE_URL)) {
@@ -37,19 +56,7 @@ class DataSyncOrchestratorService
         $fileName = basename($sourcePath);
         $target = storage_path('app/public/nas/'.$fileName);
 
-        // 1. Create the sync record
-        $record = DB::transaction(function () use ($item, $target) {
-            return DataSyncRecord::create([
-                'id' => (string) Str::uuid(),
-                'source_path' => $item->result_file,
-                'target_path' => $target,
-                'file_name' => basename($target),
-                'status' => 'transferring',
-                'retry_count' => 0,
-                'max_retry' => 3,
-                'started_at' => now(),
-            ]);
-        });
+        
 
         // 2. Perform the sync outside the transaction
         try {
