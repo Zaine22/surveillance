@@ -41,42 +41,44 @@ class RsyncService
         }
 
         $remoteSource = sprintf(
-            '%s@%s:%s',
+            '%s@%s',
             $config['username'],
-            $config['host'],
-            $remotePath
+            $config['host']
         );
 
+        // We use sftp instead of rsync because the remote user is restricted to nologin (SFTP only).
+        // The batch-mode (-b -) allows us to pipe commands to sftp.
         $command = [
             'sshpass',
             '-p',
             $config['password'],
-            'rsync',
-            '-avz',
-            '-e',
-            sprintf('ssh -p %d -o StrictHostKeyChecking=no', $config['port']),
+            'sftp',
             $remoteSource,
-            $localPath,
         ];
 
-        Log::info('Starting remote rsync', [
-            'command' => collect($command)->map(fn ($part, $key) => $key === 2 ? '******' : $part)->toArray(),
+        // The sftp commands to execute
+        $sftpCommands = sprintf("get %s %s\nquit", $remotePath, $localPath);
+
+        Log::info('Starting remote sftp download', [
             'remote_path' => $remotePath,
             'local_path' => $localPath,
+            'user' => $config['username'],
+            'host' => $config['host'],
         ]);
 
-        $result = Process::run($command);
+        $result = Process::input($sftpCommands)->run($command);
 
         if ($result->failed()) {
-            Log::error('Remote rsync failed', [
+            Log::error('Remote sftp failed', [
                 'error' => $result->errorOutput(),
                 'output' => $result->output(),
                 'exit_code' => $result->exitCode(),
             ]);
-            throw new RuntimeException('Remote rsync failed: '.$result->errorOutput());
+
+            throw new RuntimeException('Remote sftp failed: '.$result->errorOutput());
         }
 
-        Log::info('Remote rsync completed', ['local_path' => $localPath]);
+        Log::info('Remote sftp completed', ['local_path' => $localPath]);
 
         return $localPath;
     }
