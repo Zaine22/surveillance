@@ -3,6 +3,7 @@ namespace App\Console\Commands;
 
 use App\Services\CrawlerResultConsumeService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class ConsumeCrawlerResults extends Command
 {
@@ -19,6 +20,7 @@ class ConsumeCrawlerResults extends Command
     public function handle(): int
     {
         $this->info('Crawler result consumer started');
+        Log::info('Crawler result consumer started');
         $this->service->consume();
 
         return Command::SUCCESS;

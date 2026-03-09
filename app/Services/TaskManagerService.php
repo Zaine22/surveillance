@@ -65,7 +65,7 @@ class TaskManagerService
                 'crawler_machine' => $crawlerMachine,
             ]);
 
-            Log::info('Item updated to syncing', [
+            Log::info('Item updated to syncing in task manager', [
                 'item_id' => $item->id,
                 'status' => $item->status,
                 'result_file' => $item->result_file,
