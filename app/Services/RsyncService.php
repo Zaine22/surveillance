@@ -43,7 +43,6 @@ class RsyncService
         Log::info('RsyncService: Starting remote SFTP download', [
             'host' => $config['host'],
             'user' => $config['username'],
-            'password' => $config['password'],
             'remote_path' => $remotePath,
             'local_path' => $localPath,
         ]);
@@ -83,6 +82,7 @@ class RsyncService
             'sftp',
             '-o', 'BatchMode=yes',
             '-o', 'StrictHostKeyChecking=no',
+            '-o', 'UserKnownHostsFile=/dev/null',
             '-o', 'ConnectTimeout=30',
             sprintf('%s@%s', $config['username'], $config['host']),
         ];
