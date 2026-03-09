@@ -74,10 +74,11 @@ class DataSyncOrchestratorService
                 'finished_at' => now(),
             ]);
 
-            // 4. Update the original CrawlerTaskItem status and local path
+            // 4. Update the original CrawlerTaskItem status and public URL
+            $publicUrl = \Illuminate\Support\Facades\Storage::url('nas/'.$fileName);
             $item->update([
                 'status' => 'synced',
-                'result_file' => $target,
+                'result_file' => $publicUrl,
             ]);
 
             return $target;
