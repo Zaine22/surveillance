@@ -26,12 +26,16 @@ class CrawlerTaskItem extends Model
     protected static function booted(): void
     {
         static::updated(function (CrawlerTaskItem $item) {
+            Log::info('CrawlerTaskItem updated observer fired', [
+                'item_id' => $item->id,
+                'status' => $item->status,
+                'result_file_changed' => $item->wasChanged('result_file'),
+                'result_file_value' => $item->result_file,
+            ]);
+
             if ($item->wasChanged('result_file') && ! empty($item->result_file)) {
-                Log::info('Item updated to syncing', [
+                Log::info('Dispatching SyncCrawlerFileJob', [
                     'item_id' => $item->id,
-                    'status' => $item->status,
-                    'result_file' => $item->result_file,
-                    'crawler_machine' => $item->crawler_machine,
                 ]);
                 SyncCrawlerFileJob::dispatch($item);
             }

@@ -58,6 +58,12 @@ class TaskManagerService
                 return;
             }
 
+            Log::info('Attempting to update item to syncing', [
+                'item_id' => $item->id,
+                'current_result_file' => $item->result_file,
+                'new_result_file' => $filePath,
+            ]);
+
             // Update item to syncing
             $item->update([
                 'status' => 'syncing',
