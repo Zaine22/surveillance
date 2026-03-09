@@ -44,7 +44,7 @@ return [
     'crawler' => [
         'host' => env('CRAWLER_SFTP_HOST', '45.77.241.149'),
         'username' => env('CRAWLER_SFTP_USERNAME', 'php_louis'),
-        'password' => env('CRAWLER_SFTP_PASSWORD'),
+        'password' => env('CRAWLER_SFTP_PASSWORD', 'Louis_Scraper_2024_!'),
         'port' => env('CRAWLER_SFTP_PORT', 22),
     ],
 

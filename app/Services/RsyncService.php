@@ -54,10 +54,6 @@ class RsyncService
             '-p',
             $config['password'],
             'sftp',
-            '-o',
-            'StrictHostKeyChecking=no',
-            '-o',
-            'ConnectTimeout=30',
             $remoteSource,
         ];
 
