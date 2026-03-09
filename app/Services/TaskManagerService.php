@@ -64,6 +64,13 @@ class TaskManagerService
                 'crawler_machine' => $crawlerMachine,
             ]);
 
+            Log::info('Item updated to syncing', [
+                'item_id' => $item->id,
+                'status' => $item->status,
+                'result_file' => $item->result_file,
+                'crawler_machine' => $item->crawler_machine,
+            ]);
+
             // // Sync file (side effect)
             // $nasPath = $this->syncService->syncCrawlerFileToNas($item);
 

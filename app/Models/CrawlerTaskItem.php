@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use App\Jobs\SyncCrawlerFileJob;
+use Illuminate\Support\Facades\Log;
 
 class CrawlerTaskItem extends Model
 {
@@ -26,6 +27,12 @@ class CrawlerTaskItem extends Model
     {
         static::updated(function (CrawlerTaskItem $item) {
             if ($item->wasChanged('result_file') && ! empty($item->result_file)) {
+                Log::info('Item updated to syncing', [
+                    'item_id' => $item->id,
+                    'status' => $item->status,
+                    'result_file' => $item->result_file,
+                    'crawler_machine' => $item->crawler_machine,
+                ]);
                 SyncCrawlerFileJob::dispatch($item);
             }
         });
