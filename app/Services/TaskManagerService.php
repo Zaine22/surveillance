@@ -1,9 +1,8 @@
 <?php
+
 namespace App\Services;
 
 use App\Models\CrawlerTaskItem;
-use App\Services\AiTaskManagerService;
-use App\Services\DataSyncOrchestratorService;
 use Illuminate\Support\Facades\DB;
 
 class TaskManagerService
@@ -58,10 +57,10 @@ class TaskManagerService
                 return;
             }
 
-            //Update item to syncing
+            // Update item to syncing
             $item->update([
-                'status'          => 'syncing',
-                'result_file'     => $filePath,
+                'status' => 'syncing',
+                'result_file' => $filePath,
                 'crawler_machine' => $crawlerMachine,
             ]);
 
@@ -91,10 +90,15 @@ class TaskManagerService
 
     public function crawlerFailed(string $itemId, ?string $error, ?string $crawlerMachine): void
     {
+        Log::info('Crawler failed', [
+            'item_id' => $itemId,
+            'error' => $error,
+            'crawler_machine' => $crawlerMachine,
+        ]);
         CrawlerTaskItem::where('id', $itemId)
             ->update([
-                'status'          => 'error',
-                'error_message'   => $error,
+                'status' => 'error',
+                'error_message' => $error,
                 'crawler_machine' => $crawlerMachine,
             ]);
     }

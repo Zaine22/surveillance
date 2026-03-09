@@ -68,10 +68,16 @@ class DataSyncOrchestratorService
                 'target_path' => $target,
             ]);
 
-            // 3. Update status on success
+            // 3. Update sync record status
             $record->update([
                 'status' => 'completed',
                 'finished_at' => now(),
+            ]);
+
+            // 4. Update the original CrawlerTaskItem status and local path
+            $item->update([
+                'status' => 'synced',
+                'result_file' => $target,
             ]);
 
             return $target;
@@ -82,12 +88,18 @@ class DataSyncOrchestratorService
                 'error' => $e->getMessage(),
             ]);
 
-            // 4. Update status on failure
+            // 5. Update sync record status on failure
             $record->update([
                 'status' => 'failed',
                 'retry_count' => $record->retry_count + 1,
                 'error_message' => $e->getMessage(),
                 'finished_at' => now(),
+            ]);
+
+            // 6. Update the original CrawlerTaskItem to error
+            $item->update([
+                'status' => 'error',
+                'error_message' => $e->getMessage(),
             ]);
 
             throw $e;
