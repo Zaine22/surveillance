@@ -8,79 +8,94 @@ use RuntimeException;
 
 class RsyncService
 {
-    public function __construct() {}
-
+    /**
+     * Sync a file locally using rsync.
+     */
     public function sync(string $source, string $target): string
     {
-        Log::info('Starting local rsync', ['source' => $source, 'target' => $target]);
+        Log::info('RsyncService: Starting local sync', ['source' => $source, 'target' => $target]);
+
         $result = Process::run(['rsync', '-avz', $source, $target]);
 
         if ($result->failed()) {
-            Log::error('Local rsync failed', [
-                'error' => $result->errorOutput(),
-                'output' => $result->output(),
-            ]);
-            throw new RuntimeException('Rsync failed: '.$result->errorOutput());
+            throw new RuntimeException(sprintf(
+                'Local rsync failed (Exit: %d): %s',
+                $result->exitCode(),
+                $result->errorOutput() ?: $result->output()
+            ));
         }
 
-        Log::info('Local rsync completed', ['target' => $target]);
+        Log::info('RsyncService: Local sync completed', ['target' => $target]);
 
         return $target;
     }
 
     /**
-     * Sync a crawler file from the remote server to the local project.
+     * Sync a file from a remote server using SFTP.
+     * This is used when the remote user is restricted to SFTP-only access.
      */
     public function syncCrawlerFileToNas(string $remotePath, string $localPath): string
     {
         $config = config('services.crawler');
 
-        // Ensure the local directory exists
-        if (! is_dir($dir = dirname($localPath))) {
-            mkdir($dir, 0755, true);
+        $this->ensureDirectoryExists(dirname($localPath));
+
+        Log::info('RsyncService: Starting remote SFTP download', [
+            'host' => $config['host'],
+            'user' => $config['username'],
+            'remote_path' => $remotePath,
+            'local_path' => $localPath,
+        ]);
+
+        $command = $this->buildSftpCommand($config);
+        $batch = sprintf("get %s %s\nquit", $remotePath, $localPath);
+
+        // We use a generous timeout for large file transfers (matched to Horizon worker timeout)
+        $result = Process::input($batch)
+            ->timeout(300)
+            ->run($command);
+
+        if ($result->failed()) {
+            Log::error('RsyncService: Remote SFTP failed', [
+                'exit_code' => $result->exitCode(),
+                'error' => $result->errorOutput(),
+                'output' => $result->output(),
+            ]);
+
+            throw new RuntimeException('Remote SFTP transfer failed. Check logs for details.');
         }
 
-        $remoteSource = sprintf(
-            '%s@%s',
-            $config['username'],
-            $config['host']
-        );
+        Log::info('RsyncService: Remote SFTP download completed', ['path' => $localPath]);
 
-        // We use sftp instead of rsync because the remote user is restricted to nologin (SFTP only).
-        // The batch-mode (-b -) allows us to pipe commands to sftp.
-        // We add StrictHostKeyChecking=no to avoid hanging on new servers.
-        $command = [
+        return $localPath;
+    }
+
+    /**
+     * Build the sftp command with necessary options for automated background execution.
+     */
+    protected function buildSftpCommand(array $config): array
+    {
+        return [
             'sshpass',
             '-p',
             $config['password'],
             'sftp',
-            $remoteSource,
+            '-o', 'BatchMode=yes',           // Ensure no interactive prompts
+            '-o', 'StrictHostKeyChecking=no', // Bypass host key verification for automation
+            '-o', 'ConnectTimeout=30',        // Fail fast if connection cannot be established
+            sprintf('%s@%s', $config['username'], $config['host']),
         ];
+    }
 
-        // The sftp commands to execute
-        $sftpCommands = sprintf("get %s %s\nquit", $remotePath, $localPath);
-
-        Log::info('Starting remote sftp download', [
-            'remote_path' => $remotePath,
-            'local_path' => $localPath,
-            'user' => $config['username'],
-            'host' => $config['host'],
-        ]);
-
-        $result = Process::input($sftpCommands)->timeout(300)->run($command);
-
-        if ($result->failed()) {
-            Log::error('Remote sftp failed', [
-                'error' => $result->errorOutput(),
-                'output' => $result->output(),
-                'exit_code' => $result->exitCode(),
-            ]);
-
-            throw new RuntimeException('Remote sftp failed: '.$result->errorOutput());
+    /**
+     * Ensure the target directory exists and is writable.
+     */
+    protected function ensureDirectoryExists(string $directory): void
+    {
+        if (! is_dir($directory)) {
+            if (! mkdir($directory, 0755, true) && ! is_dir($directory)) {
+                throw new RuntimeException(sprintf('Directory "%s" was not created', $directory));
+            }
         }
-
-        Log::info('Remote sftp completed', ['local_path' => $localPath]);
-
-        return $localPath;
     }
 }
