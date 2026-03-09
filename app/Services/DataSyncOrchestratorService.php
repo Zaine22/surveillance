@@ -17,73 +17,75 @@ class DataSyncOrchestratorService
 
     public function syncCrawlerFileToNas(CrawlerTaskItem $item): string
     {
-        return DB::transaction(function () use ($item) {
+        $sourcePath = $item->result_file;
 
-            $sourcePath = $item->result_file;
+        // Handle URL-based source paths (e.g., http://45.77.241.149/static/zips/file.zip)
+        if (filter_var($sourcePath, FILTER_VALIDATE_URL)) {
+            // Get the path after the domain (e.g., /static/zips/file.zip)
+            $path = parse_url($sourcePath, PHP_URL_PATH);
 
-            // Handle URL-based source paths (e.g., http://45.77.241.149/static/zips/file.zip)
-            if (filter_var($sourcePath, FILTER_VALIDATE_URL)) {
-                // Get the path after the domain (e.g., /static/zips/file.zip)
-                $path = parse_url($sourcePath, PHP_URL_PATH);
+            // Map the web path /static/ to the SFTP jail path /storage/
+            // Use a regex to only match it at the start of the path
+            $sourcePath = preg_replace('/^\/static\//', '/storage/', $path);
 
-                // Map the web path /static/ to the SFTP jail path /storage/
-                // Use a regex to only match it at the start of the path
-                $sourcePath = preg_replace('/^\/static\//', 'storage/', $path);
+            Log::info('Converted URL to remote filesystem path', [
+                'original' => $item->result_file,
+                'mapped' => $sourcePath,
+            ]);
+        }
 
-                Log::info('Converted URL to remote filesystem path', [
-                    'original' => $item->result_file,
-                    'mapped' => $sourcePath,
-                ]);
-            }
+        $fileName = basename($sourcePath);
+        $target = storage_path('app/public/nas/'.$fileName);
 
-            $fileName = basename($sourcePath);
-
-            $target = storage_path('app/public/nas/'.$fileName);
-
-            $record = DataSyncRecord::create([
+        // 1. Create the sync record
+        $record = DB::transaction(function () use ($item, $target) {
+            return DataSyncRecord::create([
                 'id' => (string) Str::uuid(),
                 'source_path' => $item->result_file,
                 'target_path' => $target,
-                'file_name' => $fileName,
+                'file_name' => basename($target),
                 'status' => 'transferring',
                 'retry_count' => 0,
                 'max_retry' => 3,
                 'started_at' => now(),
             ]);
-
-            try {
-                $this->rsyncService->syncCrawlerFileToNas(
-                    $sourcePath,
-                    $target
-                );
-
-                Log::info('File sync orchestration successful', [
-                    'item_id' => $item->id,
-                    'target_path' => $target,
-                ]);
-
-                $record->update([
-                    'status' => 'completed',
-                    'finished_at' => now(),
-                ]);
-
-                return $target;
-
-            } catch (Throwable $e) {
-                Log::error('File sync orchestration failed', [
-                    'item_id' => $item->id,
-                    'error' => $e->getMessage(),
-                ]);
-
-                $record->update([
-                    'status' => 'failed',
-                    'retry_count' => $record->retry_count + 1,
-                    'error_message' => $e->getMessage(),
-                    'finished_at' => now(),
-                ]);
-
-                throw $e;
-            }
         });
+
+        // 2. Perform the sync outside the transaction
+        try {
+            $this->rsyncService->syncCrawlerFileToNas(
+                $sourcePath,
+                $target
+            );
+
+            Log::info('File sync orchestration successful', [
+                'item_id' => $item->id,
+                'target_path' => $target,
+            ]);
+
+            // 3. Update status on success
+            $record->update([
+                'status' => 'completed',
+                'finished_at' => now(),
+            ]);
+
+            return $target;
+
+        } catch (Throwable $e) {
+            Log::error('File sync orchestration failed', [
+                'item_id' => $item->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            // 4. Update status on failure
+            $record->update([
+                'status' => 'failed',
+                'retry_count' => $record->retry_count + 1,
+                'error_message' => $e->getMessage(),
+                'finished_at' => now(),
+            ]);
+
+            throw $e;
+        }
     }
 }

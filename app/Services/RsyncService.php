@@ -48,11 +48,16 @@ class RsyncService
 
         // We use sftp instead of rsync because the remote user is restricted to nologin (SFTP only).
         // The batch-mode (-b -) allows us to pipe commands to sftp.
+        // We add StrictHostKeyChecking=no to avoid hanging on new servers.
         $command = [
             'sshpass',
             '-p',
             $config['password'],
             'sftp',
+            '-o',
+            'StrictHostKeyChecking=no',
+            '-o',
+            'ConnectTimeout=30',
             $remoteSource,
         ];
 
@@ -66,7 +71,7 @@ class RsyncService
             'host' => $config['host'],
         ]);
 
-        $result = Process::input($sftpCommands)->run($command);
+        $result = Process::input($sftpCommands)->timeout(300)->run($command);
 
         if ($result->failed()) {
             Log::error('Remote sftp failed', [
