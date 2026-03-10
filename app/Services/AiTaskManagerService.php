@@ -43,7 +43,7 @@ class AiTaskManagerService
 
             $params = [
                 'dir_path'   => $task->file_name,
-                'image_type' => 'png',
+                'image_type' => 'element',
             ];
 
             $this->dispatchService->dispatch(
