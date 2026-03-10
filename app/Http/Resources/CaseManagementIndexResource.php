@@ -22,9 +22,8 @@ class CaseManagementIndexResource extends JsonResource
             'comment'          => $this->comment,
             'file_name'        => optional($this->aiPredictResult?->aiModelTask)->file_name,
             'created_at'       => $this->created_at,
-            'items'            => CaseManagementItemResource::collection(
-                $this->items()->get()
-            ),
+            'lexicon_id '      => $this->result->lexicon_id,
+            'keywords'         => $this->result->keywords,
         ];
     }
 }

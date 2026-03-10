@@ -102,7 +102,7 @@ class SurveillanceSystemSeeder extends Seeder
             'id'                 => $predictId,
             'ai_model_task_id'   => $aiModelTaskId,
             'lexicon_id'         => $lexiconId,
-            'keywords'           => 'keyword_1',
+            'keywords'           => $task->crawlerTaskItem->keywords ?? null,
             'ai_score'           => 88.50,
             'analysis_result'    => 'Detected abnormal content',
             'review_status'      => 'pending',
