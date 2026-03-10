@@ -80,7 +80,7 @@ class DataSyncOrchestratorService
                 'status'      => 'synced',
                 'result_file' => $publicUrl,
             ]);
-
+            $this->aiTaskManagerService->createFromCrawlerItem($item);
             return $target;
 
         } catch (Throwable $e) {
@@ -105,7 +105,7 @@ class DataSyncOrchestratorService
 
             throw $e;
         }
-        $this->aiTaskManagerService->createFromCrawlerItem($this->item);
+        
 
     }
 }
