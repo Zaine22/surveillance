@@ -1,4 +1,5 @@
 <?php
+
 namespace Database\Seeders;
 
 use App\Models\AiModelTask;
@@ -9,23 +10,24 @@ use Illuminate\Support\Str;
 
 class TestSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $task          = AiModelTask::first();
-        $lexicon       = Lexicon::first();
-        $aiModelTaskId = $task->id;
-        $lexiconId     = $lexicon->id;
-        $predictId     = Str::uuid();
+        $task    = AiModelTask::firstOrFail();
+        $lexicon = Lexicon::with('keywords')->firstOrFail();
+
+        $keywordModel = $lexicon->keywords()->firstOrFail();
+
+        // Convert array → string (because column is VARCHAR)
+        $keywordsString = implode(',', $keywordModel->keywords);
+
+        $predictId = Str::uuid();
+
+        // Insert ai_predict_results
         DB::table('ai_predict_results')->insert([
             'id'                 => $predictId,
-            'ai_model_task_id'   => $aiModelTaskId,
-            'lexicon_id'         => $lexiconId,
-            'keywords'           => json_encode(
-                $lexicon->keywords->first()->keywords
-            ),
+            'ai_model_task_id'   => $task->id,
+            'lexicon_id'         => $lexicon->id,
+            'keywords'           => $keywordsString,
             'ai_score'           => 88.50,
             'analysis_result'    => 'Detected abnormal content',
             'review_status'      => 'pending',
@@ -36,6 +38,7 @@ class TestSeeder extends Seeder
             'updated_at'         => now(),
         ]);
 
+        // Insert ai_predict_result_items
         for ($i = 1; $i <= 3; $i++) {
             DB::table('ai_predict_result_items')->insert([
                 'id'                   => Str::uuid(),
@@ -45,17 +48,18 @@ class TestSeeder extends Seeder
                 'ai_result'            => 'abnormal',
                 'status'               => 'valid',
                 'ai_score'             => rand(70, 99),
-                'keywords'             => $lexicon->keywords->first()->keywords,
+                'keywords'             => $keywordsString, // FIXED
                 'created_at'           => now(),
                 'updated_at'           => now(),
             ]);
         }
-        $caseId = Str::uuid();
+
+        // Insert case_management
         DB::table('case_management')->insert([
-            'id'                   => $caseId,
+            'id'                   => Str::uuid(),
             'ai_predict_result_id' => $predictId,
             'internal_case_no'     => 'INT-001',
-            'keywords'             => 'keyword_1',
+            'keywords'             => $keywordsString,
             'status'               => 'created',
             'comment'              => 'Auto generated case',
             'created_at'           => now(),
