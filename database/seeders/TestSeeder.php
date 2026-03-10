@@ -1,5 +1,4 @@
 <?php
-
 namespace Database\Seeders;
 
 use App\Models\AiModelTask;
@@ -17,17 +16,15 @@ class TestSeeder extends Seeder
 
         $keywordModel = $lexicon->keywords()->firstOrFail();
 
-        // Convert array → string (because column is VARCHAR)
-        $keywordsString = implode(',', $keywordModel->keywords);
+        $keywordsJson = json_encode($keywordModel->keywords);
 
         $predictId = Str::uuid();
 
-        // Insert ai_predict_results
         DB::table('ai_predict_results')->insert([
             'id'                 => $predictId,
             'ai_model_task_id'   => $task->id,
             'lexicon_id'         => $lexicon->id,
-            'keywords'           => $keywordsString,
+            'keywords'           => $keywordsJson,
             'ai_score'           => 88.50,
             'analysis_result'    => 'Detected abnormal content',
             'review_status'      => 'pending',
@@ -38,7 +35,6 @@ class TestSeeder extends Seeder
             'updated_at'         => now(),
         ]);
 
-        // Insert ai_predict_result_items
         for ($i = 1; $i <= 3; $i++) {
             DB::table('ai_predict_result_items')->insert([
                 'id'                   => Str::uuid(),
@@ -48,22 +44,10 @@ class TestSeeder extends Seeder
                 'ai_result'            => 'abnormal',
                 'status'               => 'valid',
                 'ai_score'             => rand(70, 99),
-                'keywords'             => $keywordsString, // FIXED
+                'keywords'             => $keywordsJson,
                 'created_at'           => now(),
                 'updated_at'           => now(),
             ]);
         }
-
-        // Insert case_management
-        DB::table('case_management')->insert([
-            'id'                   => Str::uuid(),
-            'ai_predict_result_id' => $predictId,
-            'internal_case_no'     => 'INT-001',
-            'keywords'             => $keywordsString,
-            'status'               => 'created',
-            'comment'              => 'Auto generated case',
-            'created_at'           => now(),
-            'updated_at'           => now(),
-        ]);
     }
 }
