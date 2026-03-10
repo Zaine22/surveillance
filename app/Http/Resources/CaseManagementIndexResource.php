@@ -13,6 +13,7 @@ class CaseManagementIndexResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // dd($this->aiPredictResult->aiModelTask->crawlerTaskItem->lexicon->keywords);
         return [
             'id'               => $this->id,
             'internal_case_no' => $this->internal_case_no,
@@ -22,8 +23,7 @@ class CaseManagementIndexResource extends JsonResource
             'comment'          => $this->comment,
             'file_name'        => optional($this->aiPredictResult?->aiModelTask)->file_name,
             'created_at'       => $this->created_at,
-            'lexicon_id '      => $this->result->lexicon_id,
-            'keywords'         => $this->result->keywords,
+            'lexicon_id '      => $this->aiPredictResult->lexicon_id,
         ];
     }
 }
