@@ -83,7 +83,7 @@ class DataSyncOrchestratorService
             ]);
             $this->aiTaskManagerService->createFromCrawlerItem($item);
 
-            $item->update([
+            $item->task()->update([
                 'status' => 'completed',
             ]);
 
