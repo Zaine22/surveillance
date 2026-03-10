@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('reason', 255)->nullable();
             $table->string('other_reason', 255)->nullable();
             $table->decimal('ai_score', 5, 2)->nullable();
-            $table->string('keywords', 100)->nullable();
+             $table->json('keywords')->nullable();
             $table->timestamps();
         });
     }

@@ -23,7 +23,9 @@ class TestSeeder extends Seeder
             'id'                 => $predictId,
             'ai_model_task_id'   => $aiModelTaskId,
             'lexicon_id'         => $lexiconId,
-            'keywords'           => $lexicon->keywords->first()->keywords,
+            'keywords'           => json_encode(
+                $lexicon->keywords->first()->keywords
+            ),
             'ai_score'           => 88.50,
             'analysis_result'    => 'Detected abnormal content',
             'review_status'      => 'pending',
