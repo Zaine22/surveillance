@@ -49,5 +49,16 @@ class TestSeeder extends Seeder
                 'updated_at'           => now(),
             ]);
         }
+
+        DB::table('case_management')->insert([
+            'id'                   => Str::uuid(),
+            'ai_predict_result_id' => $predictId,
+            'internal_case_no'     => 'INT-001',
+            'keywords'             => implode(',', $keywordModel->keywords),
+            'status'               => 'created',
+            'comment'              => 'Auto generated case',
+            'created_at'           => now(),
+            'updated_at'           => now(),
+        ]);
     }
 }
