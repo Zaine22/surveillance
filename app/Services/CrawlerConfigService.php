@@ -98,6 +98,10 @@ class CrawlerConfigService extends BaseFilterService
                     $url = 'https://' . $url;
                 }
 
+                if (! filter_var($url, FILTER_VALIDATE_URL)) {
+                    return null;
+                }
+
                 $parts = parse_url($url);
 
                 if (empty($parts['host'])) {
@@ -105,7 +109,7 @@ class CrawlerConfigService extends BaseFilterService
                 }
 
                 $scheme = $parts['scheme'] ?? 'https';
-                $host   = strtolower(preg_replace('/^www\./', '', $parts['host']));
+                $host   = strtolower($parts['host']);
                 $path   = $parts['path'] ?? '';
                 $query  = isset($parts['query']) ? '?' . $parts['query'] : '';
 
@@ -117,6 +121,7 @@ class CrawlerConfigService extends BaseFilterService
             ->toArray();
 
         $data['sources'] = $domains;
+
 
         $config = CrawlerConfig::create($data);
         $this->globalWhitelistService->createMany($domains);
