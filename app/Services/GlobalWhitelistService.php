@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services;
 
 use App\Models\GlobalWhitelist;
@@ -53,21 +52,17 @@ class GlobalWhitelistService
     {
         return DB::transaction(function () use ($urls) {
 
-            $normalizedUrls = collect($urls)
-                ->map(fn ($url) => strtolower(trim($url)))
-                ->map(fn ($url) => rtrim($url, '/'))
-                ->unique()
-                ->values();
+            $uniqueUrls = collect($urls)->unique()->values();
 
-            $existingUrls = GlobalWhitelist::whereIn('url', $normalizedUrls)
+            $existingUrls = GlobalWhitelist::whereIn('url', $uniqueUrls)
                 ->pluck('url')
                 ->all();
 
-            $insertData = $normalizedUrls
+            $insertData = $uniqueUrls
                 ->diff($existingUrls)
-                ->map(fn ($url) => [
-                    'id' => (string) Str::uuid(),
-                    'url' => $url,
+                ->map(fn($url) => [
+                    'id'         => (string) Str::uuid(),
+                    'url'        => $url,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ])
@@ -78,10 +73,8 @@ class GlobalWhitelistService
                 GlobalWhitelist::insert($insertData);
             }
 
-            return GlobalWhitelist::whereIn(
-                'url',
-                collect($insertData)->pluck('url')
-            )->get();
+            // Return all matching URLs (existing + new)
+            return GlobalWhitelist::whereIn('url', $uniqueUrls)->get();
         });
     }
 
