@@ -312,4 +312,29 @@ class CrawlerTaskService extends BaseFilterService
         });
     }
 
+    public function destroy(CrawlerTask $task): void
+    {
+        if ($task->status === 'processing') {
+            throw new \RuntimeException('Cannot delete a running task.');
+        }
+
+        DB::transaction(function () use ($task) {
+
+            $items = $task->items()->get();
+
+            foreach ($items as $item) {
+
+                $this->dispatchService->dispatchPauseItems($item);
+
+                $item->update([
+                    'status' => 'deleted',
+                ]);
+            }
+
+            $task->update([
+                'status' => 'deleted',
+            ]);
+        });
+    }
+
 }

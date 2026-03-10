@@ -117,4 +117,14 @@ class CrawlerTaskController extends Controller
         ]);
     }
 
+    public function destroy(CrawlerTask $task)
+    {
+        $this->crawlerTaskService->destroy($task);
+
+        return response()->json([
+            'message' => 'Task destroyed successfully',
+            'status'  => $task->fresh()->status,
+        ]);
+    }
+
 }
