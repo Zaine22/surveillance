@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services;
 
 use App\Models\CrawlerTaskItem;
@@ -12,7 +11,8 @@ use Throwable;
 class DataSyncOrchestratorService
 {
     public function __construct(
-        protected RsyncService $rsyncService
+        protected RsyncService $rsyncService,
+        protected AiTaskManagerService $aiTaskManagerService
     ) {}
 
     public function syncCrawlerFileToNas(CrawlerTaskItem $item): string
@@ -35,24 +35,24 @@ class DataSyncOrchestratorService
 
             Log::info('Converted URL to remote filesystem path', [
                 'original' => $item->result_file,
-                'mapped' => $sourcePath,
+                'mapped'   => $sourcePath,
             ]);
         }
 
         $fileName = basename($sourcePath);
-        $target = storage_path('app/public/nas/'.$fileName);
+        $target   = storage_path('app/public/nas/' . $fileName);
 
         // 1. Create the sync record
         $record = DB::transaction(function () use ($item, $target) {
             return DataSyncRecord::create([
-                'id' => (string) Str::uuid(),
+                'id'          => (string) Str::uuid(),
                 'source_path' => $item->result_file,
                 'target_path' => $target,
-                'file_name' => basename($target),
-                'status' => 'transferring',
+                'file_name'   => basename($target),
+                'status'      => 'transferring',
                 'retry_count' => 0,
-                'max_retry' => 3,
-                'started_at' => now(),
+                'max_retry'   => 3,
+                'started_at'  => now(),
             ]);
         });
 
@@ -64,20 +64,20 @@ class DataSyncOrchestratorService
             );
 
             Log::info('File sync orchestration successful', [
-                'item_id' => $item->id,
+                'item_id'     => $item->id,
                 'target_path' => $target,
             ]);
 
             // 3. Update sync record status
             $record->update([
-                'status' => 'completed',
+                'status'      => 'completed',
                 'finished_at' => now(),
             ]);
 
             // 4. Update the original CrawlerTaskItem status and public URL
-            $publicUrl = \Illuminate\Support\Facades\Storage::url('nas/'.$fileName);
+            $publicUrl = \Illuminate\Support\Facades\Storage::url('nas/' . $fileName);
             $item->update([
-                'status' => 'synced',
+                'status'      => 'synced',
                 'result_file' => $publicUrl,
             ]);
 
@@ -86,24 +86,26 @@ class DataSyncOrchestratorService
         } catch (Throwable $e) {
             Log::error('File sync orchestration failed', [
                 'item_id' => $item->id,
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ]);
 
             // 5. Update sync record status on failure
             $record->update([
-                'status' => 'failed',
-                'retry_count' => $record->retry_count + 1,
+                'status'        => 'failed',
+                'retry_count'   => $record->retry_count + 1,
                 'error_message' => $e->getMessage(),
-                'finished_at' => now(),
+                'finished_at'   => now(),
             ]);
 
             // 6. Update the original CrawlerTaskItem to error
             $item->update([
-                'status' => 'error',
+                'status'        => 'error',
                 'error_message' => $e->getMessage(),
             ]);
 
             throw $e;
         }
+        $this->aiTaskManagerService->createFromCrawlerItem($this->item);
+
     }
 }
