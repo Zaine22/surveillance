@@ -233,10 +233,14 @@ class CrawlerTaskService extends BaseFilterService
             ->get();
     }
 
-    public function start(CrawlerTask $task): void
+    public function start(CrawlerTask $task): array
     {
-        if ($task->status !== 'pending') {
-            throw new \RuntimeException('Only pending tasks can be started.');
+        if ($task->status !== 'pending' && $task->status !== 'deleted') {
+            return [
+                'success' => false,
+                'message' => 'Only pending and deleted tasks can be started.',
+                'status'  => $task->status,
+            ];
         }
 
         DB::transaction(function () use ($task) {
@@ -246,23 +250,27 @@ class CrawlerTaskService extends BaseFilterService
                 ->get();
 
             foreach ($items as $item) {
-
                 $this->dispatchService->dispatch($item);
-
-                $item->update([
-                    'status' => 'crawling',
-                ]);
+                $item->update(['status' => 'crawling']);
             }
 
-            $task->update([
-                'status' => 'processing',
-            ]);
+            $task->update(['status' => 'processing']);
         });
+
+        return [
+            'success' => true,
+            'message' => 'Task started successfully',
+            'status'  => 'processing',
+        ];
     }
-    public function pause(CrawlerTask $task): void
+    public function pause(CrawlerTask $task): array
     {
         if ($task->status !== 'processing') {
-            throw new \RuntimeException('Only processing tasks can be paused.');
+            return [
+                'success' => false,
+                'message' => 'Only processing tasks can be paused.',
+                'status'  => $task->status,
+            ];
         }
 
         DB::transaction(function () use ($task) {
@@ -272,23 +280,27 @@ class CrawlerTaskService extends BaseFilterService
                 ->get();
 
             foreach ($items as $item) {
-
                 $this->dispatchService->dispatchPauseItems($item);
-
-                $item->update([
-                    'status' => 'pending',
-                ]);
+                $item->update(['status' => 'pending']);
             }
 
-            $task->update([
-                'status' => 'paused',
-            ]);
+            $task->update(['status' => 'paused']);
         });
+
+        return [
+            'success' => true,
+            'message' => 'Task paused successfully',
+            'status'  => 'paused',
+        ];
     }
-    public function resume(CrawlerTask $task): void
+    public function resume(CrawlerTask $task): array
     {
         if ($task->status !== 'paused') {
-            throw new \RuntimeException('Only paused tasks can be resumed.');
+            return [
+                'success' => false,
+                'message' => 'Only paused tasks can be resumed.',
+                'status'  => $task->status,
+            ];
         }
 
         DB::transaction(function () use ($task) {
@@ -298,18 +310,18 @@ class CrawlerTaskService extends BaseFilterService
                 ->get();
 
             foreach ($items as $item) {
-
                 $this->dispatchService->dispatch($item);
-
-                $item->update([
-                    'status' => 'crawling',
-                ]);
+                $item->update(['status' => 'crawling']);
             }
 
-            $task->update([
-                'status' => 'processing',
-            ]);
+            $task->update(['status' => 'processing']);
         });
+
+        return [
+            'success' => true,
+            'message' => 'Task resumed successfully',
+            'status'  => 'processing',
+        ];
     }
 
     public function delete(CrawlerTask $task): array

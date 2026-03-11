@@ -89,32 +89,32 @@ class CrawlerTaskController extends Controller
 
     public function start(CrawlerTask $task)
     {
-        $this->crawlerTaskService->start($task);
+        $result = $this->crawlerTaskService->start($task);
 
-        return response()->json([
-            'message' => 'Task started successfully',
-            'status'  => $task->fresh()->status,
-        ]);
+        return response()->json(
+            $result,
+            $result['success'] ? 200 : 409
+        );
     }
 
     public function pause(CrawlerTask $task)
     {
-        $this->crawlerTaskService->pause($task);
+        $result = $this->crawlerTaskService->pause($task);
 
-        return response()->json([
-            'message' => 'Task paused successfully',
-            'status'  => $task->fresh()->status,
-        ]);
+        return response()->json(
+            $result,
+            $result['success'] ? 200 : 409
+        );
     }
 
     public function resume(CrawlerTask $task)
     {
-        $this->crawlerTaskService->resume($task);
+        $result = $this->crawlerTaskService->resume($task);
 
-        return response()->json([
-            'message' => 'Task resumed successfully',
-            'status'  => $task->fresh()->status,
-        ]);
+        return response()->json(
+            $result,
+            $result['success'] ? 200 : 409
+        );
     }
 
     public function delete(CrawlerTask $task)
