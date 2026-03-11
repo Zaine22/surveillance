@@ -40,6 +40,31 @@ class CrawlerTaskItem extends Model
                 ]);
                 SyncCrawlerFileJob::dispatch($item);
             }
+            if (
+                $item->wasChanged('status') &&
+                $item->status === 'synced'
+            ) {
+                $task = $item->task;
+
+                if (! $task) {
+                    return;
+                }
+
+                $hasPending = $task->items()
+                    ->where('status', '!=', 'synced')
+                    ->exists();
+
+                if (! $hasPending) {
+
+                    Log::info('All items synced → marking task completed', [
+                        'task_id' => $task->id,
+                    ]);
+
+                    $task->update([
+                        'status' => 'completed',
+                    ]);
+                }
+            }
         });
     }
 
