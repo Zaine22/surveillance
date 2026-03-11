@@ -1,10 +1,8 @@
 <?php
-
 namespace App\Services;
 
 use App\Models\Lexicon;
 use App\Models\LexiconKeyword;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -31,14 +29,14 @@ class LexiconService extends BaseFilterService
     //     return $query->paginate($perPage, ['*'], 'page', $page);
 
     // }
-     public function getAllLexicons(array $filters)
+    public function getAllLexicons(array $filters)
     {
         $query = Lexicon::with('keywords');
 
         return $this->applyFilters(
             $query,
             $filters,
-            ['name','remark'],
+            ['name', 'remark'],
             true
         );
     }
@@ -64,11 +62,11 @@ class LexiconService extends BaseFilterService
                 }
 
                 LexiconKeyword::create([
-                    'lexicon_id' => $lexicon->id,
-                    'keywords' => array_values(array_unique($group)),
+                    'lexicon_id'      => $lexicon->id,
+                    'keywords'        => array_values(array_unique($group)),
                     'crawl_hit_count' => 0,
-                    'case_count' => 0,
-                    'status' => 'enabled',
+                    'case_count'      => 0,
+                    'status'          => 'enabled',
                 ]);
             }
 
@@ -99,22 +97,25 @@ class LexiconService extends BaseFilterService
 
                 $payload = [
                     'keywords' => array_values(array_unique($row['keywords'])),
-                    'status' => $row['status'],
+                    'status'   => $row['status'],
                 ];
 
-                if (Str::isUuid($row['id'])) {
+                $keywordId = $row['id'] ?? null;
 
-                    LexiconKeyword::where('id', $row['id'])
+                if ($keywordId && Str::isUuid($keywordId)) {
+
+                    LexiconKeyword::where('id', $keywordId)
                         ->where('lexicon_id', $lexicon->id)
                         ->update($payload);
+
                 } else {
 
                     LexiconKeyword::create([
-                        'lexicon_id' => $lexicon->id,
-                        'keywords' => $payload['keywords'],
-                        'status' => $payload['status'],
+                        'lexicon_id'      => $lexicon->id,
+                        'keywords'        => $payload['keywords'],
+                        'status'          => $payload['status'],
                         'crawl_hit_count' => 0,
-                        'case_count' => 0,
+                        'case_count'      => 0,
                     ]);
                 }
             }
