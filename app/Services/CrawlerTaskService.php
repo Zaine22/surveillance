@@ -235,10 +235,10 @@ class CrawlerTaskService extends BaseFilterService
 
     public function start(CrawlerTask $task): array
     {
-        if ($task->status !== 'pending' && $task->status !== 'deleted') {
+        if (! in_array($task->status, ['pending', 'paused'])) {
             return [
                 'success' => false,
-                'message' => 'Only pending and deleted tasks can be started.',
+                'message' => 'Task cannot be started.',
                 'status'  => $task->status,
             ];
         }
@@ -246,7 +246,7 @@ class CrawlerTaskService extends BaseFilterService
         DB::transaction(function () use ($task) {
 
             $items = $task->items()
-                ->where('status', 'pending')
+                ->whereIn('status', ['pending', 'error'])
                 ->get();
 
             foreach ($items as $item) {
