@@ -21,8 +21,8 @@ class DatabaseSeeder extends Seeder
             // LexiconSeeder::class,
             // AiModelSeeder::class,
             // BotSeeder::class,
-            // SurveillanceSystemSeeder::class,
-            TestSeeder::class,
+            SurveillanceSystemSeeder::class,
+
         ]);
     }
 }

@@ -63,6 +63,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('{task}/start', [CrawlerTaskController::class, 'start']);
         Route::post('{task}/pause', [CrawlerTaskController::class, 'pause']);
         Route::post('{task}/resume', [CrawlerTaskController::class, 'resume']);
+        Route::post('{task}/delete', [CrawlerTaskController::class, 'delete']);
         Route::get('{task}/failed-items', [CrawlerTaskController::class, 'failedTasks']);
         Route::get('{task}/task-items', [CrawlerTaskController::class, 'getAllTaskItems']);
     });
