@@ -15,23 +15,8 @@ class CrawlerTask extends Model
         'lexicon_id',
         'status',
     ];
-    protected static function booted(): void
-    {
-        static::updated(function (CrawlerTaskItem $item) {
 
-            if ($item->wasChanged('status') && $item->status === 'synced') {
 
-                CrawlerTask::where('id', $item->task_id)
-                    ->where('status', '!=', 'completed')
-                    ->whereDoesntHave('items', function ($query) {
-                        $query->where('status', '!=', 'synced');
-                    })
-                    ->update([
-                        'status' => 'completed',
-                    ]);
-            }
-        });
-    }
 
     public function crawlerConfig()
     {
