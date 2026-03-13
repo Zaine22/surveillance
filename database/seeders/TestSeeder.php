@@ -2,7 +2,6 @@
 namespace Database\Seeders;
 
 use App\Models\AiModelTask;
-use App\Models\Lexicon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -11,12 +10,19 @@ class TestSeeder extends Seeder
 {
     public function run(): void
     {
-        $task    = AiModelTask::firstOrFail();
-        $lexicon = Lexicon::with('keywords')->firstOrFail();
+        $task = AiModelTask::with('crawlerTaskItem.task.lexicon.keywords')->firstOrFail();
 
-        $keywordModel = $lexicon->keywords()->firstOrFail();
+        $lexicon = $task->crawlerTaskItem->task->lexicon;
 
-        $keywordsJson = json_encode($keywordModel->keywords);
+        $keywordsArray = $lexicon->keywords
+            ->pluck('keywords')
+            ->flatten()
+            ->unique()
+            ->values()
+            ->toArray();
+
+        $keywordsString = substr(implode(',', $keywordsArray), 0, 250); // for varchar columns
+        $keywordsJson   = json_encode($keywordsArray);                  // for json columns
 
         $predictId = Str::uuid();
 
@@ -24,7 +30,7 @@ class TestSeeder extends Seeder
             'id'                 => $predictId,
             'ai_model_task_id'   => $task->id,
             'lexicon_id'         => $lexicon->id,
-            'keywords'           => $keywordsJson,
+            'keywords'           => $keywordsString,
             'ai_score'           => 88.50,
             'analysis_result'    => 'Detected abnormal content',
             'review_status'      => 'pending',
@@ -54,7 +60,7 @@ class TestSeeder extends Seeder
             'id'                   => Str::uuid(),
             'ai_predict_result_id' => $predictId,
             'internal_case_no'     => 'INT-001',
-            'keywords'             => implode(',', $keywordModel->keywords),
+            'keywords'             => $keywordsString,
             'status'               => 'created',
             'comment'              => 'Auto generated case',
             'created_at'           => now(),
