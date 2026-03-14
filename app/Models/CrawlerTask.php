@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -16,6 +15,8 @@ class CrawlerTask extends Model
         'lexicon_id',
         'status',
     ];
+
+
 
     public function crawlerConfig()
     {

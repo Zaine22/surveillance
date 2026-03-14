@@ -28,7 +28,7 @@ class UpdateLexiconRequest extends FormRequest
 
             'keywords' => ['required', 'array'],
 
-            'keywords.*.id' => ['required', 'string'],
+            'keywords.*.id' => ['nullable', 'string'],
             'keywords.*.keywords' => ['required', 'array', 'min:1'],
             'keywords.*.keywords.*' => ['string', 'min:1', 'max:100'],
             'keywords.*.status' => ['required', 'in:enabled,disabled'],

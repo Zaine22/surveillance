@@ -107,8 +107,10 @@ class AiPredictResultService extends BaseFilterService
     //     });
     // }
 
-    public function saveFromAiCallback(AiModelTask $task, array $payload): AiPredictResult
+    public function saveFromAiCallback($id, array $payload): AiPredictResult
     {
+
+        $task = AiModelTask::findOrFail($id);
         return DB::transaction(function () use ($task, $payload) {
 
             $existing = AiPredictResult::where(
@@ -162,7 +164,8 @@ class AiPredictResultService extends BaseFilterService
                 'ai_analysis_detail' => $payload,
                 'review_status'      => 'pending',
                 'audit_status'       => 'pending',
-                'keywords'           => $task->crawlerTaskItem->keywords ?? null,
+                'lexicon_id'         => $task->crawlerTaskItem->crawlerTask->lexicon->id ?? null,
+                'keywords'           => $task->crawlerTaskItem->crawlerTask->lexicon->keywords ?? null,
             ]);
 
             $this->service->createFromPredictResult($result);

@@ -63,10 +63,10 @@ class AiResultConsumeService
                             throw new \RuntimeException('task_id missing');
                         }
 
-                        // Call your domain service
-                        $this->resultService->handle((string) $taskId, $payload);
 
-                        // ACK message after success
+                        $this->resultService->saveFromAiCallback((string) $taskId, $payload);
+
+
                         Redis::xack($this->stream, $this->group, [$id]);
 
                     } catch (\Throwable $e) {

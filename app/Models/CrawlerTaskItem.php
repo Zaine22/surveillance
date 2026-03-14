@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use App\Jobs\SyncCrawlerFileJob;
@@ -28,10 +27,10 @@ class CrawlerTaskItem extends Model
         static::updated(function (CrawlerTaskItem $item) {
             // Log for debugging
             Log::info('CrawlerTaskItem updated observer fired', [
-                'item_id' => $item->id,
-                'status' => $item->status,
+                'item_id'        => $item->id,
+                'status'         => $item->status,
                 'status_changed' => $item->wasChanged('status'),
-                'result_file' => $item->result_file,
+                'result_file'    => $item->result_file,
             ]);
 
             // Trigger sync when status moves to 'syncing'
@@ -40,6 +39,18 @@ class CrawlerTaskItem extends Model
                     'item_id' => $item->id,
                 ]);
                 SyncCrawlerFileJob::dispatch($item);
+            }
+
+            if ($item->wasChanged('status') && $item->status === 'synced') {
+
+                CrawlerTask::where('id', $item->task_id)
+                    ->where('status', '!=', 'completed')
+                    ->whereDoesntHave('items', function ($query) {
+                        $query->where('status', '!=', 'synced');
+                    })
+                    ->update([
+                        'status' => 'completed',
+                    ]);
             }
         });
     }
@@ -53,4 +64,10 @@ class CrawlerTaskItem extends Model
     {
         return $this->task->crawlerConfig();
     }
+
+    public function lexicon()
+    {
+        return $this->task->lexicon();
+    }
+
 }

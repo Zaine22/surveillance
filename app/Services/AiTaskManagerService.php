@@ -41,6 +41,7 @@ class AiTaskManagerService
                 'status'               => 'pending',
             ]);
 
+            
             $params = [
                 'dir_path'   => $task->file_name,
                 'image_type' => 'element',

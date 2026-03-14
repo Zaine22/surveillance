@@ -4,6 +4,7 @@ use App\Http\Controllers\AiModelController;
 use App\Http\Controllers\AiModelTaskController;
 use App\Http\Controllers\AiPredictResultController;
 use App\Http\Controllers\AiPredictResultItemController;
+use App\Http\Controllers\AllowedIpController;
 use App\Http\Controllers\AuditRatioController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BotMachineController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\GlobalWhitelistController;
 use App\Http\Controllers\LexiconController;
 use App\Http\Controllers\LexiconKeywordController;
 use App\Http\Controllers\NotifyTemplateController;
+use App\Http\Controllers\OperationLogController;
 use App\Http\Controllers\SystemDataController;
 use App\Http\Controllers\SystemNoticeController;
 use App\Http\Controllers\ValidationRecordController;
@@ -27,7 +29,12 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/send-otp', [AuthController::class, 'sendOtp']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 
-Route::middleware(['auth:sanctum'])->group(function () {
+Route::middleware(['allow.ip',
+    'auth:sanctum',
+    'operation.log'])->group(function () {
+    Route::get('/operation-logs', [OperationLogController::class, 'index']);
+    Route::post('allowed-ips/bulk', [AllowedIpController::class, 'bulkStore']);
+    Route::get('/allowed-ips', [AllowedIpController::class, 'index']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::post('/auth/refresh', [AuthController::class, 'refresh']);
     Route::get('/check-password-expiry', [AuthController::class, 'checkPasswordExpiry']);
@@ -63,7 +70,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::prefix('crawler-tasks')->group(function () {
         Route::post('{task}/start', [CrawlerTaskController::class, 'start']);
         Route::post('{task}/pause', [CrawlerTaskController::class, 'pause']);
-        Route::post('{task}/resume', [CrawlerTaskController::class, 'resume']);
+        Route::post('{task}/delete', [CrawlerTaskController::class, 'delete']);
         Route::get('{task}/failed-items', [CrawlerTaskController::class, 'failedTasks']);
         Route::get('{task}/task-items', [CrawlerTaskController::class, 'getAllTaskItems']);
     });
