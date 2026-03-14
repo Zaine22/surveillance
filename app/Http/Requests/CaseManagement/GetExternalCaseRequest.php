@@ -4,7 +4,7 @@ namespace App\Http\Requests\CaseManagement;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreExternalCaseRequest extends FormRequest
+class GetExternalCaseRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,22 +22,15 @@ class StoreExternalCaseRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'url' => 'required|url',
-            'leakReason' => 'required|string',
-            'issue_date' => 'nullable|date',
-            'due_date' => 'nullable|date',
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'url.required' => 'URL不能为空',
-            'url.url' => 'URL格式不正确',
-            'leakReason.required' => '泄露原因不能为空',
-            'leakReason.string' => '泄露原因必须是字符串',
-            'issue_date.date' => '发布日期格式不正确',
-            'due_date.date' => '到期日期格式不正确',
+            'search' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', 'string', 'in:立案,成案,待截圖,截圖完成,不成案,全部'],
+            'dateRange' => ['nullable', 'string', 'in:一週,一個月,一年,自行選擇範圍'],
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date', 'after_or_equal:from'],
+            'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'sort_by' => ['nullable', 'string'],
+            'sort_order' => ['nullable', 'in:asc,desc'],
         ];
     }
 

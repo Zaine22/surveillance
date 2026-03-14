@@ -2,15 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Http\Requests\CaseManagement\CaseManagementIndexRequest;
+use App\Http\Requests\CaseManagement\GetExternalCaseRequest;
 use App\Http\Requests\CaseManagement\ProceedCaseScreenshotRequest;
 use App\Http\Requests\CaseManagement\StoreCaseFeedbackRequest;
 use App\Http\Requests\CaseManagement\StoreExternalCaseRequest;
 use App\Http\Requests\CaseManagement\UpdateCaseScreenshotRequest;
 use App\Http\Resources\CaseManagementIndexResource;
 use App\Models\CaseFeedback;
-use App\Models\CaseManagement;
 use App\Services\CaseManagementService;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
@@ -70,6 +69,13 @@ class CaseManagementController extends Controller
         return response()->json($result);
     }
 
+    public function getExternalCase(GetExternalCaseRequest $request): AnonymousResourceCollection
+    {
+        $cases = $this->caseManagementService->getExternalCase($request->validated());
+
+        return CaseManagementIndexResource::collection($cases);
+    }
+
     public function index(
         CaseManagementIndexRequest $request
     ): AnonymousResourceCollection {
@@ -80,10 +86,9 @@ class CaseManagementController extends Controller
         return CaseManagementIndexResource::collection($cases);
     }
 
-     public function show(
+    public function show(
         string $id
-    ): CaseManagementIndexResource
-     {
+    ): CaseManagementIndexResource {
 
         $result = $this->caseManagementService->findById($id);
 

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services;
 
 use App\Models\AiPredictResult;
@@ -13,8 +14,7 @@ use Illuminate\Support\Str;
 
 class CaseManagementService extends BaseFilterService
 {
-    public function __construct()
-    {}
+    public function __construct() {}
 
     public function getAll(array $filters): LengthAwarePaginator
     {
@@ -28,20 +28,20 @@ class CaseManagementService extends BaseFilterService
             $query->where(function ($q) use ($search) {
 
                 $q->orWhereRaw(
-                    "LOWER(internal_case_no) LIKE ?",
+                    'LOWER(internal_case_no) LIKE ?',
                     ["%{$search}%"]
                 )
                     ->orWhereRaw(
-                        "LOWER(external_case_no) LIKE ?",
+                        'LOWER(external_case_no) LIKE ?',
                         ["%{$search}%"]
                     )
                     ->orWhereRaw(
-                        "LOWER(keywords) LIKE ?",
+                        'LOWER(keywords) LIKE ?',
                         ["%{$search}%"]
                     )
                     ->orWhereHas('aiPredictResult.aiModelTask', function ($task) use ($search) {
                         $task->whereRaw(
-                            "LOWER(file_name) LIKE ?",
+                            'LOWER(file_name) LIKE ?',
                             ["%{$search}%"]
                         );
                     });
@@ -81,11 +81,11 @@ class CaseManagementService extends BaseFilterService
         return DB::transaction(function () use ($result) {
 
             $case = CaseManagement::create([
-                'id'                   => (string) Str::uuid(),
+                'id' => (string) Str::uuid(),
                 'ai_predict_result_id' => $result->id,
-                'keywords'             => $result->keywords,
-                'internal_case_no'     => 'INT-' . strtoupper(uniqid()),
-                'status'               => 'created',
+                'keywords' => $result->keywords,
+                'internal_case_no' => 'INT-'.strtoupper(uniqid()),
+                'status' => 'created',
             ]);
 
             // foreach ($result->items as $item) {
@@ -108,10 +108,10 @@ class CaseManagementService extends BaseFilterService
         $case = CaseFeedback::updateOrCreate(
             ['case_id' => $data['case_id']],
             [
-                'url'         => $data['url'],
-                'is_illegal'  => $data['is_illegal'],
+                'url' => $data['url'],
+                'is_illegal' => $data['is_illegal'],
                 'legal_basis' => $data['legal_basis'] ?? null,
-                'reason'      => $data['reason'] ?? null,
+                'reason' => $data['reason'] ?? null,
             ]
         );
 
@@ -120,16 +120,18 @@ class CaseManagementService extends BaseFilterService
 
     public function createExternalCase(array $data): CaseManagementItem
     {
-        $external_case_id = 'EXT-' . strtoupper(uniqid());
-        $case             = CaseManagement::create([
+        $external_case_id = 'EXT-'.strtoupper(uniqid());
+        $case = CaseManagement::create([
             'external_case_no' => $external_case_id,
         ]);
 
         $caseItem = CaseManagementItem::create([
             'case_management_id' => $case->id,
-            'crawler_page_url'   => $data['url'],
-            'status'             => 'valid',
-            'reason'             => $data['leakReason'],
+            'crawler_page_url' => $data['url'],
+            'status' => 'valid',
+            'reason' => $data['leakReason'],
+            'issue_date' => $data['issue_date'] ?? null,
+            'due_date' => $data['due_date'] ?? null,
         ]);
 
         return $caseItem;
@@ -142,28 +144,28 @@ class CaseManagementService extends BaseFilterService
 
         $case->update([
             'issue_date' => $validated['issue_date'],
-            'due_date'   => $validated['due_date'],
+            'due_date' => $validated['due_date'],
         ]);
 
         $response = Http::post(
             env('SCREENSHOT_URL'),
             [
-                'case_management_id'      => $case->case_management_id,
+                'case_management_id' => $case->case_management_id,
                 'case_management_item_id' => $case->id, // or item_id if you have it
-                'url'                     => $case->crawler_page_url,
+                'url' => $case->crawler_page_url,
             ]
         );
 
         if ($response->failed()) {
             return response()->json([
                 'message' => 'Case updated but crawler API failed',
-                'error'   => $response->body(),
+                'error' => $response->body(),
             ], 500);
         }
 
         return response()->json([
             'message' => 'Case updated successfully',
-            'data'    => $case,
+            'data' => $case,
         ]);
     }
 
@@ -177,9 +179,76 @@ class CaseManagementService extends BaseFilterService
 
         $case->update([
             'media_url' => $data['media_url'],
-            'status'    => $data['status'] ?? $case->status,
+            'status' => $data['status'] ?? $case->status,
         ]);
 
         return $case;
+    }
+
+    public function getExternalCase(array $filters): LengthAwarePaginator
+    {
+        $query = CaseManagement::with(['items'])
+            ->whereNotNull('external_case_no');
+
+        if (! empty($filters['search'])) {
+            $search = strtolower($filters['search']);
+            $query->where(function ($q) use ($search) {
+                $q->whereRaw('LOWER(external_case_no) LIKE ?', ["%{$search}%"])
+                    ->orWhereHas('items', function ($itemQuery) use ($search) {
+                        $itemQuery->whereRaw('LOWER(media_url) LIKE ?', ["%{$search}%"]);
+                    });
+            });
+        }
+
+        if (! empty($filters['status'])) {
+            if ($filters['status'] === '全部') {
+                unset($filters['status']);
+            } else {
+                $statusMap = [
+                    '立案' => 'pending',
+                    '成案' => 'created',
+                    '待截圖' => 'notified',
+                    '截圖完成' => 'moved_offline',
+                    '不成案' => 'auto_offline',
+                ];
+
+                if (isset($statusMap[$filters['status']])) {
+                    $filters['status'] = $statusMap[$filters['status']];
+                }
+            }
+        }
+
+        if (! empty($filters['dateRange'])) {
+            $dateRange = $filters['dateRange'];
+            $now = now();
+
+            switch ($dateRange) {
+                case '一週':
+                    $query->whereBetween('created_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()]);
+                    break;
+                case '一個月':
+                    $query->whereBetween('created_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()]);
+                    break;
+                case '一年':
+                    $query->whereBetween('created_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()]);
+                    break;
+                case '自行選擇範圍':
+                    if (! empty($filters['from']) && ! empty($filters['to'])) {
+                        $query->whereBetween('created_at', [
+                            \Carbon\Carbon::parse($filters['from'])->startOfDay(),
+                            \Carbon\Carbon::parse($filters['to'])->endOfDay(),
+                        ]);
+                    }
+                    break;
+            }
+        }
+
+        return $this->applyFilters(
+            $query,
+            $filters,
+            [],
+            true,
+            'created_at'
+        );
     }
 }

@@ -43,6 +43,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('ai-predict-results', AiPredictResultController::class);
     Route::get('audits', [AiPredictResultController::class, 'getAudits']
     );
+    Route::get('/case-managements/get-external-case', [CaseManagementController::class, 'getExternalCase']);
     Route::get(
         'ai-predict-results/{result}/items',
         [AiPredictResultController::class, 'getResultItems']
