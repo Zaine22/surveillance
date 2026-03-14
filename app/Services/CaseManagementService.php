@@ -196,6 +196,9 @@ class CaseManagementService extends BaseFilterService
                 $q->whereRaw('LOWER(external_case_no) LIKE ?', ["%{$search}%"])
                     ->orWhereHas('items', function ($itemQuery) use ($search) {
                         $itemQuery->whereRaw('LOWER(media_url) LIKE ?', ["%{$search}%"]);
+                    })
+                    ->orWhereHas('aiPredictResult.aiModelTask', function ($taskQuery) use ($search) {
+                        $taskQuery->whereRaw('LOWER(file_name) LIKE ?', ["%{$search}%"]);
                     });
             });
         }
