@@ -5,6 +5,7 @@ use App\Models\AllowedIp;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Log;
 
 class CheckIpWhitelist
 {
@@ -16,6 +17,7 @@ class CheckIpWhitelist
     public function handle(Request $request, Closure $next): Response
     {
         $clientIp = $request->ip();
+        Log::info('Client IP: ' . $clientIp);
         $allowed  = AllowedIp::where('ip_address', $clientIp)
             ->where('status', true)
             ->exists();
