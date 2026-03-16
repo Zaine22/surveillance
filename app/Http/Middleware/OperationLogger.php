@@ -41,6 +41,20 @@ class OperationLogger
                 'ip_address'      => $request->ip(),
                 'token'           => $request->bearerToken(),
                 'cost_time'       => $executionTime,
+                // 'page_data'    => [
+                //     'Device'      => $request->userAgent(),
+                //     'OnlineToken' => $request->bearerToken(),
+                //     'PageTime'    => now()->toDateTimeString(),
+                //     'PageName'    => $request->path(),
+                // ],
+                'page_data'       => [
+                    'Reviewer'        => true,
+                    'ReviewerPurview' => true,
+                    'Device'          => $request->userAgent(),
+                    'OnlineToken'     => $request->bearerToken(),
+                    'PageTime'        => now()->toDateTimeString(),
+                    'PageName'        => preg_replace('/^api\//', '', $request->path()),
+                ],
                 'operation_time'  => now(),
                 'request_payload' => [
                     'method'     => $request->method(),

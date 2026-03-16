@@ -31,7 +31,7 @@ return new class extends Migration
             $table->ipAddress('ip_address')->nullable();
             $table->string('token')->nullable();
             $table->integer('cost_time')->nullable();
-
+            $table->json('page_data')->nullable();
             $table->json('request_payload')->nullable();
             $table->timestamp('operation_time')->nullable();
 

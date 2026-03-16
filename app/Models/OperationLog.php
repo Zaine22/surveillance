@@ -20,12 +20,14 @@ class OperationLog extends Model
         'ip_address',
         'token',
         'cost_time',
+        'page_data',
         'request_payload',
         'operation_time',
     ];
 
     protected $casts = [
         'request_payload' => 'array',
+        'page_data'       => 'array',
         'operation_time'  => 'datetime',
     ];
 
