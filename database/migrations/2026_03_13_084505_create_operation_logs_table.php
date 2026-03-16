@@ -12,15 +12,33 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('operation_logs', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->foreignUuid('user_id')->constrained('users')->nullable();
+            $table->bigIncrements('record_no');
+            $table->uuid('id')->unique();
+            $table->foreignUuid('user_id')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
             $table->string('operator_name')->nullable();
+            $table->string('operator_email')->nullable();
             $table->string('department')->nullable();
+            $table->string('role')->nullable();
             $table->string('page_url');
             $table->string('action');
-            $table->string('status');
-            $table->string('ip_address')->nullable();
+            $table->enum('status', [
+                'success',
+                'failed',
+            ]);
+            $table->ipAddress('ip_address')->nullable();
+            $table->string('token')->nullable();
+            $table->integer('cost_time')->nullable();
+
+            $table->json('request_payload')->nullable();
+            $table->timestamp('operation_time')->nullable();
+
             $table->timestamps();
+            $table->index('user_id');
+            $table->index('operation_time');
+            $table->index('ip_address');
         });
     }
 

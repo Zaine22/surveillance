@@ -9,12 +9,24 @@ class OperationLog extends Model
     use HasUuids;
     protected $fillable = [
         'user_id',
+        'record_no',
         'operator_name',
+        'operator_email',
         'department',
+        'role',
         'page_url',
         'action',
         'status',
         'ip_address',
+        'token',
+        'cost_time',
+        'request_payload',
+        'operation_time',
+    ];
+
+    protected $casts = [
+        'request_payload' => 'array',
+        'operation_time'  => 'datetime',
     ];
 
     public function user()
