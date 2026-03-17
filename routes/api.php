@@ -13,6 +13,7 @@ use App\Http\Controllers\CaseManagementItemController;
 use App\Http\Controllers\CrawlerConfigController;
 use App\Http\Controllers\CrawlerTaskController;
 use App\Http\Controllers\CrawlerTaskItemController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataSyncRecordController;
 use App\Http\Controllers\GlobalWhitelistController;
 use App\Http\Controllers\LexiconController;
@@ -32,6 +33,8 @@ Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::middleware(['allow.ip',
     'auth:sanctum',
     'operation.log'])->group(function () {
+    Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
+    Route::get('/dashboard/ranking', [DashboardController::class, 'ranking']);
     Route::get('/operation-logs', [OperationLogController::class, 'index']);
     Route::post('allowed-ips/bulk', [AllowedIpController::class, 'bulkStore']);
     Route::get('/allowed-ips', [AllowedIpController::class, 'index']);
