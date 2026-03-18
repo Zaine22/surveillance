@@ -2,11 +2,10 @@
 
 namespace App\Services;
 
+use App\Jobs\ExpireSystemNoticeJob;
+use App\Jobs\PublishSystemNoticeJob;
 use App\Models\SystemNotice;
 use Illuminate\Support\Facades\Log;
-use App\Events\SystemNoticeEvent;
-use App\Jobs\PublishSystemNoticeJob;
-use App\Jobs\ExpireSystemNoticeJob;
 
 class SystemNoticeService
 {
@@ -17,7 +16,7 @@ class SystemNoticeService
         $search = $filters['search'] ?? null;
         $status = $filters['status'] ?? null;
 
-        $query = SystemNotice::query();
+        $query = SystemNotice::with('creator');
 
         if ($search) {
             $query->where('title', 'like', "%{$search}%");
@@ -33,7 +32,7 @@ class SystemNoticeService
     public function getNoticeById($id)
     {
         try {
-            $notice = SystemNotice::find($id);
+            $notice = SystemNotice::with('creator')->find($id);
             if (! $notice) {
                 throw new \Exception("System notice with ID {$id} not found.");
             }
@@ -47,18 +46,22 @@ class SystemNoticeService
 
     public function createNotice($data)
     {
+        if (auth()->check()) {
+            $data['created_by'] = auth()->id();
+        }
+
         $systemNotice = SystemNotice::create($data);
 
         // Publish Job
         if ($systemNotice->publish_date > now()) {
             PublishSystemNoticeJob::dispatch($systemNotice->id)
-            ->delay($systemNotice->publish_date);
+                ->delay($systemNotice->publish_date);
         }
 
         // Expire Job
         if ($systemNotice->expire_at > now()) {
             ExpireSystemNoticeJob::dispatch($systemNotice->id)
-            ->delay($systemNotice->expire_at);
+                ->delay($systemNotice->expire_at);
         }
 
         return $systemNotice;
@@ -78,7 +81,8 @@ class SystemNoticeService
 
     public function getActiveNotices()
     {
-        return SystemNotice::where('status', 'published')
+        return SystemNotice::with('creator')
+            ->where('status', 'published')
             ->where('publish_date', '<=', now())
             ->where('expire_at', '>', now())
             ->orderBy('publish_date', 'desc')

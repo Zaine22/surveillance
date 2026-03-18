@@ -19,6 +19,9 @@ return [
     'ai' => [
         'metrics_url' => env('AI_METRICS_URL'),
     ],
+    'screenshot' => [
+        'url' => env('SCREENSHOT_URL'),
+    ],
 
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),

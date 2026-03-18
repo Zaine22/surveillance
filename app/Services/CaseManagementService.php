@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Jobs\ProcessExternalCaseJob;
 use App\Models\AiPredictResult;
 use App\Models\CaseFeedback;
 use App\Models\CaseManagement;
 use App\Models\CaseManagementItem;
+use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
@@ -46,6 +48,49 @@ class CaseManagementService extends BaseFilterService
                         );
                     });
             });
+        }
+
+        if (! empty($filters['status'])) {
+            if ($filters['status'] === '全部') {
+                unset($filters['status']);
+            } else {
+                $statusMap = [
+                    '立案' => 'pending',
+                    '成案' => 'created',
+                    '待截圖' => 'notified',
+                    '截圖完成' => 'moved_offline',
+                    '不成案' => 'auto_offline',
+                ];
+
+                if (isset($statusMap[$filters['status']])) {
+                    $filters['status'] = $statusMap[$filters['status']];
+                }
+            }
+        }
+
+        if (! empty($filters['dateRange'])) {
+            $dateRange = $filters['dateRange'];
+            $now = now();
+
+            switch ($dateRange) {
+                case '一週':
+                    $query->whereBetween('created_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()]);
+                    break;
+                case '一個月':
+                    $query->whereBetween('created_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()]);
+                    break;
+                case '一年':
+                    $query->whereBetween('created_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()]);
+                    break;
+                case '自行選擇範圍':
+                    if (! empty($filters['from']) && ! empty($filters['to'])) {
+                        $query->whereBetween('created_at', [
+                            \Carbon\Carbon::parse($filters['from'])->startOfDay(),
+                            \Carbon\Carbon::parse($filters['to'])->endOfDay(),
+                        ]);
+                    }
+                    break;
+            }
         }
 
         return $this->applyFilters(
@@ -133,6 +178,16 @@ class CaseManagementService extends BaseFilterService
             'issue_date' => $data['issue_date'] ?? null,
             'due_date' => $data['due_date'] ?? null,
         ]);
+
+        $issueDate = ! empty($data['issue_date'])
+            ? Carbon::parse($data['issue_date'])
+            : null;
+
+        if ($issueDate) {
+            ProcessExternalCaseJob::dispatch($caseItem)->delay($issueDate);
+        } else {
+            ProcessExternalCaseJob::dispatch($caseItem);
+        }
 
         return $caseItem;
     }

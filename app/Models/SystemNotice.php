@@ -17,10 +17,16 @@ class SystemNotice extends Model
         'expire_at',
         'title',
         'content',
+        'created_by',
     ];
 
     protected $casts = [
         'publish_date' => 'datetime',
         'expire_at' => 'datetime',
     ];
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
 }
