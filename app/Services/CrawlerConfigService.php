@@ -124,7 +124,7 @@ class CrawlerConfigService extends BaseFilterService
 
 
         $config = CrawlerConfig::create($data);
-        $this->globalWhitelistService->createMany($domains);
+        // $this->globalWhitelistService->createMany($domains);
         $lexicon = Lexicon::findOrFail($data['lexicon_id']);
 
         $this->crawlerTaskService->createFromConfig($config, $lexicon);
