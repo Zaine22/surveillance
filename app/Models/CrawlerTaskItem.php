@@ -43,6 +43,17 @@ class CrawlerTaskItem extends Model
 
             if ($item->wasChanged('status') && $item->status === 'synced') {
 
+                if (! empty($item->keywords)) {
+                    try {
+                        app(\App\Services\KeywordRankingService::class)
+                            ->processHit($item->keywords);
+                    } catch (\Throwable $e) {
+                        Log::error('Keyword processHit failed', [
+                            'item_id' => $item->id,
+                            'error'   => $e->getMessage(),
+                        ]);
+                    }
+                }
                 CrawlerTask::where('id', $item->task_id)
                     ->where('status', '!=', 'completed')
                     ->whereDoesntHave('items', function ($query) {
