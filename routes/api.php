@@ -29,8 +29,8 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/send-otp', [AuthController::class, 'sendOtp']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
-
-Route::middleware(['allow.ip',
+//'allow.ip',
+Route::middleware([
     'auth:sanctum',
     'operation.log'])->group(function () {
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
