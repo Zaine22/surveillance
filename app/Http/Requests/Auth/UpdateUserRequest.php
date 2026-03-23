@@ -11,7 +11,7 @@ class UpdateUserRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -26,6 +26,8 @@ class UpdateUserRequest extends FormRequest
             'email' => 'sometimes|required|email|unique:users,email,'.$this->user()->id,
             'department' => 'sometimes|nullable|string',
             'roles' => 'sometimes|nullable|string',
+            'phone' => 'sometimes|nullable|string',
+            'status' => 'sometimes|nullable|string',
         ];
     }
 }

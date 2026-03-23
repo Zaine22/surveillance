@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\ChangePasswordRequest;
 use App\Http\Requests\Auth\GetUsersRequest;
 use App\Http\Requests\Auth\LoginUserRequest;
@@ -69,11 +68,17 @@ class AuthController extends Controller
     {
         $data = $request->validated();
 
-        $this->authService->changePassword(
+        $result = $this->authService->changePassword(
             $request->user(),
             $data['current_password'],
             $data['new_password']
         );
+
+        if ($result['error'] ?? false) {
+            return response()->json([
+                'message' => $result['error'],
+            ], 403);
+        }
 
         return response()->json([
             'message' => 'Password changed successfully. Please login again.',
@@ -146,11 +151,11 @@ class AuthController extends Controller
         ]);
     }
 
-    public function updateUser(UpdateUserRequest $request)
+    public function updateUser(UpdateUserRequest $request, string $id)
     {
         $data = $request->validated();
 
-        $updatedUser = $this->authService->updateUser($request->user(), $data);
+        $updatedUser = $this->authService->updateUser($id, $data);
 
         return response()->json([
             'message' => 'User updated successfully',

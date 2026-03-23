@@ -96,20 +96,36 @@ class AuthService
         return compact('user', 'token');
     }
 
-    public function changePassword(User $user, string $currentPassword, string $newPassword): void
+    public function changePassword(User $user, string $currentPassword, string $newPassword): array
     {
-        if (! Hash::check($currentPassword, $user->password)) {
-            throw ValidationException::withMessages([
-                'current_password' => ['Current password is incorrect'],
+        try {
+            $checkUser = User::where('email', $user->email)->first();
+            if (! Hash::check($currentPassword, $checkUser->password)) {
+                throw ValidationException::withMessages([
+                    'current_password' => ['Current password is incorrect'],
+                ]);
+            }
+
+            $checkUser->update([
+                'password' => Hash::make($newPassword),
+                'password_last_changed' => now(),
             ]);
+
+            $checkUser->tokens()->delete();
+
+            return [
+                'message' => 'Password changed successfully. Please login again.',
+            ];
+        } catch (\Throwable $e) {
+            Log::error('Password change failed', [
+                'email' => $user->email,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'error' => ['Failed to change password. Please try again later.'],
+            ];
         }
-
-        $user->update([
-            'password' => Hash::make($newPassword),
-            'password_last_changed' => now(),
-        ]);
-
-        $user->tokens()->delete();
     }
 
     public function logout(User $user): void
@@ -225,8 +241,9 @@ class AuthService
         return $validation_record;
     }
 
-    public function updateUser(User $user, array $data): array
+    public function updateUser(string $id, array $data): array
     {
+        $user = User::findOrFail($id);
         $user->update($data);
 
         return $user->toArray();
@@ -238,7 +255,7 @@ class AuthService
         $page = (int) $request->query('page', 1);
 
         $query = User::query()
-            ->select(['id', 'name', 'email', 'status', 'created_at'])
+            ->select(['id', 'name', 'email', 'status', 'created_at', 'phone', 'department', 'roles', 'last_login', 'password_last_changed'])
             ->orderByDesc('created_at');
 
         if ($request->filled('search')) {
@@ -275,8 +292,11 @@ class AuthService
             'password' => Hash::make($data['password']),
             'department' => $data['department'] ?? null,
             'roles' => $data['roles'] ?? 'user',
-            'status' => 'enabled',
+            'status' => $data['status'] ?? 'enabled',
+            'phone' => $data['phone'] ?? null,
         ]);
+
+        $this->mailService->sendAccountCreated($data['email'], $data['password']);
 
         return $user->toArray();
     }

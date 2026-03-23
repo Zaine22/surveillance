@@ -38,4 +38,22 @@ class SystemMailService
             )
         );
     }
+
+    public function sendAccountCreated(string $email, string $password): void
+    {
+        $appName = config('app.name', 'Surveillance');
+        $title = "帳戶啟用通知信";
+
+        Mail::to($email)->send(
+            new SystemMail(
+                subjectText: $title,
+                viewname: 'emails.account_created',
+                data: [
+                    'title' => $title,
+                    'email' => $email,
+                    'password' => $password,
+                ]
+            )
+        );
+    }
 }

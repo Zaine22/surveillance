@@ -41,7 +41,7 @@ Route::middleware(['allow.ip',
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::post('/auth/refresh', [AuthController::class, 'refresh']);
     Route::get('/check-password-expiry', [AuthController::class, 'checkPasswordExpiry']);
-    Route::put('/user', [AuthController::class, 'updateUser']);
+    Route::put('/user/{id}', [AuthController::class, 'updateUser']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
     Route::get('/users', [AuthController::class, 'index']);
     Route::post('/users/create', [AuthController::class, 'createByAdmin']);

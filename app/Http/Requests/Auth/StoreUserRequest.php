@@ -28,6 +28,8 @@ class StoreUserRequest extends FormRequest
             'password' => 'required|string|min:8',
             'department' => 'nullable|string',
             'roles' => 'required|string',
+            'status' => 'required|string',
+            'phone' => 'nullable|string',
         ];
     }
 
@@ -35,7 +37,7 @@ class StoreUserRequest extends FormRequest
     {
         $user = $this->user();
 
-        if (! $user || $user->roles !== 'Administrator') {
+        if (! $user || $user->roles !== '管理員') {
             throw new AuthorizationException(
                 'You are not allowed to perform this action.'
             );
@@ -57,6 +59,10 @@ class StoreUserRequest extends FormRequest
             'department.string' => '部门必须是字符串',
             'role.required' => '角色不能为空',
             'role.string' => '角色必须是字符串',
+            'status.required' => '状态不能为空',
+            'status.string' => '状态必须是字符串',
+            'phone.string' => '电话必须是字符串',
+            'phone.nullable' => '电话可以为空',
         ];
     }
 }
