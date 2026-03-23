@@ -1,11 +1,12 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LexiconKeyword\StoreLexiconKeywordRequest;
+use App\Http\Requests\LexiconKeyword\StoreLexiconKeywordTranslationRequest;
 use App\Http\Requests\LexiconKeyword\UpdateLexiconKeywordRequest;
 use App\Http\Resources\LexiconKeywordResource;
+use App\Http\Resources\LexiconTranslationResource;
 use App\Services\LexiconKeywordService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -13,7 +14,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class LexiconKeywordController extends Controller
 {
-    public function __construct(protected LexiconKeywordService $lexiconKeywordService) {}
+    public function __construct(protected LexiconKeywordService $lexiconKeywordService)
+    {}
 
     public function index(string $lexiconId): AnonymousResourceCollection
     {
@@ -25,7 +27,7 @@ class LexiconKeywordController extends Controller
         return LexiconKeywordResource::collection($keywords);
     }
 
-    public function show(string $id): LexiconKeywordResource|JsonResponse
+    public function show(string $id): LexiconTranslationResource | JsonResponse
     {
         $keyword = $this->lexiconKeywordService
             ->getLexiconKeywordById($id);
@@ -34,7 +36,7 @@ class LexiconKeywordController extends Controller
             return response()->json(['message' => 'Lexicon keyword not found'], 404);
         }
 
-        return new LexiconKeywordResource($keyword);
+        return new LexiconTranslationResource($keyword);
     }
 
     public function store(StoreLexiconKeywordRequest $request): LexiconKeywordResource
@@ -45,7 +47,7 @@ class LexiconKeywordController extends Controller
         return new LexiconKeywordResource($lexiconKeyword);
     }
 
-    public function update(UpdateLexiconKeywordRequest $request, string $id): LexiconKeywordResource|JsonResponse
+    public function update(UpdateLexiconKeywordRequest $request, string $id): LexiconKeywordResource | JsonResponse
     {
         $keyword = $this->lexiconKeywordService
             ->getLexiconKeywordById($id);
@@ -94,5 +96,26 @@ class LexiconKeywordController extends Controller
     public function export(string $lexiconId): StreamedResponse
     {
         return $this->lexiconKeywordService->export($lexiconId);
+    }
+
+    public function storeTranslation(
+        StoreLexiconKeywordTranslationRequest $request,
+        string $parentId,
+    ): LexiconTranslationResource | JsonResponse {
+
+        $translation = $this->lexiconKeywordService->upsertTranslation(
+            $parentId,
+            $request->validated('lang'),
+            $request->validated('keywords')
+        );
+
+        if (! $translation) {
+            return response()->json(['message' => 'Parent keyword not found'], 404);
+        }
+
+
+        $parent = $this->lexiconKeywordService->getTranslations($parentId);
+
+        return new LexiconTranslationResource($parent);
     }
 }

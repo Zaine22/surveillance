@@ -92,6 +92,7 @@ Route::middleware([
     Route::apiResource('global-whitelists', GlobalWhitelistController::class);
     Route::apiResource('lexicons', LexiconController::class);
     Route::apiResource('lexicon-keywords', LexiconKeywordController::class);
+    Route::post('lexicon-keywords/{parentId}/translations', [LexiconKeywordController::class, 'storeTranslation']);
     Route::apiResource('notify-templates', NotifyTemplateController::class);
     Route::apiResource('system-data', SystemDataController::class);
     Route::apiResource('system-notices', SystemNoticeController::class);
