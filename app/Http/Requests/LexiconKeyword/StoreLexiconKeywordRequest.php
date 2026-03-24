@@ -24,7 +24,7 @@ class StoreLexiconKeywordRequest extends FormRequest
         return [
             'lexicon_id' => 'required|uuid|exists:lexicons,id',
             'keywords' => 'required|array|min:1',
-            'keywords.*' => 'required|string|max:255',
+            'keywords.*' => 'required',
             'crawl_hit_count' => 'integer|min:0',
             'case_count' => 'integer|min:0',
             'status' => 'in:enabled,disabled',
