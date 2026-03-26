@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services;
 
 use App\Jobs\ProcessExternalCaseJob;
@@ -16,7 +15,8 @@ use Illuminate\Support\Str;
 
 class CaseManagementService extends BaseFilterService
 {
-    public function __construct() {}
+    public function __construct()
+    {}
 
     public function getAll(array $filters): LengthAwarePaginator
     {
@@ -55,11 +55,11 @@ class CaseManagementService extends BaseFilterService
                 unset($filters['status']);
             } else {
                 $statusMap = [
-                    '立案' => 'pending',
-                    '成案' => 'created',
-                    '待截圖' => 'notified',
+                    '立案'   => 'pending',
+                    '成案'   => 'created',
+                    '待截圖'  => 'notified',
                     '截圖完成' => 'moved_offline',
-                    '不成案' => 'auto_offline',
+                    '不成案'  => 'auto_offline',
                 ];
 
                 if (isset($statusMap[$filters['status']])) {
@@ -70,7 +70,7 @@ class CaseManagementService extends BaseFilterService
 
         if (! empty($filters['dateRange'])) {
             $dateRange = $filters['dateRange'];
-            $now = now();
+            $now       = now();
 
             switch ($dateRange) {
                 case '一週':
@@ -126,11 +126,11 @@ class CaseManagementService extends BaseFilterService
         return DB::transaction(function () use ($result) {
 
             $case = CaseManagement::create([
-                'id' => (string) Str::uuid(),
+                'id'                   => (string) Str::uuid(),
                 'ai_predict_result_id' => $result->id,
-                'keywords' => $result->keywords,
-                'internal_case_no' => 'INT-'.strtoupper(uniqid()),
-                'status' => 'created',
+                'keywords'             => $result->keywords,
+                'internal_case_no'     => 'INT-' . strtoupper(uniqid()),
+                'status'               => 'created',
             ]);
 
             // foreach ($result->items as $item) {
@@ -153,10 +153,10 @@ class CaseManagementService extends BaseFilterService
         $case = CaseFeedback::updateOrCreate(
             ['case_id' => $data['case_id']],
             [
-                'url' => $data['url'],
-                'is_illegal' => $data['is_illegal'],
+                'url'         => $data['url'],
+                'is_illegal'  => $data['is_illegal'],
                 'legal_basis' => $data['legal_basis'] ?? null,
-                'reason' => $data['reason'] ?? null,
+                'reason'      => $data['reason'] ?? null,
             ]
         );
 
@@ -165,18 +165,18 @@ class CaseManagementService extends BaseFilterService
 
     public function createExternalCase(array $data): CaseManagementItem
     {
-        $external_case_id = 'EXT-'.strtoupper(uniqid());
-        $case = CaseManagement::create([
+        $external_case_id = $data['case_id'];
+        $case             = CaseManagement::create([
             'external_case_no' => $external_case_id,
         ]);
 
         $caseItem = CaseManagementItem::create([
             'case_management_id' => $case->id,
-            'crawler_page_url' => $data['url'],
-            'status' => 'valid',
-            'reason' => $data['leakReason'],
-            'issue_date' => $data['issue_date'] ?? null,
-            'due_date' => $data['due_date'] ?? null,
+            'crawler_page_url'   => $data['url'],
+            'status'             => 'valid',
+            'reason'             => $data['leakReason'],
+            'issue_date'         => $data['issue_date'] ?? null,
+            'due_date'           => $data['due_date'] ?? null,
         ]);
 
         $issueDate = ! empty($data['issue_date'])
@@ -195,33 +195,66 @@ class CaseManagementService extends BaseFilterService
     public function caseScreenShot(array $validated)
     {
 
-        $case = CaseManagementItem::where('crawler_page_url', $validated['url'])->firstOrFail();
+        // $case = CaseManagementItem::where('crawler_page_url', $validated['url'])->firstOrFail();
 
-        $case->update([
+        // $case->update([
+        //     'issue_date' => $validated['issue_date'],
+        //     'due_date'   => $validated['due_date'],
+        // ]);
+
+        // $response = Http::post(
+        //     env('SCREENSHOT_URL'),
+        //     [
+        //         'case_management_id'      => $case->case_management_id,
+        //         'case_management_item_id' => $case->id, // or item_id if you have it
+        //         'url'                     => $case->crawler_page_url,
+        //     ]
+        // );
+
+        // if ($response->failed()) {
+        //     return response()->json([
+        //         'message' => 'Case updated but crawler API failed',
+        //         'error'   => $response->body(),
+        //     ], 500);
+        // }
+
+        // return response()->json([
+        //     'message' => 'Case updated successfully',
+        //     'data'    => $case,
+        // ]);
+
+        $case = CaseManagement::where('external_case_no', $validated['case_id'])
+            ->firstOrFail();
+
+        $caseItem = CaseManagementItem::where('case_management_id', $case->id)
+            ->where('crawler_page_url', $validated['url'])
+            ->firstOrFail();
+
+        $caseItem->update([
             'issue_date' => $validated['issue_date'],
-            'due_date' => $validated['due_date'],
+            'due_date'   => $validated['due_date'],
         ]);
 
         $response = Http::post(
             env('SCREENSHOT_URL'),
             [
-                'case_management_id' => $case->case_management_id,
-                'case_management_item_id' => $case->id, // or item_id if you have it
-                'url' => $case->crawler_page_url,
+                'case_management_id'      => $case->id,
+                'case_management_item_id' => $caseItem->id,
+                'url'                     => $caseItem->crawler_page_url,
             ]
         );
 
         if ($response->failed()) {
-            return response()->json([
+            return [
                 'message' => 'Case updated but crawler API failed',
-                'error' => $response->body(),
-            ], 500);
+                'error'   => $response->body(),
+            ];
         }
 
-        return response()->json([
+        return [
             'message' => 'Case updated successfully',
-            'data' => $case,
-        ]);
+            'data'    => $caseItem,
+        ];
     }
 
     public function captureCaseScreenshot(string $id, array $data)
@@ -234,7 +267,7 @@ class CaseManagementService extends BaseFilterService
 
         $case->update([
             'media_url' => $data['media_url'],
-            'status' => $data['status'] ?? $case->status,
+            'status'    => $data['status'] ?? $case->status,
         ]);
 
         return $case;
@@ -263,11 +296,11 @@ class CaseManagementService extends BaseFilterService
                 unset($filters['status']);
             } else {
                 $statusMap = [
-                    '立案' => 'pending',
-                    '成案' => 'created',
-                    '待截圖' => 'notified',
+                    '立案'   => 'pending',
+                    '成案'   => 'created',
+                    '待截圖'  => 'notified',
                     '截圖完成' => 'moved_offline',
-                    '不成案' => 'auto_offline',
+                    '不成案'  => 'auto_offline',
                 ];
 
                 if (isset($statusMap[$filters['status']])) {
@@ -278,7 +311,7 @@ class CaseManagementService extends BaseFilterService
 
         if (! empty($filters['dateRange'])) {
             $dateRange = $filters['dateRange'];
-            $now = now();
+            $now       = now();
 
             switch ($dateRange) {
                 case '一週':

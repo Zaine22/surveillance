@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Requests\CaseManagement;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -23,21 +22,24 @@ class ProceedCaseScreenshotRequest extends FormRequest
     {
         return [
             'issue_date' => 'required|date',
-            'due_date' => 'required|date|after_or_equal:issue_date',
-            'url' => 'required|url',
+            'due_date'   => 'required|date|after_or_equal:issue_date',
+            'case_id'    => 'required|string|exists:case_management,external_case_no',
+            'url'        => 'required|url',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'issue_date.required' => '案件发布日期不能为空',
-            'issue_date.date' => '案件发布日期必须是有效的日期',
-            'due_date.required' => '案件截止日期不能为空',
-            'due_date.date' => '案件截止日期必须是有效的日期',
+            'issue_date.required'     => '案件发布日期不能为空',
+            'issue_date.date'         => '案件发布日期必须是有效的日期',
+            'due_date.required'       => '案件截止日期不能为空',
+            'due_date.date'           => '案件截止日期必须是有效的日期',
             'due_date.after_or_equal' => '案件截止日期必须在案件发布日期之后或相同',
-            'url.required' => 'URL不能为空',
-            'url.url' => 'URL格式不正确',
+            'case_id.required'        => '案件编号不能为空',
+            'case_id.exists'          => '案件编号不存在',
+            'url.required'            => 'URL不能为空',
+            'url.url'                 => 'URL格式不正确',
         ];
     }
 }
