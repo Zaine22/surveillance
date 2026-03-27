@@ -1,0 +1,293 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Surveillance API Documentation",
+        "description": "L5 Swagger OpenApi description",
+        "contact": {
+            "email": "admin@admin.com"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://surveillance.test",
+            "description": "Demo API Server"
+        }
+    ],
+    "paths": {
+        "/api/caseFeedback": {
+            "post": {
+                "tags": [
+                    "Case Management"
+                ],
+                "summary": "Submit case feedback",
+                "operationId": "11bf98c06d23bbd76535387770cf8029",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "case_id",
+                                    "url",
+                                    "is_illegal"
+                                ],
+                                "properties": {
+                                    "case_id": {
+                                        "type": "string",
+                                        "example": "CASE123"
+                                    },
+                                    "url": {
+                                        "type": "string",
+                                        "format": "url",
+                                        "example": "https://example.com"
+                                    },
+                                    "is_illegal": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "legal_basis": {
+                                        "type": "string",
+                                        "example": "Copyright Act"
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Unauthorised distribution"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "已接收"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "500": {
+                        "description": "Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "反馈保存失败"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ]
+            }
+        },
+        "/api/newcaseCreate": {
+            "post": {
+                "tags": [
+                    "Case Management"
+                ],
+                "summary": "Create external case",
+                "operationId": "095504f057cecbcefc70cb6e8e5283ad",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "url",
+                                    "leakReason",
+                                    "case_id"
+                                ],
+                                "properties": {
+                                    "url": {
+                                        "type": "string",
+                                        "format": "url",
+                                        "example": "https://example.com"
+                                    },
+                                    "leakReason": {
+                                        "type": "string",
+                                        "example": "Found on dark web"
+                                    },
+                                    "case_id": {
+                                        "type": "string",
+                                        "example": "EXT-001"
+                                    },
+                                    "issue_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-03-26"
+                                    },
+                                    "due_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-04-26"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "已接收"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "500": {
+                        "description": "Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "外部案件创建失败"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ]
+            }
+        },
+        "/api/caseScreenshot": {
+            "post": {
+                "tags": [
+                    "Case Management"
+                ],
+                "summary": "Process case screenshot",
+                "operationId": "ef46301d0429847884da338a5565c9b2",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "issue_date",
+                                    "due_date",
+                                    "case_id",
+                                    "url"
+                                ],
+                                "properties": {
+                                    "issue_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-03-26"
+                                    },
+                                    "due_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-03-27"
+                                    },
+                                    "case_id": {
+                                        "type": "string",
+                                        "example": "EXT-001"
+                                    },
+                                    "url": {
+                                        "type": "string",
+                                        "format": "url",
+                                        "example": "https://example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "apikey": {
+                "type": "apiKey",
+                "name": "x-api-key",
+                "in": "header"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Case Management",
+            "description": "Case Management"
+        }
+    ]
+}
