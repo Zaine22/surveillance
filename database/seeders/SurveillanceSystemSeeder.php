@@ -30,7 +30,6 @@ class SurveillanceSystemSeeder extends Seeder
                 $aiModels[] = $id;
             }
 
-            // 👉 Lexicons
             for ($l = 1; $l <= 5; $l++) {
 
                 $lexiconId   = Str::uuid();
@@ -96,7 +95,6 @@ class SurveillanceSystemSeeder extends Seeder
                         'updated_at'        => $taskDate,
                     ]);
 
-                    // 👉 Task Items
                     for ($i = 1; $i <= 5; $i++) {
 
                         $itemId   = Str::uuid();
@@ -116,7 +114,6 @@ class SurveillanceSystemSeeder extends Seeder
                             'updated_at'      => $itemDate,
                         ]);
 
-                        // 👉 AI Model Task
                         $aiTaskId = Str::uuid();
 
                         DB::table('ai_model_tasks')->insert([
@@ -129,7 +126,6 @@ class SurveillanceSystemSeeder extends Seeder
                             'updated_at'           => $itemDate,
                         ]);
 
-                        // 👉 AI Predict Result
                         $predictId = Str::uuid();
 
                         DB::table('ai_predict_results')->insert([
@@ -145,7 +141,6 @@ class SurveillanceSystemSeeder extends Seeder
                             'updated_at'         => $itemDate,
                         ]);
 
-                        // 👉 Predict Result Items
                         DB::table('ai_predict_result_items')->insert([
                             'id'                   => Str::uuid(),
                             'ai_predict_result_id' => $predictId,
@@ -159,7 +154,6 @@ class SurveillanceSystemSeeder extends Seeder
                             'updated_at'           => $itemDate,
                         ]);
 
-                        // 👉 Case Management
                         $caseId = Str::uuid();
 
                         DB::table('case_management')->insert([
@@ -188,7 +182,6 @@ class SurveillanceSystemSeeder extends Seeder
                 }
             }
 
-            // 👉 Data Sync Records
             for ($i = 1; $i <= 5; $i++) {
                 DB::table('data_sync_records')->insert([
                     'id'          => Str::uuid(),
@@ -201,11 +194,10 @@ class SurveillanceSystemSeeder extends Seeder
                 ]);
             }
 
-            // 👉 Allowed IPs
             for ($i = 1; $i <= 5; $i++) {
                 DB::table('allowed_ips')->insert([
                     'id'         => Str::uuid(),
-                    'ip_address' => "192.168.1.$i",
+                    'ip_address' => "192.168.12.$i",
                     'status'     => true,
                     'created_at' => now(),
                     'updated_at' => now(),
