@@ -24,6 +24,7 @@ class AiPredictResultItem extends Model
 
     protected $casts = [
         'ai_score' => 'decimal:2',
+        'keywords' => 'array', // ✅ ADD THIS
     ];
 
     public function result()

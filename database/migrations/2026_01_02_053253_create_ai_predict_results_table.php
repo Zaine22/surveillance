@@ -15,7 +15,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignUuid('ai_model_task_id')->constrained('ai_model_tasks')->cascadeOnDelete();
             $table->uuid('lexicon_id')->nullable();
-            $table->string('keywords', 100)->nullable();
+            $table->json('keywords')->nullable();
             $table->decimal('ai_score', 5, 2)->nullable();
             $table->text('analysis_result')->nullable();
             $table->enum('review_status', ['pending', 'approved', 'rejected'])->nullable();

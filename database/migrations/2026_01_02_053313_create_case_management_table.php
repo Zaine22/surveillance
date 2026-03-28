@@ -21,7 +21,7 @@ return new class extends Migration
 
             $table->string('internal_case_no', 100)->nullable();
             $table->string('external_case_no', 100)->nullable();
-            $table->string('keywords', 500)->nullable();
+            $table->json('keywords')->nullable();
 
             $table->enum('status', [
                 'pending', 'created', 'notified', 'moved_offline', 'auto_offline',

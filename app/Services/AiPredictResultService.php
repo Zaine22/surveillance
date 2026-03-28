@@ -8,6 +8,7 @@ use App\Models\AiPredictResultItem;
 use App\Models\CaseManagementItem;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class AiPredictResultService extends BaseFilterService
@@ -78,229 +79,296 @@ class AiPredictResultService extends BaseFilterService
             'ai_analysis_result',
         ];
     }
-    // public function saveFromAiCallback(AiModelTask $task, array $payload): AiPredictResult
-    // {
-    //     return DB::transaction(function () use ($task, $payload) {
 
-    //         $result = AiPredictResult::create([
-    //             'id' => (string) Str::uuid(),
-    //             'ai_model_task_id' => $task->id,
-    //             'ai_score' => $payload['ai_score'] ?? null,
-    //             'ai_analysis_result' => $payload['ai_analysis_result'] ?? null,
-    //             'review_status' => 'pending',
-    //             'audit_status' => 'pending',
-    //             'keywords' => $payload['keywords'] ?? null,
-    //         ]);
-
-    //         foreach ($payload['items'] ?? [] as $item) {
-    //             AiPredictResultItem::create([
-    //                 'id' => (string) Str::uuid(),
-    //                 'ai_predict_result_id' => $result->id,
-    //                 'media_url' => $item['media_url'] ?? null,
-    //                 'crawler_page_url' => $item['crawler_page_url'] ?? null,
-    //                 'ai_result' => $item['ai_result'] ?? null,
-    //                 'status' => 'valid',
-    //             ]);
-    //         }
-
-    //         return $result;
-    //     });
-    // }
-
-    public function saveFromAiCallback($id, array $payload): AiPredictResult
+    public function saveFromAiCallback(string $id, array $payload): AiPredictResult
     {
+        $task = AiModelTask::with([
+            'crawlerTaskItem.crawlerTask.lexicon.keywords',
+        ])->findOrFail($id);
 
-        $task = AiModelTask::findOrFail($id);
         return DB::transaction(function () use ($task, $payload) {
 
-            $existing = AiPredictResult::where(
-                'ai_model_task_id',
-                $task->id
-            )->first();
-
+            // ✅ prevent duplicate
+            $existing = AiPredictResult::where('ai_model_task_id', $task->id)->first();
             if ($existing) {
+                Log::info('AI RESULT ALREADY EXISTS', ['task_id' => $task->id]);
                 return $existing;
             }
 
-            $victims = $payload['victim'] ?? [];
-            $ages    = $payload['age'] ?? [];
-            $nsfws   = $payload['nsfw'] ?? [];
+            $status = strtolower((string) ($payload['status'] ?? ''));
 
-            $hasVictim = ! empty($victims);
-
-            $maxAgeScore  = 0.0;
-            $maxPornScore = 0.0;
-
-            foreach ($ages as $age) {
-                $score = (float) ($age['result'] ?? 0);
-                if ($score > $maxAgeScore) {
-                    $maxAgeScore = $score;
-                }
+            // ❌ skip unfinished
+            if (in_array($status, ['pending', 'running'])) {
+                throw new \RuntimeException("AI not finished: {$status}");
             }
 
-            foreach ($nsfws as $nsfw) {
-                $porn = (float) (($nsfw['result']['porn'] ?? 0));
-                if ($porn > $maxPornScore) {
-                    $maxPornScore = $porn;
-                }
+            // ❌ failed case
+            if ($status === 'failed') {
+                return $this->createFailedResult($task, $payload);
             }
+
+            if ($status !== 'finished') {
+                throw new \RuntimeException("Unsupported status: {$status}");
+            }
+
+            // ✅ USE ALREADY PARSED DATA
+            $parsed = $payload;
+
+            $victims = $parsed['victim'] ?? [];
+            $ages    = $parsed['age'] ?? [];
+            $nsfws   = $parsed['nsfw'] ?? [];
+
+            // ✅ calculate score
+            $hasVictim    = $this->hasVictim($victims);
+            $maxAgeScore  = $this->getMaxAgeScore($ages);
+            $maxPornScore = $this->getMaxPornScore($nsfws);
 
             $aiAnalysisResult = 'normal';
             $aiScore          = max($maxAgeScore, $maxPornScore);
 
             if ($hasVictim) {
                 $aiAnalysisResult = 'abnormal';
-                $aiScore          = 1.0;
-            } elseif ($maxAgeScore >= 0.7 || $maxPornScore >= 0.6) {
+                $aiScore          = 1.00;
+            } elseif ($maxAgeScore >= 0.70 || $maxPornScore >= 0.60) {
                 $aiAnalysisResult = 'abnormal';
             }
 
+            // ✅ FIX: get real keywords from lexicon
+            $lexicon  = $task->crawlerTaskItem?->crawlerTask?->lexicon;
+            $keywords = $this->collectLexiconKeywords($lexicon);
+
+            // ✅ CREATE RESULT
             $result = AiPredictResult::create([
                 'id'                 => (string) Str::uuid(),
                 'ai_model_task_id'   => $task->id,
-                'ai_score'           => $aiScore,
-                'analysis_result'    => json_encode($payload, JSON_UNESCAPED_UNICODE),
+                'lexicon_id'         => $lexicon?->id,
+                'keywords'           => $keywords, // ✅ FIXED
+                'ai_score'           => round($aiScore, 2),
+                'analysis_result'    => json_encode($parsed, JSON_UNESCAPED_UNICODE),
                 'ai_analysis_result' => $aiAnalysisResult,
-                'ai_analysis_detail' => $payload,
+                'ai_analysis_detail' => $parsed,
                 'review_status'      => 'pending',
                 'audit_status'       => 'pending',
-                'lexicon_id'         => $task->crawlerTaskItem->crawlerTask->lexicon->id ?? null,
-                'keywords'           => $task->crawlerTaskItem->crawlerTask->lexicon->keywords ?? null,
             ]);
 
-            $this->service->createFromPredictResult($result);
-
-            foreach ($victims as $victim) {
-
-                AiPredictResultItem::create([
-                    'id'                   => (string) Str::uuid(),
-                    'ai_predict_result_id' => $result->id,
-                    'media_url'            => $victim['image'] ?? null,
-                    'crawler_page_url'     => $task->crawlerTaskItem->crawl_location ?? null,
-                    'ai_result'            => 'abnormal',
-                    'status'               => 'valid',
-                    'reason'               => 'victim_detected',
-                    'ai_score'             => 1.0,
-                    'keywords'             => $result->keywords,
-                ]);
-            }
-
-            foreach ($ages as $age) {
-
-                $score = (float) ($age['result'] ?? 0);
-
-                AiPredictResultItem::create([
-                    'id'                   => (string) Str::uuid(),
-                    'ai_predict_result_id' => $result->id,
-                    'media_url'            => $age['image'] ?? null,
-                    'crawler_page_url'     => $task->crawlerTaskItem->crawl_location ?? null,
-                    'ai_result'            => $score >= 0.7 ? 'abnormal' : 'normal',
-                    'status'               => 'valid',
-                    'reason'               => $score >= 0.7 ? 'minor_probability' : null,
-                    'ai_score'             => $score,
-                    'keywords'             => $result->keywords,
-                ]);
-            }
-
-            foreach ($nsfws as $nsfw) {
-
-                $porn = (float) (($nsfw['result']['porn'] ?? 0));
-
-                AiPredictResultItem::create([
-                    'id'                   => (string) Str::uuid(),
-                    'ai_predict_result_id' => $result->id,
-                    'media_url'            => $nsfw['image'] ?? null,
-                    'crawler_page_url'     => $task->crawlerTaskItem->crawl_location ?? null,
-                    'ai_result'            => $porn >= 0.6 ? 'abnormal' : 'normal',
-                    'status'               => 'valid',
-                    'reason'               => $porn >= 0.6 ? 'nsfw_porn' : null,
-                    'ai_score'             => $porn,
-                    'keywords'             => $result->keywords,
-                ]);
-            }
+            // ✅ create items
+            $this->createVictimItems($result, $task, $victims);
+            $this->createAgeItems($result, $task, $ages);
+            $this->createNsfwItems($result, $task, $nsfws);
 
             return $result;
         });
     }
+    protected function collectLexiconKeywords($lexicon): array
+    {
+        $keywords = [];
 
-    // public function evidenceReview(string $resultId, array $items): void
-    // {
-    //     DB::transaction(function () use ($resultId, $items) {
+        if ($lexicon && $lexicon->keywords) {
+            foreach ($lexicon->keywords as $row) {
 
-    //         $result = AiPredictResult::with('caseManagement')
-    //             ->findOrFail($resultId);
+                $value = $row->keywords;
 
-    //         $case = $result->caseManagement;
+                if (is_array($value)) {
+                    $keywords = array_merge($keywords, $value);
+                } elseif (is_string($value)) {
+                    $decoded = json_decode($value, true);
+                    if (is_array($decoded)) {
+                        $keywords = array_merge($keywords, $decoded);
+                    }
+                }
+            }
+        }
 
-    //         $validCount   = 0;
-    //         $invalidCount = 0;
+        return array_values(array_unique($keywords));
+    }
 
-    //         foreach ($items as $data) {
+    protected function createFailedResult(AiModelTask $task, array $payload): AiPredictResult
+    {
+        $lexicon  = $task->crawlerTaskItem?->crawlerTask?->lexicon;
+        $keywords = [];
 
-    //             $item = AiPredictResultItem::where(
-    //                 'ai_predict_result_id',
-    //                 $resultId
-    //             )
-    //                 ->where('id', $data['id'])
-    //                 ->firstOrFail();
+        if ($lexicon && $lexicon->keywords) {
+            foreach ($lexicon->keywords as $row) {
 
-    //             $item->update([
-    //                 'status'       => $data['decision'],
-    //                 'reason'       => $data['decision'] === 'invalid'
-    //                     ? $data['reason']
-    //                     : null,
-    //                 'other_reason' => (
-    //                     $data['decision'] === 'invalid'
-    //                     && $data['reason'] === 'Other'
-    //                 )
-    //                     ? $data['other_reason']
-    //                     : null,
-    //             ]);
+                $value = $row->keywords;
 
-    //             if ($data['decision'] === 'invalid') {
+                if (is_array($value)) {
+                    $keywords = array_merge($keywords, $value);
+                } elseif (is_string($value)) {
+                    $decoded = json_decode($value, true);
+                    if (is_array($decoded)) {
+                        $keywords = array_merge($keywords, $decoded);
+                    }
+                }
+            }
+        }
 
-    //                 CaseManagementItem::create([
-    //                     'case_management_id' => $case->id,
-    //                     'media_url'          => $item->media_url,
-    //                     'crawler_page_url'   => $item->crawler_page_url,
-    //                     'ai_result'          => $item->ai_result,
-    //                     'status'             => 'invalid',
-    //                     'reason'             => $data['reason'],
-    //                     'other_reason'       => $data['reason'] === 'Other'
-    //                         ? $data['other_reason']
-    //                         : null,
-    //                     'ai_score'           => $item->ai_score,
-    //                     'keywords'           => $item->keywords,
-    //                     'issue_date'         => now(),
-    //                 ]);
-    //             }
-    //             $finalDecision = match (true) {
-    //                 $invalidCount === 0 => 'approved',
-    //                 $validCount === 0   => 'rejected',
-    //                 default             => 'partial',
-    //             };
+        $keywords = array_values(array_unique($keywords));
 
-    //             $result->update([
-    //                 'review_status' => $finalDecision,
-    //             ]);
+        return AiPredictResult::create([
+            'id'                 => (string) Str::uuid(),
+            'ai_model_task_id'   => $task->id,
+            'lexicon_id'         => $lexicon?->id,
+            'keywords'           => $this->extractKeywords($keywords),
+            'ai_score'           => 0.00,
+            'analysis_result'    => json_encode($payload, JSON_UNESCAPED_UNICODE),
+            'ai_analysis_result' => 'normal',
+            'ai_analysis_detail' => $payload,
+            'review_status'      => 'pending',
+            'audit_status'       => 'pending',
+        ]);
+    }
 
-    //             AiPredictResultAudit::create([
-    //                 'ai_predict_result_id' => $resultId,
-    //                 'auditor_id'           => auth()->id(),
-    //                 'decision'             => $finalDecision,
-    //                 'valid_count'          => $validCount,
-    //                 'invalid_count'        => $invalidCount,
-    //                 'summary'              => "Valid: {$validCount}, Invalid: {$invalidCount}",
-    //             ]);
-    //         }
+    protected function hasVictim(array $victims): bool
+    {
+        foreach ($victims as $victim) {
+            if (! empty($victim['victims']) && is_array($victim['victims'])) {
+                return true;
+            }
+        }
 
-    //         return $result->fresh([
-    //             'items',
-    //             'caseManagement.items',
-    //             'audits.auditor',
-    //         ]);
-    //     });
-    // }
+        return false;
+    }
+
+    protected function getMaxAgeScore(array $ages): float
+    {
+        $maxAgeScore = 0.0;
+
+        foreach ($ages as $age) {
+            $score       = (float) ($age['underage_probability'] ?? 0);
+            $maxAgeScore = max($maxAgeScore, $score);
+        }
+
+        return $maxAgeScore;
+    }
+
+    protected function getMaxPornScore(array $nsfws): float
+    {
+        $maxPornScore = 0.0;
+
+        foreach ($nsfws as $nsfw) {
+            $porn         = (float) ($nsfw['result']['porn'] ?? 0);
+            $maxPornScore = max($maxPornScore, $porn);
+        }
+
+        return $maxPornScore;
+    }
+
+    protected function createVictimItems(
+        AiPredictResult $result,
+        AiModelTask $task,
+        array $victims
+    ): void {
+        foreach ($victims as $victim) {
+            $image = $victim['image'] ?? null;
+            $faces = $victim['victims'] ?? [];
+
+            if (! is_array($faces)) {
+                continue;
+            }
+
+            foreach ($faces as $face) {
+                AiPredictResultItem::create([
+                    'id'                   => (string) Str::uuid(),
+                    'ai_predict_result_id' => $result->id,
+                    'media_url'            => $image,
+                    'crawler_page_url'     => $task->crawlerTaskItem?->crawl_location,
+                    'ai_result'            => 'abnormal',
+                    'status'               => 'valid',
+                    'reason'               => 'victim_detected',
+                    'other_reason'         => null,
+                    'ai_score'             => round((float) ($face['similarity'] ?? 1), 2),
+                    'keywords'             => $result->keywords,
+                ]);
+            }
+        }
+    }
+
+    protected function createAgeItems(
+        AiPredictResult $result,
+        AiModelTask $task,
+        array $ages
+    ): void {
+        foreach ($ages as $age) {
+            $score = (float) ($age['underage_probability'] ?? 0);
+
+            AiPredictResultItem::create([
+                'id'                   => (string) Str::uuid(),
+                'ai_predict_result_id' => $result->id,
+                'media_url'            => $age['path'] ?? null,
+                'crawler_page_url'     => $task->crawlerTaskItem?->crawl_location,
+                'ai_result'            => $score >= 0.70 ? 'abnormal' : 'normal',
+                'status'               => 'valid',
+                'reason'               => $score >= 0.70 ? 'minor_probability' : null,
+                'other_reason'         => null,
+                'ai_score'             => round($score, 2),
+                'keywords' => $result->keywords,($result->keywords),
+            ]);
+        }
+    }
+
+    protected function createNsfwItems(
+        AiPredictResult $result,
+        AiModelTask $task,
+        array $nsfws
+    ): void {
+        foreach ($nsfws as $nsfw) {
+            $porn = (float) ($nsfw['result']['porn'] ?? 0);
+
+            AiPredictResultItem::create([
+                'id'                   => (string) Str::uuid(),
+                'ai_predict_result_id' => $result->id,
+                'media_url'            => $nsfw['image'] ?? null,
+                'crawler_page_url'     => $task->crawlerTaskItem?->crawl_location,
+                'ai_result'            => $porn >= 0.60 ? 'abnormal' : 'normal',
+                'status'               => 'valid',
+                'reason'               => $porn >= 0.60 ? 'nsfw_porn' : null,
+                'other_reason'         => null,
+                'ai_score'             => round($porn, 2),
+                'keywords' => $result->keywords,($result->keywords),
+            ]);
+        }
+    }
+
+    protected function extractKeywords(mixed $keywords): ?string
+    {
+        if (empty($keywords)) {
+            return null;
+        }
+
+        if (is_string($keywords)) {
+            return $keywords;
+        }
+
+        if (is_array($keywords)) {
+            return json_encode($keywords, JSON_UNESCAPED_UNICODE);
+        }
+
+        return null;
+    }
+
+    protected function normalizeKeywordsForJson(mixed $keywords): ?array
+    {
+        if (empty($keywords)) {
+            return null;
+        }
+
+        if (is_array($keywords)) {
+            return $keywords;
+        }
+
+        if (is_string($keywords)) {
+            $decoded = json_decode($keywords, true);
+
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return $decoded;
+            }
+
+            return [$keywords];
+        }
+
+        return null;
+    }
 
     public function evidenceReview(string $resultId, array $items): AiPredictResult
     {

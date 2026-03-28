@@ -33,6 +33,7 @@ class AiPredictResult extends Model
         'review_date'        => 'datetime',
         'audit_date'         => 'datetime',
         'ai_analysis_date'   => 'datetime',
+        'keywords'           => 'array',
     ];
 
     public function aiModelTask()

@@ -19,6 +19,10 @@ class CaseManagement extends Model
         'comment',
     ];
 
+    protected $casts = [
+        'keywords' => 'array', // ✅ FIX
+    ];
+
     public function result()
     {
         return $this->belongsTo(AiPredictResult::class);

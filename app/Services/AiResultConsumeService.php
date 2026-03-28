@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services;
 
 use Illuminate\Support\Facades\Log;
@@ -17,7 +16,46 @@ class AiResultConsumeService
 
     public function consume(): void
     {
-        // Create group if not exists
+        $this->createGroupIfNotExists();
+
+        Log::info('AiResultConsumeService started', [
+            'stream'   => $this->stream,
+            'group'    => $this->group,
+            'consumer' => $this->consumer,
+        ]);
+
+        while (true) {
+            try {
+                $messages = Redis::xreadgroup(
+                    $this->group,
+                    $this->consumer,
+                    [$this->stream => '>'],
+                    10,
+                    5
+                );
+
+                if ($messages === false || empty($messages[$this->stream])) {
+                    continue;
+                }
+
+                foreach ($messages[$this->stream] as $id => $data) {
+                    Log::info('🔥 REDIS MESSAGE RECEIVED', [
+                        'id'   => $id,
+                        'data' => $data,
+                    ]);
+                    $this->handleMessage($id, $data);
+                }
+            } catch (\Throwable $e) {
+                Log::critical('AI consumer crashed', [
+                    'error' => $e->getMessage(),
+                ]);
+
+                sleep(2);
+            }
+        }
+    }
+    protected function createGroupIfNotExists(): void
+    {
         try {
             Redis::executeRaw([
                 'XGROUP', 'CREATE',
@@ -27,66 +65,73 @@ class AiResultConsumeService
                 'MKSTREAM',
             ]);
         } catch (\Throwable $e) {
-            // Group already exists
+            // group already exists
         }
+    }
 
-        Log::info('AiResultConsumeService started');
+    protected function handleMessage(string $redisId, array $data): void
+    {
+        try {
+            $rawPayload = json_decode($data['payload'], true) ?? [];
 
-        while (true) {
-            try {
+            $taskId = $rawPayload['task_id'] ?? $data['task_id'] ?? null;
 
-                $messages = Redis::xreadgroup(
-                    $this->group,
-                    $this->consumer,
-                    [$this->stream => '>'],
-                    10,   // COUNT
-                    5     // BLOCK (seconds)
-                );
+            if (! $taskId) {
+                throw new \RuntimeException('task_id missing');
+            }
 
-                if ($messages === false || empty($messages[$this->stream])) {
-                    continue;
-                }
+            $parsed = $this->parseAiResult($rawPayload);
 
-                foreach ($messages[$this->stream] as $id => $data) {
+            $payload = array_merge($rawPayload, $parsed);
 
-                    try {
+            $this->resultService->saveFromAiCallback((string) $taskId, $payload);
 
-                        $payload = [];
+            Redis::xack($this->stream, $this->group, [$redisId]);
+        } catch (\Throwable $e) {
+            Log::error('AI result process failed', [
+                'redis_id' => $redisId,
+                'raw_data' => $data,
+                'error'    => $e->getMessage(),
+            ]);
+        }
+    }
 
-                        if (!empty($data['payload'])) {
-                            $payload = json_decode($data['payload'], true) ?? [];
-                        }
+    protected function decodePayload(array $data): array
+    {
+        if (! empty($data['payload'])) {
+            $decoded = json_decode($data['payload'], true);
 
-                        $taskId = $payload['task_id'] ?? $data['task_id'] ?? null;
-
-                        if (!$taskId) {
-                            throw new \RuntimeException('task_id missing');
-                        }
-
-
-                        $this->resultService->saveFromAiCallback((string) $taskId, $payload);
-
-
-                        Redis::xack($this->stream, $this->group, [$id]);
-
-                    } catch (\Throwable $e) {
-
-                        Log::error('AI result process failed', [
-                            'redis_id' => $id,
-                            'raw_data' => $data,
-                            'error'    => $e->getMessage(),
-                        ]);
-                    }
-                }
-
-            } catch (\Throwable $e) {
-
-                Log::critical('AI consumer crashed', [
-                    'error' => $e->getMessage(),
-                ]);
-
-                sleep(2); // prevent CPU spike if Redis down
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return $decoded;
             }
         }
+
+        return $data;
+    }
+    protected function parseAiResult(array $payload): array
+    {
+        if (empty($payload['result'])) {
+            return [];
+        }
+
+        $raw = $payload['result'];
+
+        $json = str_replace("'", '"', $raw);
+
+        $json = str_replace(['True', 'False'], ['true', 'false'], $json);
+
+        $json = preg_replace('/\((.*?)\)/', '[$1]', $json);
+
+        $decoded = json_decode($json, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            Log::error('AI parse failed', [
+                'error' => json_last_error_msg(),
+                'raw'   => $raw,
+            ]);
+            return [];
+        }
+
+        return $decoded;
     }
 }

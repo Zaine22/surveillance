@@ -81,4 +81,8 @@ class CrawlerTaskItem extends Model
         return $this->task->lexicon();
     }
 
+    public function crawlerTask()
+    {
+        return $this->belongsTo(CrawlerTask::class, 'task_id');
+    }
 }

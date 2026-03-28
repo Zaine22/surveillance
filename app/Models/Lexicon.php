@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -22,4 +21,5 @@ class Lexicon extends Model
     {
         return $this->hasMany(LexiconKeyword::class, 'lexicon_id');
     }
+
 }
