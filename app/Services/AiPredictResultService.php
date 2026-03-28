@@ -88,7 +88,6 @@ class AiPredictResultService extends BaseFilterService
 
         return DB::transaction(function () use ($task, $payload) {
 
-            // ✅ prevent duplicate
             $existing = AiPredictResult::where('ai_model_task_id', $task->id)->first();
             if ($existing) {
                 Log::info('AI RESULT ALREADY EXISTS', ['task_id' => $task->id]);
@@ -97,12 +96,10 @@ class AiPredictResultService extends BaseFilterService
 
             $status = strtolower((string) ($payload['status'] ?? ''));
 
-            // ❌ skip unfinished
             if (in_array($status, ['pending', 'running'])) {
                 throw new \RuntimeException("AI not finished: {$status}");
             }
 
-            // ❌ failed case
             if ($status === 'failed') {
                 return $this->createFailedResult($task, $payload);
             }
@@ -111,14 +108,12 @@ class AiPredictResultService extends BaseFilterService
                 throw new \RuntimeException("Unsupported status: {$status}");
             }
 
-            // ✅ USE ALREADY PARSED DATA
             $parsed = $payload;
 
             $victims = $parsed['victim'] ?? [];
             $ages    = $parsed['age'] ?? [];
             $nsfws   = $parsed['nsfw'] ?? [];
 
-            // ✅ calculate score
             $hasVictim    = $this->hasVictim($victims);
             $maxAgeScore  = $this->getMaxAgeScore($ages);
             $maxPornScore = $this->getMaxPornScore($nsfws);
@@ -133,16 +128,14 @@ class AiPredictResultService extends BaseFilterService
                 $aiAnalysisResult = 'abnormal';
             }
 
-            // ✅ FIX: get real keywords from lexicon
             $lexicon  = $task->crawlerTaskItem?->crawlerTask?->lexicon;
             $keywords = $this->collectLexiconKeywords($lexicon);
 
-            // ✅ CREATE RESULT
             $result = AiPredictResult::create([
                 'id'                 => (string) Str::uuid(),
                 'ai_model_task_id'   => $task->id,
                 'lexicon_id'         => $lexicon?->id,
-                'keywords'           => $keywords, // ✅ FIXED
+                'keywords'           => $keywords,
                 'ai_score'           => round($aiScore, 2),
                 'analysis_result'    => json_encode($parsed, JSON_UNESCAPED_UNICODE),
                 'ai_analysis_result' => $aiAnalysisResult,
@@ -151,7 +144,6 @@ class AiPredictResultService extends BaseFilterService
                 'audit_status'       => 'pending',
             ]);
 
-            // ✅ create items
             $this->createVictimItems($result, $task, $victims);
             $this->createAgeItems($result, $task, $ages);
             $this->createNsfwItems($result, $task, $nsfws);
