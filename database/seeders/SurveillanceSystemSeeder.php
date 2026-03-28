@@ -45,11 +45,8 @@ class SurveillanceSystemSeeder extends Seeder
                     'updated_at' => $lexiconDate,
                 ]);
 
-                // 👉 Lexicon Keywords (with language + parent)
-                $parentKeywordId = Str::uuid();
-
                 DB::table('lexicon_keywords')->insert([
-                    'id'         => $parentKeywordId,
+                    'id'         => Str::uuid(),
                     'lexicon_id' => $lexiconId,
                     'keywords'   => json_encode(["main$l"]),
                     'status'     => 'enabled',
@@ -61,7 +58,7 @@ class SurveillanceSystemSeeder extends Seeder
                     DB::table('lexicon_keywords')->insert([
                         'id'         => Str::uuid(),
                         'lexicon_id' => $lexiconId,
-                        'parent_id'  => $parentKeywordId,
+                        'parent_id'  => null,
                         'language'   => $lang,
                         'keywords'   => json_encode(["{$lang}_keyword$l"]),
                         'status'     => 'enabled',
@@ -70,7 +67,6 @@ class SurveillanceSystemSeeder extends Seeder
                     ]);
                 }
 
-                // 👉 Crawler Config
                 $configId = Str::uuid();
 
                 DB::table('crawler_configs')->insert([
@@ -84,7 +80,6 @@ class SurveillanceSystemSeeder extends Seeder
                     'updated_at'     => $lexiconDate,
                 ]);
 
-                // 👉 Tasks (5 per config)
                 for ($t = 1; $t <= 5; $t++) {
 
                     $taskId   = Str::uuid();
