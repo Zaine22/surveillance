@@ -7,6 +7,7 @@ use App\Models\CrawlerTaskItem;
 use App\Models\Lexicon;
 use App\Services\CrawlerTaskItemService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class CrawlerTaskService extends BaseFilterService
@@ -117,6 +118,26 @@ class CrawlerTaskService extends BaseFilterService
     }
     public function getTaskItemSummary(array $filters)
     {
+        if (! empty($filters['range'])) {
+            $now = Carbon::now();
+
+            switch ($filters['range']) {
+                case 'one_week':
+                    $filters['from_date'] = $now->copy()->subWeek()->startOfDay();
+                    $filters['to_date']   = $now->copy()->endOfDay();
+                    break;
+
+                case 'one_month':
+                    $filters['from_date'] = $now->copy()->subMonth()->startOfDay();
+                    $filters['to_date']   = $now->copy()->endOfDay();
+                    break;
+
+                case 'one_year':
+                    $filters['from_date'] = $now->copy()->subYear()->startOfDay();
+                    $filters['to_date']   = $now->copy()->endOfDay();
+                    break;
+            }
+        }
         $itemQuery = CrawlerTaskItem::query()
             ->whereHas('task', function ($task) use ($filters) {
 
@@ -126,10 +147,6 @@ class CrawlerTaskService extends BaseFilterService
                     $task->whereHas('crawlerConfig', function ($q) use ($search) {
                         $q->whereRaw("LOWER(name) LIKE ?", ["%{$search}%"]);
                     });
-                }
-
-                if (! empty($filters['status'])) {
-                    $task->where('status', $filters['status']);
                 }
 
                 if (! empty($filters['from_date'])) {

@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Requests\TaskManagement;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -21,33 +20,27 @@ class CrawlerTaskIndexRequest extends FormRequest
      */
     public function rules(): array
     {
-                return [
-            'search' => ['nullable', 'string', 'max:100'],
-
-            'status' => [
+        return [
+            'search'     => ['nullable', 'string', 'max:100'],
+            'status'     => [
                 'nullable',
-                'in:pending,running,completed,failed'
+                'in:pending,running,completed,failed',
             ],
-
-            'range' => [
+            'range'      => [
                 'nullable',
-                'in:one_week,one_month,one_year'
+                'in:one_week,one_month,one_year',
             ],
-
-            'from_date' => ['nullable', 'date_format:Y-m-d'],
-            'to_date'   => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from_date'],
-
-            'page' => ['nullable', 'integer', 'min:1'],
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
-
-            'sort_by' => [
+            'from_date'  => ['nullable', 'date_format:Y-m-d'],
+            'to_date'    => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from_date'],
+            'page'       => ['nullable', 'integer', 'min:1'],
+            'per_page'   => ['nullable', 'integer', 'min:1', 'max:100'],
+            'sort_by'    => [
                 'nullable',
-                'in:created_at,updated_at,status'
+                'in:created_at,updated_at,status',
             ],
-
             'sort_order' => [
                 'nullable',
-                'in:asc,desc'
+                'in:asc,desc',
             ],
         ];
     }

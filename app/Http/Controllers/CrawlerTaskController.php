@@ -19,6 +19,7 @@ class CrawlerTaskController extends Controller
 
     public function index(CrawlerTaskIndexRequest $request)
     {
+
         $filters = $request->validated();
 
         $tasks = $this->crawlerTaskService->getAllTasks($filters);
