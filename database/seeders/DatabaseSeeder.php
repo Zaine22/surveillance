@@ -3,7 +3,6 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use PHPUnit\Metadata\Test;
 
 class DatabaseSeeder extends Seeder
 {
@@ -22,7 +21,8 @@ class DatabaseSeeder extends Seeder
             // AiModelSeeder::class,
             // BotSeeder::class,
             // AllowedIpSeeder::class,
-            TestSeeder::class,
+            // TestSeeder::class,
+            SurveillanceSystemSeeder::class,
 
         ]);
     }
