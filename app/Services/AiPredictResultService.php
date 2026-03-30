@@ -13,8 +13,7 @@ use Illuminate\Support\Str;
 
 class AiPredictResultService extends BaseFilterService
 {
-    public function __construct(protected CaseManagementService $service)
-    {}
+    public function __construct(protected CaseManagementService $service) {}
 
     public function getAll(array $filters): LengthAwarePaginator
     {
@@ -26,12 +25,12 @@ class AiPredictResultService extends BaseFilterService
             $query->where(function ($q) use ($search) {
 
                 $q->orWhereRaw(
-                    "LOWER(analysis_result) LIKE ?",
+                    'LOWER(analysis_result) LIKE ?',
                     ["%{$search}%"]
                 )
                     ->orWhereHas('aiModelTask', function ($task) use ($search) {
                         $task->whereRaw(
-                            "LOWER(file_name) LIKE ?",
+                            'LOWER(file_name) LIKE ?',
                             ["%{$search}%"]
                         );
                     });
@@ -46,6 +45,12 @@ class AiPredictResultService extends BaseFilterService
             $query->where('audit_status', $filters['audit_status']);
         }
 
+        if (empty($filters['range'])) {
+            $filters['range'] = 'one_week';
+        } else if($filters['range'] === 'custom_range') {
+            $filters['range'] = null;
+        }
+
         return $this->applyFilters(
             $query,
             $filters,
@@ -54,6 +59,7 @@ class AiPredictResultService extends BaseFilterService
             'created_at'
         );
     }
+
     public function findById(string $id): AiPredictResult
     {
         return AiPredictResult::query()
@@ -91,6 +97,7 @@ class AiPredictResultService extends BaseFilterService
             $existing = AiPredictResult::where('ai_model_task_id', $task->id)->first();
             if ($existing) {
                 Log::info('AI RESULT ALREADY EXISTS', ['task_id' => $task->id]);
+
                 return $existing;
             }
 
