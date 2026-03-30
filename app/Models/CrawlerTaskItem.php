@@ -25,19 +25,17 @@ class CrawlerTaskItem extends Model
     protected static function booted(): void
     {
         static::updated(function (CrawlerTaskItem $item) {
-            // Log for debugging
-            Log::info('CrawlerTaskItem updated observer fired', [
-                'item_id'        => $item->id,
-                'status'         => $item->status,
-                'status_changed' => $item->wasChanged('status'),
-                'result_file'    => $item->result_file,
-            ]);
+            // Log::info('CrawlerTaskItem updated observer fired', [
+            //     'item_id'        => $item->id,
+            //     'status'         => $item->status,
+            //     'status_changed' => $item->wasChanged('status'),
+            //     'result_file'    => $item->result_file,
+            // ]);
 
-            // Trigger sync when status moves to 'syncing'
             if ($item->wasChanged('status') && $item->status === 'syncing' && ! empty($item->result_file)) {
-                Log::info('Dispatching SyncCrawlerFileJob based on status change', [
-                    'item_id' => $item->id,
-                ]);
+                // Log::info('Dispatching SyncCrawlerFileJob based on status change', [
+                //     'item_id' => $item->id,
+                // ]);
                 SyncCrawlerFileJob::dispatch($item);
             }
 
@@ -62,6 +60,14 @@ class CrawlerTaskItem extends Model
                     ->update([
                         'status' => 'completed',
                     ]);
+
+                if ($item->wasChanged('status') && $item->status === 'error') {
+
+                    CrawlerTask::where('id', $item->task_id)
+                        ->update([
+                            'status' => 'error',
+                        ]);
+                }
             }
         });
     }
