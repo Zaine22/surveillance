@@ -1,4 +1,5 @@
 <?php
+
 namespace Database\Seeders;
 
 use Carbon\Carbon;
@@ -13,6 +14,8 @@ class SurveillanceSystemSeeder extends Seeder
         DB::transaction(function () {
 
             $aiModels = [];
+
+            // AI MODELS
             for ($i = 1; $i <= 5; $i++) {
                 $id = Str::uuid();
 
@@ -30,6 +33,7 @@ class SurveillanceSystemSeeder extends Seeder
                 $aiModels[] = $id;
             }
 
+            // LEXICONS
             for ($l = 1; $l <= 5; $l++) {
 
                 $lexiconId   = Str::uuid();
@@ -57,7 +61,6 @@ class SurveillanceSystemSeeder extends Seeder
                     DB::table('lexicon_keywords')->insert([
                         'id'         => Str::uuid(),
                         'lexicon_id' => $lexiconId,
-                        'parent_id'  => null,
                         'language'   => $lang,
                         'keywords'   => json_encode(["{$lang}_keyword$l"]),
                         'status'     => 'enabled',
@@ -66,6 +69,7 @@ class SurveillanceSystemSeeder extends Seeder
                     ]);
                 }
 
+                // CRAWLER CONFIG
                 $configId = Str::uuid();
 
                 DB::table('crawler_configs')->insert([
@@ -79,6 +83,7 @@ class SurveillanceSystemSeeder extends Seeder
                     'updated_at'     => $lexiconDate,
                 ]);
 
+                // TASKS
                 for ($t = 1; $t <= 5; $t++) {
 
                     $taskId   = Str::uuid();
@@ -88,13 +93,12 @@ class SurveillanceSystemSeeder extends Seeder
                         'id'                => $taskId,
                         'crawler_config_id' => $configId,
                         'lexicon_id'        => $lexiconId,
-                        'status'            => collect([
-                            'pending', 'processing', 'completed', 'error',
-                        ])->random(),
+                        'status'            => collect(['pending', 'processing', 'completed', 'error'])->random(),
                         'created_at'        => $taskDate,
                         'updated_at'        => $taskDate,
                     ]);
 
+                    // TASK ITEMS
                     for ($i = 1; $i <= 5; $i++) {
 
                         $itemId   = Str::uuid();
@@ -107,13 +111,12 @@ class SurveillanceSystemSeeder extends Seeder
                             'crawler_machine' => "bot-" . rand(1, 20),
                             'result_file'     => "file$i.zip",
                             'crawl_location'  => "https://example.com/$i",
-                            'status'          => collect([
-                                'pending', 'crawling', 'syncing', 'synced', 'error',
-                            ])->random(),
+                            'status'          => collect(['pending', 'crawling', 'syncing', 'synced', 'error'])->random(),
                             'created_at'      => $itemDate,
                             'updated_at'      => $itemDate,
                         ]);
 
+                        // AI TASK
                         $aiTaskId = Str::uuid();
 
                         DB::table('ai_model_tasks')->insert([
@@ -126,21 +129,28 @@ class SurveillanceSystemSeeder extends Seeder
                             'updated_at'           => $itemDate,
                         ]);
 
+                        // AI RESULT
                         $predictId = Str::uuid();
+                        $status    = collect(['finished', 'failed', 'pending', 'running'])->random();
 
                         DB::table('ai_predict_results')->insert([
                             'id'                 => $predictId,
                             'ai_model_task_id'   => $aiTaskId,
                             'lexicon_id'         => $lexiconId,
-                            'keywords'           => "keyword$i",
+                            'keywords'           => json_encode(["keyword$i"]),
                             'ai_score'           => rand(10, 99),
-                            'ai_analysis_result' => collect(['normal', 'abnormal'])->random(),
+                            'analysis_result'    => $this->buildAnalysisResult($status),
+                            'ai_analysis_result' => $status === 'finished'
+                                ? collect(['normal', 'abnormal'])->random()
+                                : null,
+                            'ai_analysis_detail' => $this->buildAiAnalysisDetail($status),
                             'review_status'      => 'pending',
                             'audit_status'       => 'pending',
                             'created_at'         => $itemDate,
                             'updated_at'         => $itemDate,
                         ]);
 
+                        // RESULT ITEMS
                         DB::table('ai_predict_result_items')->insert([
                             'id'                   => Str::uuid(),
                             'ai_predict_result_id' => $predictId,
@@ -153,58 +163,107 @@ class SurveillanceSystemSeeder extends Seeder
                             'created_at'           => $itemDate,
                             'updated_at'           => $itemDate,
                         ]);
-
-                        $caseId = Str::uuid();
-
-                        DB::table('case_management')->insert([
-                            'id'                   => $caseId,
-                            'ai_predict_result_id' => $predictId,
-                            'internal_case_no'     => "INT-$i",
-                            'status'               => collect([
-                                'pending', 'created', 'notified',
-                            ])->random(),
-                            'created_at'           => $itemDate,
-                            'updated_at'           => $itemDate,
-                        ]);
-
-                        DB::table('case_management_items')->insert([
-                            'id'                 => Str::uuid(),
-                            'case_management_id' => $caseId,
-                            'media_url'          => "https://img.com/$i.jpg",
-                            'ai_result'          => 'abnormal',
-                            'status'             => 'valid',
-                            'issue_date'         => $itemDate,
-                            'due_date'           => Carbon::parse($itemDate)->addDays(7),
-                            'created_at'         => $itemDate,
-                            'updated_at'         => $itemDate,
-                        ]);
                     }
                 }
             }
-
-            for ($i = 1; $i <= 5; $i++) {
-                DB::table('data_sync_records')->insert([
-                    'id'          => Str::uuid(),
-                    'source_path' => "/source/$i",
-                    'target_path' => "/target/$i",
-                    'file_name'   => "file$i.zip",
-                    'status'      => collect(['pending', 'completed', 'failed'])->random(),
-                    'created_at'  => $this->randomDate(),
-                    'updated_at'  => now(),
-                ]);
-            }
-
-            for ($i = 1; $i <= 5; $i++) {
-                DB::table('allowed_ips')->insert([
-                    'id'         => Str::uuid(),
-                    'ip_address' => "192.168.12.$i",
-                    'status'     => true,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-
         });
+    }
+
+    private function buildAnalysisResult(string $status): string
+    {
+        $base = [
+            'status'    => $status,
+            'params'    => json_encode([
+                'dir_path'   => 'test_3',
+                'image_type' => 'screenshot',
+            ]),
+            'timestamp' => now()->toDateTimeString(),
+        ];
+
+        return match ($status) {
+
+            'finished' => json_encode([
+                ...$base,
+                'result' => $this->fakeAiResult(),
+            ], JSON_UNESCAPED_UNICODE),
+
+            'failed' => json_encode([
+                ...$base,
+                'result' => 'task/test_5.zip or task/test_5 not found',
+            ], JSON_UNESCAPED_UNICODE),
+
+            'pending', 'running' => json_encode([
+                ...$base,
+                'result' => '',
+            ], JSON_UNESCAPED_UNICODE),
+
+            default => json_encode($base),
+        };
+    }
+
+    private function buildAiAnalysisDetail(string $status): ?string
+    {
+        return match ($status) {
+
+            'finished' => json_encode([
+                'victim' => [
+                    [
+                        'image' => 'task/test_3/275.png',
+                        'victims' => [
+                            [
+                                'user_name' => 'victim_1',
+                                'facial_area' => [
+                                    'x' => 78,
+                                    'y' => 32,
+                                    'w' => 43,
+                                    'h' => 57,
+                                ],
+                                'similarity' => 0.80,
+                            ],
+                        ],
+                    ],
+                ],
+                'age' => [
+                    [
+                        'underage_probability' => 0.99,
+                        'message' => 'successful',
+                        'success' => true,
+                        'path' => 'task/test_3/112.png',
+                    ],
+                ],
+                'nsfw' => [
+                    [
+                        'image' => 'task/test_3/112.png',
+                        'result' => [
+                            'porn' => 0.88,
+                        ],
+                    ],
+                ],
+            ], JSON_UNESCAPED_UNICODE),
+
+            'failed' => json_encode([
+                'error' => 'task/test_5.zip not found',
+            ]),
+
+            'pending' => json_encode([
+                'message' => 'Queued',
+            ]),
+
+            'running' => json_encode([
+                'message' => 'Processing',
+            ]),
+
+            default => null,
+        };
+    }
+
+    private function fakeAiResult(): string
+    {
+        return json_encode([
+            'victim' => [],
+            'age'    => [],
+            'nsfw'   => [],
+        ]);
     }
 
     private function randomDate()
