@@ -44,4 +44,19 @@ class CrawlerTaskIndexRequest extends FormRequest
             ],
         ];
     }
+
+    public function validated($key = null, $default = null): array
+    {
+        $data = parent::validated();
+
+        if (isset($data['status'])) {
+            $data['status'] = match ($data['status']) {
+                'running' => 'processing',
+                'failed'  => 'error',
+                default   => $data['status'],
+            };
+        }
+
+        return $data;
+    }
 }
