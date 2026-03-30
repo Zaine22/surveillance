@@ -1,10 +1,9 @@
 <?php
-
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
 
 class PushAiResultToStream extends Command
@@ -20,13 +19,13 @@ class PushAiResultToStream extends Command
     {
         $status = strtolower($this->option('status'));
 
-        // 🔥 1. create ai_model_task first
+
         $taskId = $this->createAiModelTask();
 
-        // 🔥 2. build payload
+
         $payload = $this->buildPayload($taskId, $status);
 
-        // 🔥 3. push to Redis
+
         $messageId = Redis::xadd($this->stream, '*', [
             'payload' => json_encode($payload, JSON_UNESCAPED_UNICODE),
         ]);
@@ -40,31 +39,28 @@ class PushAiResultToStream extends Command
         return Command::SUCCESS;
     }
 
-    /**
-     * 🔥 Create ai_model_tasks record
-     */
     protected function createAiModelTask(): string
     {
         $taskId = (string) Str::uuid();
 
-        // 👉 get random ai_model_id
+
         $aiModelId = DB::table('ai_models')->value('id');
 
-        // 👉 get random crawler_task_item_id
+
         $crawlerItemId = DB::table('crawler_task_items')->value('id');
 
-        if (!$aiModelId || !$crawlerItemId) {
+        if (! $aiModelId || ! $crawlerItemId) {
             throw new \RuntimeException('ai_models or crawler_task_items is empty');
         }
 
         DB::table('ai_model_tasks')->insert([
-            'id' => $taskId,
-            'ai_model_id' => $aiModelId,
+            'id'                   => $taskId,
+            'ai_model_id'          => $aiModelId,
             'crawler_task_item_id' => $crawlerItemId,
-            'file_name' => 'task/test_3.zip',
-            'status' => 'completed', // since we push result directly
-            'created_at' => now(),
-            'updated_at' => now(),
+            'file_name'            => 'task/test_3.zip',
+            'status'               => 'completed',
+            'created_at'           => now(),
+            'updated_at'           => now(),
         ]);
 
         return $taskId;
@@ -75,50 +71,50 @@ class PushAiResultToStream extends Command
         return match ($status) {
 
             'finished' => [
-                'task_id' => $taskId,
-                'status'  => 'finished',
+                'task_id'   => $taskId,
+                'status'    => 'finished',
                 'timestamp' => now()->toDateTimeString(),
-                'params' => json_encode([
-                    'dir_path' => 'test_3',
+                'params'    => json_encode([
+                    'dir_path'   => 'test_3',
                     'image_type' => 'screenshot',
                 ]),
-                'result' => $this->getSuccessResult(),
+                'result'    => $this->getSuccessResult(),
             ],
 
-            'failed' => [
-                'task_id' => $taskId,
-                'status'  => 'failed',
+            'failed'   => [
+                'task_id'   => $taskId,
+                'status'    => 'failed',
                 'timestamp' => now()->toDateTimeString(),
-                'params' => json_encode([
-                    'dir_path' => 'test_5',
+                'params'    => json_encode([
+                    'dir_path'   => 'test_5',
                     'image_type' => 'element',
                 ]),
-                'result' => 'task/test_5.zip or task/test_5 not found',
+                'result'    => 'task/test_5.zip or task/test_5 not found',
             ],
 
-            'pending' => [
-                'task_id' => $taskId,
-                'status'  => 'pending',
+            'pending'  => [
+                'task_id'   => $taskId,
+                'status'    => 'pending',
                 'timestamp' => now()->toDateTimeString(),
-                'params' => json_encode([
-                    'dir_path' => 'test_3',
+                'params'    => json_encode([
+                    'dir_path'   => 'test_3',
                     'image_type' => 'screenshot',
                 ]),
-                'result' => '',
+                'result'    => '',
             ],
 
-            'running' => [
-                'task_id' => $taskId,
-                'status'  => 'running',
+            'running'  => [
+                'task_id'   => $taskId,
+                'status'    => 'running',
                 'timestamp' => now()->toDateTimeString(),
-                'params' => json_encode([
-                    'dir_path' => 'test_3',
+                'params'    => json_encode([
+                    'dir_path'   => 'test_3',
                     'image_type' => 'screenshot',
                 ]),
-                'result' => '',
+                'result'    => '',
             ],
 
-            default => throw new \InvalidArgumentException("Invalid status: {$status}"),
+            default    => throw new \InvalidArgumentException("Invalid status: {$status}"),
         };
     }
 

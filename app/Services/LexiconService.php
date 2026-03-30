@@ -64,6 +64,7 @@ class LexiconService extends BaseFilterService
                 LexiconKeyword::create([
                     'lexicon_id'      => $lexicon->id,
                     'keywords'        => array_values(array_unique($group)),
+                    'language'        => 'zh',
                     'crawl_hit_count' => 0,
                     'case_count'      => 0,
                     'status'          => 'enabled',

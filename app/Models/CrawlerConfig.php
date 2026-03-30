@@ -17,6 +17,8 @@ class CrawlerConfig extends Model
         'description',
         'frequency_code',
         'status',
+        'from',
+        'to',
     ];
 
     protected $casts = [

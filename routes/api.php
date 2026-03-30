@@ -62,6 +62,12 @@ Route::middleware([
         'ai-predict-results/{result}/evidence-review',
         [AiPredictResultController::class, 'update']
     );
+    Route::prefix('ai-models')->group(function () {
+        Route::get('/', [AiModelController::class, 'index']);
+        Route::get('/stats', [AiModelController::class, 'stats']);
+        Route::get('/{id}', [AiModelController::class, 'show']);
+        Route::post('/{id}/check', [AiModelController::class, 'check']);
+    });
     Route::apiResource('ai-predict-result-items', AiPredictResultItemController::class);
     Route::apiResource('audit-ratios', AuditRatioController::class);
     Route::apiResource('bot-machines', BotMachineController::class);
