@@ -32,6 +32,18 @@ class LexiconService extends BaseFilterService
     public function getAllLexicons(array $filters)
     {
         $query = Lexicon::with('keywords');
+        $query = Lexicon::query()
+            ->with('keywords')
+            ->withSum([
+                'keywords as crawl_hit_count' => function ($q) {
+                    $q->where('status', 'enabled');
+                },
+            ], 'crawl_hit_count')
+            ->withSum([
+                'keywords as case_count' => function ($q) {
+                    $q->where('status', 'enabled');
+                },
+            ], 'case_count');
 
         return $this->applyFilters(
             $query,

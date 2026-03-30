@@ -23,8 +23,8 @@ class LexiconResource extends JsonResource
             'keywords'        => LexiconKeywordResource::collection(
                 $this->whenLoaded('keywords')
             ),
-            'crawl_hit_count' => $this->crawl_hit_count,
-            'case_count'      => $this->case_count,
+            'crawl_hit_count' => (int) ($this->crawl_hit_count ?? 0),
+            'case_count'      => (int) ($this->case_count ?? 0),
         ];
     }
 }
