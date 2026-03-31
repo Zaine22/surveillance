@@ -8,5 +8,5 @@ class Department extends Model
 {
     use HasUuids;
 
-    protected $fillable = ['name'];
+    protected $fillable = ['id', 'name'];
 }

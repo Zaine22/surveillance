@@ -3,13 +3,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Department;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class DepartmentController extends Controller
 {
     public function index()
     {
-        $departments = Department::latest()->get();
+        $departments = Department::latest()->pluck('name');
 
         return response()->json($departments);
     }
@@ -21,7 +20,6 @@ class DepartmentController extends Controller
         ]);
 
         $department = Department::create([
-            'id'   => (string) Str::uuid(),
             'name' => $request->name,
         ]);
 
