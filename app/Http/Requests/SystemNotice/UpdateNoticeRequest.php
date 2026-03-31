@@ -24,7 +24,7 @@ class UpdateNoticeRequest extends FormRequest
         return [
             'title' => 'nullable|string|max:255',
             'content' => 'nullable|string',
-            'status' => 'nullable|string|in:published,pending',
+            'status' => 'nullable|string|in:published,pending,to_be_published',
             'publish_date' => 'nullable|date',
             'expire_at' => 'nullable|date|after:published_date',
         ];
