@@ -100,12 +100,12 @@ class OperationLogger
                 'page_url'        => preg_replace('/^api\//', '', $path),
 
                 'action'          => match (true) {
-                    $isLogin                                       => 'login',
-                    $isLogout                                      => 'logout',
-                    $request->method() === 'POST'                  => 'create',
-                    in_array($request->method(), ['PUT', 'PATCH']) => 'update',
-                    $request->method() === 'DELETE'                => 'delete',
-                    default                                        => 'view',
+                    $isLogin                                       => '登入',
+                    $isLogout                                      => '登出',
+                    $request->method() === 'POST'                  => '新增',
+                    in_array($request->method(), ['PUT', 'PATCH']) => '更新',
+                    $request->method() === 'DELETE'                => '刪除',
+                    default                                        => '查看',
                 },
 
                 'status'          => $response->getStatusCode() < 400

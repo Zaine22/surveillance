@@ -24,9 +24,9 @@ class OperationLogIndexRequest extends FormRequest
             'department' => [
                 'nullable',
                 'string',
-                'in:Department of Information Technology,Department of Social and Family Affairs,Department of Protective Services,Administration',
+                'exists:departments,name',
             ],
-            'action'     => ['nullable', 'string', 'in:login,create,update,view,delete,logout'],
+            'action'     => ['nullable', 'string'],
             'search'     => ['nullable', 'string', 'max:100'],
             'range'      => ['nullable', 'in:one_week,one_month,one_year'],
             'from_date'  => ['nullable', 'date'],

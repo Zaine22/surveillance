@@ -28,9 +28,9 @@ class StoreUserRequest extends FormRequest
             'department' => [
                 'nullable',
                 'string',
-                'in:Department of Information Technology,Department of Social and Family Affairs,Department of Protective Services', 'Administration',
+                'exists:departments,name',
             ],
-            'roles'      => ['required|string', 'in:Administrator,Auditor,User,Outsiders'],
+            'roles'      => 'required|string',
             'status'     => 'required|string',
             'phone'      => 'nullable|string',
         ];
