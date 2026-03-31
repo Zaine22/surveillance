@@ -81,13 +81,12 @@ class OperationLogger
 
         $user = auth()->user();
 
-        // 👇 Detect login / logout
+
         $path = $request->path();
 
         $isLogin  = str_contains($path, 'login');
         $isLogout = str_contains($path, 'logout');
 
-        // ✅ Allow logging even if not authenticated (for login)
         if ($user || $isLogin || $isLogout) {
 
             OperationLog::create([
@@ -100,12 +99,12 @@ class OperationLogger
                 'page_url'        => preg_replace('/^api\//', '', $path),
 
                 'action'          => match (true) {
-                    $isLogin                                       => '登入',
-                    $isLogout                                      => '登出',
-                    $request->method() === 'POST'                  => '新增',
-                    in_array($request->method(), ['PUT', 'PATCH']) => '更新',
-                    $request->method() === 'DELETE'                => '刪除',
-                    default                                        => '查看',
+                    $isLogin                                       => 'login',
+                    $isLogout                                      => 'logout',
+                    $request->method() === 'POST'                  => 'create',
+                    in_array($request->method(), ['PUT', 'PATCH']) => 'update',
+                    $request->method() === 'DELETE'                => 'delete',
+                    default                                        => 'view',
                 },
 
                 'status'          => $response->getStatusCode() < 400
