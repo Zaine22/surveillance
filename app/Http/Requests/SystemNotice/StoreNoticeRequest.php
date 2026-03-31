@@ -26,7 +26,7 @@ class StoreNoticeRequest extends FormRequest
         return [
             'title' => 'required|string|max:255',
             'content' => 'required|string',
-            'status' => 'nullable|string|in:published,pending',
+            'status' => 'nullable|string|in:published,pending,to_be_published',
             'publish_date' => 'required|date',
             'expire_at' => 'required|date|after:published_date',
         ];
