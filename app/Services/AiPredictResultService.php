@@ -13,7 +13,8 @@ use Illuminate\Support\Str;
 
 class AiPredictResultService extends BaseFilterService
 {
-    public function __construct(protected CaseManagementService $service) {}
+    public function __construct(protected CaseManagementService $service)
+    {}
 
     public function getAll(array $filters): LengthAwarePaginator
     {
@@ -41,13 +42,13 @@ class AiPredictResultService extends BaseFilterService
             $query->where('review_status', $filters['review_status']);
         }
 
-        if (! empty($filters['audit_status'])) {
-            $query->where('audit_status', $filters['audit_status']);
+        if (! empty($filters['ai_analysis_result'])) {
+            $query->where('ai_analysis_result', $filters['ai_analysis_result']);
         }
 
         if (empty($filters['range'])) {
             $filters['range'] = 'one_week';
-        } else if($filters['range'] === 'custom_range') {
+        } else if ($filters['range'] === 'custom_range') {
             $filters['range'] = null;
         }
 
@@ -301,7 +302,7 @@ class AiPredictResultService extends BaseFilterService
                 'reason'               => $score >= 0.70 ? 'minor_probability' : null,
                 'other_reason'         => null,
                 'ai_score'             => round($score, 2),
-                'keywords' => $result->keywords,($result->keywords),
+                'keywords'             => $result->keywords, ($result->keywords),
             ]);
         }
     }
@@ -324,7 +325,7 @@ class AiPredictResultService extends BaseFilterService
                 'reason'               => $porn >= 0.60 ? 'nsfw_porn' : null,
                 'other_reason'         => null,
                 'ai_score'             => round($porn, 2),
-                'keywords' => $result->keywords,($result->keywords),
+                'keywords'             => $result->keywords, ($result->keywords),
             ]);
         }
     }

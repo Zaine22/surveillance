@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Requests\AiPredictResult;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -22,16 +21,16 @@ class AiPredictResultIndexRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'search'              => ['nullable', 'string'],
-            'review_status'       => ['nullable', 'in:pending,approved,rejected'],
-            'audit_status'        => ['nullable', 'in:pending,approved,rejected'],
-            'range'               => ['nullable', 'in:one_week,one_month,one_year'],
-            'from_date'           => ['nullable', 'date'],
-            'to_date'             => ['nullable', 'date'],
-            'page'                => ['nullable', 'integer'],
-            'per_page'            => ['nullable', 'integer'],
-            'sort_by'             => ['nullable', 'string'],
-            'sort_order'          => ['nullable', 'in:asc,desc'],
+            'search'             => ['nullable', 'string'],
+            'review_status'      => ['nullable', 'in:pending,approved,rejected'],
+            'ai_analysis_result' => ['nullable', 'in:normal,abnormal'],
+            'range'              => ['nullable', 'in:one_week,one_month,one_year'],
+            'from_date'          => ['nullable', 'date'],
+            'to_date'            => ['nullable', 'date'],
+            'page'               => ['nullable', 'integer'],
+            'per_page'           => ['nullable', 'integer'],
+            'sort_by'            => ['nullable', 'string'],
+            'sort_order'         => ['nullable', 'in:asc,desc'],
         ];
     }
 }
