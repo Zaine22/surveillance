@@ -163,6 +163,10 @@ class SurveillanceSystemSeeder extends Seeder
                             'created_at'           => $itemDate,
                             'updated_at'           => $itemDate,
                         ]);
+                         DB::table('departments')->insert([
+                            'id'                   => Str::uuid(),
+                            'name'                 => "Administration",
+                        ]);
                     }
                 }
             }

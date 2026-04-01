@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\CrawlerTaskItem;
 use App\Services\CrawlerTaskItemService;
+use Illuminate\Http\JsonResponse;
 
 class CrawlerTaskItemController extends Controller
 {
@@ -32,8 +33,17 @@ class CrawlerTaskItemController extends Controller
         );
     }
 
-    public function destroy(CrawlerTaskItem $item)
+    public function destroy(string $id): JsonResponse
     {
+        $item = CrawlerTaskItem::find($id);
+
+        if (! $item) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Task item not found.',
+            ], 404);
+        }
+
         return response()->json(
             $this->crawlerTaskItemService->delete($item)
         );
