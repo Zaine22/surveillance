@@ -183,10 +183,19 @@ class CaseManagementService extends BaseFilterService
             ? Carbon::parse($data['issue_date'])
             : null;
 
-        if ($issueDate) {
+        if ($issueDate && $issueDate->isFuture()) {
+            \Illuminate\Support\Facades\Log::info('Dispatching ProcessExternalCaseJob with DELAY', [
+                'case_item_id' => $caseItem->id,
+                'issue_date'   => $issueDate->toDateTimeString(),
+            ]);
+
             ProcessExternalCaseJob::dispatch($caseItem)->delay($issueDate);
         } else {
-            ProcessExternalCaseJob::dispatch($caseItem);
+            \Illuminate\Support\Facades\Log::info('Dispatching ProcessExternalCaseJob IMMEDIATELY (Sync)', [
+                'case_item_id' => $caseItem->id,
+            ]);
+
+            ProcessExternalCaseJob::dispatchSync($caseItem);
         }
 
         return $caseItem;
