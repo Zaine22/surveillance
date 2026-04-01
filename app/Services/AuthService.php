@@ -28,6 +28,10 @@ class AuthService
             'status' => 'disabled',
         ]);
 
+        $user->passwordHistories()->create([
+            'password' => $user->password,
+        ]);
+
         $token = $user->createToken('api_token')->plainTextToken;
 
         return compact('user', 'token');
@@ -106,9 +110,23 @@ class AuthService
                 ]);
             }
 
+            // Check against password history
+            $histories = $checkUser->passwordHistories()->latest()->take(3)->get();
+            foreach ($histories as $history) {
+                if (Hash::check($newPassword, $history->password)) {
+                    throw ValidationException::withMessages([
+                        'new_password' => ['新密碼不能與前三次使用過之密碼相同'],
+                    ]);
+                }
+            }
+
             $checkUser->update([
                 'password' => Hash::make($newPassword),
                 'password_last_changed' => now(),
+            ]);
+
+            $checkUser->passwordHistories()->create([
+                'password' => $checkUser->password,
             ]);
 
             $checkUser->tokens()->delete();
@@ -123,7 +141,7 @@ class AuthService
             ]);
 
             return [
-                'error' => ['Failed to change password. Please try again later.'],
+                'error' => $e->getMessage(),
             ];
         }
     }
@@ -290,10 +308,15 @@ class AuthService
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
+            'password_last_changed' => now(),
             'department' => $data['department'] ?? null,
             'roles' => $data['roles'] ?? 'user',
             'status' => $data['status'] ?? 'enabled',
             'phone' => $data['phone'] ?? null,
+        ]);
+
+        $user->passwordHistories()->create([
+            'password' => $user->password,
         ]);
 
         $this->mailService->sendAccountCreated($data['email'], $data['password']);

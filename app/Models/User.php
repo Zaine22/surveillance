@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -49,11 +50,16 @@ class User extends Authenticatable
      */
     protected $casts = [
         'password_last_changed' => 'datetime',
-        'last_login'            => 'datetime',
+        'last_login' => 'datetime',
     ];
 
     public function operationLogs()
     {
         return $this->hasMany(OperationLog::class);
+    }
+
+    public function passwordHistories()
+    {
+        return $this->hasMany(PasswordHistory::class);
     }
 }
