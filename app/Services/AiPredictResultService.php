@@ -425,7 +425,7 @@ class AiPredictResultService extends BaseFilterService
                             ? ($data['other_reason'] ?? null)
                             : null,
                         'ai_score'           => $item->ai_score,
-                        'keywords'           => $item->keywords,
+                        'keywords' => json_encode($item->keywords),
                         'issue_date'         => now(),
                     ]);
                 }
