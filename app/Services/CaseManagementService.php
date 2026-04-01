@@ -195,7 +195,7 @@ class CaseManagementService extends BaseFilterService
                 'case_item_id' => $caseItem->id,
             ]);
 
-            ProcessExternalCaseJob::dispatchSync($caseItem);
+            ProcessExternalCaseJob::dispatch($caseItem);
         }
 
         return $caseItem;
