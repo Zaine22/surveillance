@@ -42,7 +42,7 @@ class AiPredictResultSeeder extends Seeder
                     DB::table('ai_predict_result_items')->insert([
                         'id'                   => (string) Str::uuid(),
                         'ai_predict_result_id' => $predictId,
-                        'media_url'            => "https://via.placeholder.com/300",
+                        'media_url'            => "https://picsum.photos/300/200",
                         'crawler_page_url'     => "https://example.com/page/{$task->id}",
                         'ai_result'  => collect(['normal', 'abnormal'])->random(),
                         'status'     => 'valid',
