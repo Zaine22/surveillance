@@ -11,7 +11,6 @@ class AiPredictResultSeeder extends Seeder
     {
         DB::transaction(function () {
 
-            // get existing ai_model_tasks
             $tasks = DB::table('ai_model_tasks')->get();
 
             foreach ($tasks as $task) {
@@ -19,12 +18,13 @@ class AiPredictResultSeeder extends Seeder
                 $predictId = (string) Str::uuid();
                 $status    = collect(['finished', 'failed', 'pending', 'running'])->random();
 
-                // 🔹 AI PREDICT RESULT
+                $keywords = json_encode(['sample']);
+
                 DB::table('ai_predict_results')->insert([
                     'id'                 => $predictId,
                     'ai_model_task_id'   => $task->id,
-                    'lexicon_id'         => null, // optional if you don't need
-                    'keywords'           => json_encode(['sample']),
+                    'lexicon_id'         => null,
+                    'keywords'           => $keywords,
                     'ai_score'           => rand(50, 99),
                     'analysis_result'    => $this->buildAnalysisResult($status),
                     'ai_analysis_result' => $status === 'finished'
@@ -42,18 +42,38 @@ class AiPredictResultSeeder extends Seeder
                     DB::table('ai_predict_result_items')->insert([
                         'id'                   => (string) Str::uuid(),
                         'ai_predict_result_id' => $predictId,
-                        'media_url'            => "https://example.com/media/{$task->id}_{$i}.jpg",
-                        'crawler_page_url' => "https://example.com/page/{$task->id}",
+                        'media_url'            => "https://via.placeholder.com/300",
+                        'crawler_page_url'     => "https://example.com/page/{$task->id}",
                         'ai_result'  => collect(['normal', 'abnormal'])->random(),
                         'status'     => 'valid',
                         'ai_score'   => rand(50, 99),
-                        'keywords'   => json_encode(['sample']),
+                        'keywords'   => $keywords,
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
                 }
+
+                DB::table('case_management')->insert([
+                    'id'                   => (string) Str::uuid(),
+                    'ai_predict_result_id' => $predictId,
+                    'internal_case_no'     => $this->generateInternalCaseNo(),
+                    'keywords'             => $keywords,
+                    'status'               => 'pending',
+                    'comment'              => 'Auto generated case',
+                    'created_at'           => now(),
+                    'updated_at'           => now(),
+                ]);
             }
         });
+    }
+
+    /**
+     * Generate internal case number
+     * Example: CASE-20260401-0001
+     */
+    private function generateInternalCaseNo(): string
+    {
+        return 'CASE-' . now()->format('Ymd') . '-' . rand(1000, 9999);
     }
 
     private function buildAnalysisResult(string $status): string
