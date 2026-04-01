@@ -175,13 +175,13 @@ return [
             'backoff_base' => env('REDIS_BACKOFF_BASE', 100),
             'backoff_cap' => env('REDIS_BACKOFF_CAP', 1000),
         ],
-        
-        'ai' => [
-        'host'     => env('REDIS_AI_HOST'),
-        'password' => env('REDIS_AI_PASSWORD'),
-        'port'     => env('REDIS_AI_PORT'),
-        'database' => env('REDIS_AI_DB', 0),
-    ],
+
+        // 'ai' => [
+        // 'host'     => env('REDIS_AI_HOST'),
+        // 'password' => env('REDIS_AI_PASSWORD'),
+        // 'port'     => env('REDIS_AI_PORT'),
+        // 'database' => env('REDIS_AI_DB', 0),
+    // ],
 
     ],
 

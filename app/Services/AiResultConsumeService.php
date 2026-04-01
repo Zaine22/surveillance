@@ -26,7 +26,7 @@ class AiResultConsumeService
 
         while (true) {
             try {
-                $messages = Redis::connection('ai')->xreadgroup(
+                $messages = Redis::xreadgroup(
                     $this->group,
                     $this->consumer,
                     [$this->stream => '>'],
@@ -57,7 +57,7 @@ class AiResultConsumeService
     protected function createGroupIfNotExists(): void
     {
         try {
-            Redis::connection('ai')->executeRaw([
+            Redis::executeRaw([
                 'XGROUP', 'CREATE',
                 $this->stream,
                 $this->group,
@@ -86,7 +86,7 @@ class AiResultConsumeService
 
             $this->resultService->saveFromAiCallback((string) $taskId, $payload);
 
-            Redis::connection('ai')->xack($this->stream, $this->group, [$redisId]);
+            Redis::xack($this->stream, $this->group, [$redisId]);
         } catch (\Throwable $e) {
             Log::error('AI result process failed', [
                 'redis_id' => $redisId,
