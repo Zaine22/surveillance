@@ -84,6 +84,7 @@ class CrawlerTaskService extends BaseFilterService
     public function baseQuery(array $filters)
     {
         $query = CrawlerTask::with('crawlerConfig')
+            ->where('status', '!=', 'deleted')
             ->withCount([
                 'items as total_tasks',
                 'items as pending_count'  => fn($q)  => $q->where('status', 'pending'),

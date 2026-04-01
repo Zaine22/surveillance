@@ -8,7 +8,9 @@ class DepartmentController extends Controller
 {
     public function index()
     {
-        $departments = Department::latest()->pluck('name');
+        $departments = Department::latest()
+            ->select('id', 'name')
+            ->get();
 
         return response()->json($departments);
     }
