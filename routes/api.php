@@ -113,7 +113,6 @@ Route::middleware([
 Route::middleware('apikey')->group(function () {
     Route::post('/caseFeedback', [CaseManagementController::class, 'netChineseCaseFeedback']);
     Route::post('/newcaseCreate', [CaseManagementController::class, 'externalCaseCreate']);
-    Route::post('/updateExternalKeywords', [CaseManagementController::class, 'updateExternalKeywords']);
     Route::post('/caseScreenshot', [CaseManagementController::class, 'netChineseCaseScreenshot']);
 });
 
