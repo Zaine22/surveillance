@@ -22,7 +22,8 @@ class DatabaseSeeder extends Seeder
             // BotSeeder::class,
             // AllowedIpSeeder::class,
             // TestSeeder::class,
-            SurveillanceSystemSeeder::class,
+            // SurveillanceSystemSeeder::class,
+            AiPredictResultSeeder::class
 
         ]);
     }

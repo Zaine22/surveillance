@@ -22,6 +22,9 @@ class CrawlerTaskItem extends Model
         'error_message',
     ];
 
+    public $incrementing = false;
+    protected $keyType   = 'string';
+
     protected static function booted(): void
     {
         static::updated(function (CrawlerTaskItem $item) {

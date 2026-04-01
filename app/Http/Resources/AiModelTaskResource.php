@@ -16,13 +16,13 @@ class AiModelTaskResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'ai_model_id' => $this->ai_model_id,
-            'crawler_task_item_id' => $this->crawler_task_item_id,
+            // 'ai_model_id' => $this->ai_model_id,
+            // 'crawler_task_item_id' => $this->crawler_task_item_id,
             'file_name' => $this->file_name,
             'status' => $this->status,
-            'created_at' => $this->created_at,
+            // 'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            'crawler_task_item' => new CrawlerTaskItemsIndexResource($this->whenLoaded('crawlerTaskItem')),
+            // 'crawler_task_item' => new CrawlerTaskItemsIndexResource($this->whenLoaded('crawlerTaskItem')),
         ];
     }
 }

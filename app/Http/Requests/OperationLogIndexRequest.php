@@ -21,7 +21,12 @@ class OperationLogIndexRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'department' => ['nullable', 'string'],
+            'department' => [
+                'nullable',
+                'string',
+                'exists:departments,name',
+            ],
+            'action'     => ['nullable', 'string'],
             'search'     => ['nullable', 'string', 'max:100'],
             'range'      => ['nullable', 'in:one_week,one_month,one_year'],
             'from_date'  => ['nullable', 'date'],

@@ -6,6 +6,7 @@ use App\Models\CrawlerTask;
 use App\Models\CrawlerTaskItem;
 use App\Models\Lexicon;
 use App\Services\CrawlerDispatchService;
+use Illuminate\Support\Facades\DB;
 
 class CrawlerTaskItemService
 {
@@ -123,9 +124,9 @@ class CrawlerTaskItemService
             'status'       => $item->status,
         ];
     }
-    public function delete(CrawlerTaskItem $item): array
+    public function delete($item): array
     {
-        if ($item->status === 'crawling') {
+        if (strtolower($item->status) === 'crawling') {
             return [
                 'success' => false,
                 'message' => 'Cannot delete item while crawling.',
@@ -133,13 +134,37 @@ class CrawlerTaskItemService
         }
 
         $id = $item->id;
+        try {
+            DB::transaction(function () use ($item) {
 
-        $item->delete();
+                $taskIds = DB::table('ai_model_tasks')
+                    ->where('crawler_task_item_id', $item->id)
+                    ->pluck('id');
 
-        return [
-            'success'      => true,
-            'message'      => 'Task item deleted successfully.',
-            'task_item_id' => $id,
-        ];
+                if ($taskIds->isNotEmpty()) {
+                    DB::table('ai_predict_results')
+                        ->whereIn('ai_model_task_id', $taskIds)
+                        ->delete();
+                }
+
+                DB::table('ai_model_tasks')
+                    ->where('crawler_task_item_id', $item->id)
+                    ->delete();
+
+                $item->delete();
+            });
+
+            return [
+                'success'      => true,
+                'message'      => 'Task item deleted successfully.',
+                'task_item_id' => $id,
+            ];
+
+        } catch (\Throwable $e) {
+            return [
+                'success' => false,
+                'message' => 'Delete failed: ' . $e->getMessage(),
+            ];
+        }
     }
 }

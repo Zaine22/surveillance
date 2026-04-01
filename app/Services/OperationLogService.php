@@ -9,16 +9,19 @@ class OperationLogService extends BaseFilterService
     {
         $query = OperationLog::query()->with('user');
 
-        // Department filter
         if (! empty($filters['department']) && $filters['department'] !== 'all') {
             $query->where('department', $filters['department']);
+        }
+
+        if (! empty($filters['action'])) {
+            $query->where('action', $filters['action']);
         }
 
         return $this->applyFilters(
             $query,
             $filters,
             ['operator_name'], // searchable column
-            false,             // no status filter needed
+            false,
             'created_at'
         );
     }
