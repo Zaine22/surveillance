@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Requests\CaseManagement;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -22,14 +21,14 @@ class CaseManagementIndexRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'search' => ['nullable', 'string', 'max:255'],
-            'status' => ['nullable', 'string', 'in:立案,成案,待截圖,截圖完成,不成案,全部'],
-            'dateRange' => ['nullable', 'string', 'in:一週,一個月,一年,自行選擇範圍'],
-            'from' => ['nullable', 'date'],
-            'to' => ['nullable', 'date', 'after_or_equal:from'],
-            'page' => ['nullable', 'integer', 'min:1'],
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
-            'sort_by' => ['nullable', 'string'],
+            'search'     => ['nullable', 'string', 'max:255'],
+            'status'     => ['nullable', 'string', 'in:pending,created,notified,moved_offline,auto_offline'],
+            'dateRange'  => ['nullable', 'string', 'in:one_week,one_month,one_year'],
+            'from'       => ['nullable', 'date'],
+            'to'         => ['nullable', 'date', 'after_or_equal:from'],
+            'page'       => ['nullable', 'integer', 'min:1'],
+            'per_page'   => ['nullable', 'integer', 'min:1', 'max:100'],
+            'sort_by'    => ['nullable', 'string'],
             'sort_order' => ['nullable', 'in:asc,desc'],
         ];
     }
@@ -38,7 +37,7 @@ class CaseManagementIndexRequest extends FormRequest
     {
         throw new \Illuminate\Validation\ValidationException($validator, response()->json([
             'message' => 'The given data was invalid.',
-            'errors' => $validator->errors(),
+            'errors'  => $validator->errors(),
         ], 422));
     }
 }
