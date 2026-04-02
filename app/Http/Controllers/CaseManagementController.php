@@ -10,6 +10,7 @@ use App\Http\Requests\CaseManagement\StoreExternalCaseRequest;
 use App\Http\Requests\CaseManagement\UpdateCaseScreenshotRequest;
 use App\Http\Requests\CaseManagement\UpdateExternalKeywordsRequest;
 use App\Http\Resources\CaseManagementIndexResource;
+use App\Http\Resources\CaseManagementResource;
 use App\Models\CaseFeedback;
 use App\Services\CaseManagementService;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -101,10 +102,10 @@ class CaseManagementController extends Controller
 
     public function show(
         string $id
-    ): CaseManagementIndexResource {
+    ): CaseManagementResource {
 
         $result = $this->caseManagementService->findById($id);
 
-        return new CaseManagementIndexResource($result);
+        return new CaseManagementResource($result);
     }
 }

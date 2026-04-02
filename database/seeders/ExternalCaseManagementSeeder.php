@@ -50,10 +50,10 @@ class ExternalCaseManagementSeeder extends Seeder
 
             $caseId = (string) Str::uuid();
 
-            // ✅ CASE MANAGEMENT (EXTERNAL → no ai_predict_result_id)
+
             DB::table('case_management')->insert([
                 'id'                     => $caseId,
-                'ai_predict_result_id'  => null, // external case
+                'ai_predict_result_id'  => null, 
                 'internal_case_no'      => null,
                 'external_case_no'      => 'EXT-' . strtoupper(Str::random(6)),
                 'keywords'              => json_encode(
