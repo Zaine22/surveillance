@@ -8,6 +8,7 @@ use App\Http\Requests\CaseManagement\ProceedCaseScreenshotRequest;
 use App\Http\Requests\CaseManagement\StoreCaseFeedbackRequest;
 use App\Http\Requests\CaseManagement\StoreExternalCaseRequest;
 use App\Http\Requests\CaseManagement\UpdateCaseScreenshotRequest;
+use App\Http\Requests\CaseManagement\UpdateExternalKeywordsRequest;
 use App\Http\Resources\CaseManagementIndexResource;
 use App\Models\CaseFeedback;
 use App\Services\CaseManagementService;
@@ -49,6 +50,18 @@ class CaseManagementController extends Controller
         }
 
         return response()->json(['status' => 'success', 'message' => '已接收'], 200);
+    }
+
+    public function updateExternalKeywords(UpdateExternalKeywordsRequest $request)
+    {
+        $validated = $request->validated();
+
+        $this->caseManagementService->updateExternalKeywords($validated);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => '关键字更新成功',
+        ], 200);
     }
 
     public function netChineseCaseScreenshot(ProceedCaseScreenshotRequest $request)

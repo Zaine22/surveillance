@@ -34,80 +34,81 @@ Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::middleware([
     'auth:sanctum',
     'operation.log'])->group(function () {
-    Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
-    Route::get('/dashboard/ranking', [DashboardController::class, 'ranking']);
-    Route::get('/operation-logs', [OperationLogController::class, 'index']);
-    Route::post('allowed-ips/bulk', [AllowedIpController::class, 'bulkStore']);
-    Route::get('/allowed-ips', [AllowedIpController::class, 'index']);
-    Route::post('/auth/logout', [AuthController::class, 'logout']);
-    Route::post('/auth/refresh', [AuthController::class, 'refresh']);
-    Route::get('/check-password-expiry', [AuthController::class, 'checkPasswordExpiry']);
-    Route::put('/user/{id}', [AuthController::class, 'updateUser']);
-    Route::post('/change-password', [AuthController::class, 'changePassword']);
-    Route::get('/users', [AuthController::class, 'index']);
-    Route::post('/users/create', [AuthController::class, 'createByAdmin']);
+        Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
+        Route::get('/dashboard/ranking', [DashboardController::class, 'ranking']);
+        Route::get('/operation-logs', [OperationLogController::class, 'index']);
+        Route::post('allowed-ips/bulk', [AllowedIpController::class, 'bulkStore']);
+        Route::get('/allowed-ips', [AllowedIpController::class, 'index']);
+        Route::post('/auth/logout', [AuthController::class, 'logout']);
+        Route::post('/auth/refresh', [AuthController::class, 'refresh']);
+        Route::get('/check-password-expiry', [AuthController::class, 'checkPasswordExpiry']);
+        Route::put('/user/{id}', [AuthController::class, 'updateUser']);
+        Route::post('/change-password', [AuthController::class, 'changePassword']);
+        Route::get('/users', [AuthController::class, 'index']);
+        Route::post('/users/create', [AuthController::class, 'createByAdmin']);
 
-    Route::post('/import/lexicon-keywords', [LexiconKeywordController::class, 'import']);
-    Route::post('/export/lexicon-keywords/{lexiconId}', [LexiconKeywordController::class, 'export']);
-    Route::apiResource('ai-models', AiModelController::class);
-    Route::apiResource('departments', DepartmentController::class);
-    Route::get('ai-model-tasks/stats', [AiModelTaskController::class, 'stats']);
-    Route::get('ai-model-tasks/latest', [AiModelTaskController::class, 'latest']);
-    Route::apiResource('ai-model-tasks', AiModelTaskController::class);
-    Route::apiResource('ai-predict-results', AiPredictResultController::class);
-    Route::get('audits', [AiPredictResultController::class, 'getAudits']
-    );
-    Route::get('/case-managements/get-external-case', [CaseManagementController::class, 'getExternalCase']);
-    Route::get(
-        'ai-predict-results/{result}/items',
-        [AiPredictResultController::class, 'getResultItems']
-    );
-    Route::patch(
-        'ai-predict-results/{result}/evidence-review',
-        [AiPredictResultController::class, 'update']
-    );
-    Route::prefix('ai-models')->group(function () {
-        Route::get('/', [AiModelController::class, 'index']);
-        Route::get('/stats', [AiModelController::class, 'stats']);
-        Route::get('/{id}', [AiModelController::class, 'show']);
-        Route::post('/{id}/check', [AiModelController::class, 'check']);
+        Route::post('/import/lexicon-keywords', [LexiconKeywordController::class, 'import']);
+        Route::post('/export/lexicon-keywords/{lexiconId}', [LexiconKeywordController::class, 'export']);
+        Route::apiResource('ai-models', AiModelController::class);
+        Route::apiResource('departments', DepartmentController::class);
+        Route::get('ai-model-tasks/stats', [AiModelTaskController::class, 'stats']);
+        Route::get('ai-model-tasks/latest', [AiModelTaskController::class, 'latest']);
+        Route::apiResource('ai-model-tasks', AiModelTaskController::class);
+        Route::apiResource('ai-predict-results', AiPredictResultController::class);
+        Route::get('audits', [AiPredictResultController::class, 'getAudits']
+        );
+        Route::get('/case-managements/get-external-case', [CaseManagementController::class, 'getExternalCase']);
+        Route::get(
+            'ai-predict-results/{result}/items',
+            [AiPredictResultController::class, 'getResultItems']
+        );
+        Route::patch(
+            'ai-predict-results/{result}/evidence-review',
+            [AiPredictResultController::class, 'update']
+        );
+        Route::prefix('ai-models')->group(function () {
+            Route::get('/', [AiModelController::class, 'index']);
+            Route::get('/stats', [AiModelController::class, 'stats']);
+            Route::get('/{id}', [AiModelController::class, 'show']);
+            Route::post('/{id}/check', [AiModelController::class, 'check']);
+        });
+        Route::apiResource('ai-predict-result-items', AiPredictResultItemController::class);
+        Route::apiResource('audit-ratios', AuditRatioController::class);
+        Route::apiResource('bot-machines', BotMachineController::class);
+        Route::apiResource('case-managements', CaseManagementController::class);
+        Route::apiResource('case-management-items', CaseManagementItemController::class);
+        Route::apiResource('crawler-configs', CrawlerConfigController::class);
+        Route::apiResource('crawler-tasks', CrawlerTaskController::class);
+
+        Route::prefix('crawler-tasks')->group(function () {
+            Route::post('{task}/start', [CrawlerTaskController::class, 'start']);
+            Route::post('{task}/pause', [CrawlerTaskController::class, 'pause']);
+            Route::post('{task}/delete', [CrawlerTaskController::class, 'delete']);
+            Route::get('{task}/failed-items', [CrawlerTaskController::class, 'failedTasks']);
+            Route::get('{task}/task-items', [CrawlerTaskController::class, 'getAllTaskItems']);
+        });
+
+        Route::apiResource('crawler-task-items', CrawlerTaskItemController::class);
+
+        Route::prefix('crawler-task-items')->group(function () {
+            Route::post('{item}/start', [CrawlerTaskItemController::class, 'start']);
+            Route::post('{item}/pause', [CrawlerTaskItemController::class, 'pause']);
+            Route::post('{item}/retry', [CrawlerTaskItemController::class, 'retry']);
+            Route::delete('{item}', [CrawlerTaskItemController::class, 'destroy']);
+        });
+
+        Route::get('system-notices/active', [SystemNoticeController::class, 'getActiveNotices']);
+        Route::apiResource('data-sync-records', DataSyncRecordController::class);
+        Route::apiResource('global-whitelists', GlobalWhitelistController::class);
+        Route::apiResource('lexicons', LexiconController::class);
+        Route::apiResource('lexicon-keywords', LexiconKeywordController::class);
+        Route::post('lexicon-keywords/{parentId}/translations', [LexiconKeywordController::class, 'storeTranslation']);
+        Route::apiResource('notify-templates', NotifyTemplateController::class);
+        Route::apiResource('system-data', SystemDataController::class);
+        Route::apiResource('system-notices', SystemNoticeController::class);
+        Route::apiResource('validation-records', ValidationRecordController::class);
+        Route::post('/updateExternalKeywords', [CaseManagementController::class, 'updateExternalKeywords']);
     });
-    Route::apiResource('ai-predict-result-items', AiPredictResultItemController::class);
-    Route::apiResource('audit-ratios', AuditRatioController::class);
-    Route::apiResource('bot-machines', BotMachineController::class);
-    Route::apiResource('case-managements', CaseManagementController::class);
-    Route::apiResource('case-management-items', CaseManagementItemController::class);
-    Route::apiResource('crawler-configs', CrawlerConfigController::class);
-    Route::apiResource('crawler-tasks', CrawlerTaskController::class);
-
-    Route::prefix('crawler-tasks')->group(function () {
-        Route::post('{task}/start', [CrawlerTaskController::class, 'start']);
-        Route::post('{task}/pause', [CrawlerTaskController::class, 'pause']);
-        Route::post('{task}/delete', [CrawlerTaskController::class, 'delete']);
-        Route::get('{task}/failed-items', [CrawlerTaskController::class, 'failedTasks']);
-        Route::get('{task}/task-items', [CrawlerTaskController::class, 'getAllTaskItems']);
-    });
-
-    Route::apiResource('crawler-task-items', CrawlerTaskItemController::class);
-
-    Route::prefix('crawler-task-items')->group(function () {
-        Route::post('{item}/start', [CrawlerTaskItemController::class, 'start']);
-        Route::post('{item}/pause', [CrawlerTaskItemController::class, 'pause']);
-        Route::post('{item}/retry', [CrawlerTaskItemController::class, 'retry']);
-        Route::delete('{item}', [CrawlerTaskItemController::class, 'destroy']);
-    });
-
-    Route::get('system-notices/active', [SystemNoticeController::class, 'getActiveNotices']);
-    Route::apiResource('data-sync-records', DataSyncRecordController::class);
-    Route::apiResource('global-whitelists', GlobalWhitelistController::class);
-    Route::apiResource('lexicons', LexiconController::class);
-    Route::apiResource('lexicon-keywords', LexiconKeywordController::class);
-    Route::post('lexicon-keywords/{parentId}/translations', [LexiconKeywordController::class, 'storeTranslation']);
-    Route::apiResource('notify-templates', NotifyTemplateController::class);
-    Route::apiResource('system-data', SystemDataController::class);
-    Route::apiResource('system-notices', SystemNoticeController::class);
-    Route::apiResource('validation-records', ValidationRecordController::class);
-});
 
 Route::middleware('apikey')->group(function () {
     Route::post('/caseFeedback', [CaseManagementController::class, 'netChineseCaseFeedback']);
