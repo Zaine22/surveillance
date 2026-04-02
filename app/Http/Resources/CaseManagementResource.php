@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
@@ -14,7 +13,7 @@ class CaseManagementResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-       return [
+        return [
             'id'               => $this->id,
             'internal_case_no' => $this->internal_case_no,
             'external_case_no' => $this->external_case_no,
@@ -22,6 +21,7 @@ class CaseManagementResource extends JsonResource
             'status'           => $this->status,
             'comment'          => $this->comment,
             'created_at'       => $this->created_at,
+            'lexicon_id'       => $this->aiPredictResult?->lexicon_id,
             'items'            => CaseManagementItemResource::collection(
                 $this->whenLoaded('items')
             ),
