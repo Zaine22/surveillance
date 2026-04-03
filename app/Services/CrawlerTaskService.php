@@ -19,7 +19,7 @@ class CrawlerTaskService extends BaseFilterService
 
     public function getAllTasks(array $filters): LengthAwarePaginator
     {
-        $query = $this->baseQuery($filters);
+        $query = $this->baseQuery($filters)->latest('created_at');
 
         return $this->applyFilters($query, $filters, [], true);
     }
