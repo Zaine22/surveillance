@@ -22,7 +22,11 @@ class CaseManagementIndexRequest extends FormRequest
     {
         return [
             'search'     => ['nullable', 'string', 'max:255'],
-            'status'     => ['nullable', 'string', 'in:pending,created,notified,moved_offline,auto_offline'],
+            'status'     => [
+                'nullable',
+                'string',
+                'in:pending_notification,notified,case_established,case_not_established,tracking_completed,external_pending',
+            ],
             'dateRange'  => ['nullable', 'string', 'in:one_week,one_month,one_year'],
             'from'       => ['nullable', 'date'],
             'to'         => ['nullable', 'date', 'after_or_equal:from'],

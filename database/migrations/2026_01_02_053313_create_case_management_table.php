@@ -24,7 +24,12 @@ return new class extends Migration
             $table->json('keywords')->nullable();
 
             $table->enum('status', [
-                'pending', 'created', 'notified', 'moved_offline', 'auto_offline',
+                'pending_notification',
+                'notified',
+                'case_established', //created after ai_predict_result is approved
+                'case_not_established',
+                'tracking_completed',
+                'external_pending',
             ])->default('pending');
 
             $table->text('comment')->nullable();

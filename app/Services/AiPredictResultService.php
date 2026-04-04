@@ -425,7 +425,7 @@ class AiPredictResultService extends BaseFilterService
                             ? ($data['other_reason'] ?? null)
                             : null,
                         'ai_score'           => $item->ai_score,
-                        'keywords' => json_encode($item->keywords),
+                        'keywords'           => json_encode($item->keywords),
                         'issue_date'         => now(),
                     ]);
                 }
@@ -447,6 +447,17 @@ class AiPredictResultService extends BaseFilterService
                 'invalid_count'        => $invalidCount,
                 'summary'              => "Valid: {$validCount}, Invalid: {$invalidCount}",
             ]);
+
+            if ($case) {
+
+                if ($invalidCount > 0) {
+                    // illegal content → notify authority
+                    $this->service->updateStatus($case, 'notified');
+                } else {
+                    // no issue → close case
+                    $this->service->updateStatus($case, 'case_not_established');
+                }
+            }
 
             return $result->fresh([
                 'items',
