@@ -55,7 +55,11 @@ class LexiconService extends BaseFilterService
 
     public function getLexiconById(string $id): ?Lexicon
     {
-        return Lexicon::with('keywords')->find($id);
+        return Lexicon::with('keywords')->withSum([
+            'keywords as crawl_hit_count' => function ($q) {
+                $q->where('status', 'enabled');
+            },
+        ], 'crawl_hit_count')->find($id);
     }
 
     public function createLexicon(array $data): Lexicon
