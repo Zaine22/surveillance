@@ -452,10 +452,14 @@ class AiPredictResultService extends BaseFilterService
 
                 if ($invalidCount > 0) {
                     // illegal content → notify authority
-                    $this->service->updateStatus($case, 'notified');
+                    $case->update([
+                        'status' => 'notified',
+                    ]);
                 } else {
                     // no issue → close case
-                    $this->service->updateStatus($case, 'case_not_established');
+                    $case->update([
+                        'status' => 'case_not_established',
+                    ]);
                 }
             }
 
