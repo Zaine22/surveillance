@@ -106,7 +106,7 @@ class CaseManagementService extends BaseFilterService
             $filters,
             [],
             true,
-            'created_at'
+            'updated_at'
         );
     }
 

@@ -18,6 +18,7 @@ class AiPredictResultShowResource extends JsonResource
             'id'                 => $this->id,
             'ai_model_task_id'   => $this->ai_model_task_id,
             'lexicon_id'         => $this->lexicon_id,
+            'lexicon_name'       => $this->lexicon?->name,
             'keywords'           => $this->keywords,
             'ai_score'           => $this->ai_score,
             'analysis_result'    => $this->analysis_result,
@@ -25,7 +26,6 @@ class AiPredictResultShowResource extends JsonResource
             'audit_status'       => $this->audit_status,
             'ai_analysis_result' => $this->ai_analysis_result,
             'ai_analysis_detail' => $this->ai_analysis_detail,
-
             'created_at'         => $this->created_at,
             'items'              => AiPredictResultItemResource::collection(
                 $this->whenLoaded('items')

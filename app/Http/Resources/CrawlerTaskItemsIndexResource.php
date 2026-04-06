@@ -17,7 +17,9 @@ class CrawlerTaskItemsIndexResource extends JsonResource
             'id'              => $this->id,
             'keywords'        => $this->keywords,
             'crawler_machine' => $this->crawler_machine,
-            'resutl_file'     => $this->result_file,
+            'resutl_file'     => $this->result_file
+                ? basename(parse_url($this->result_file, PHP_URL_PATH))
+                : null,
             'status'          => $this->status,
             'crawl_location'  => $this->crawl_location,
             'error_message'   => $this->error_message,

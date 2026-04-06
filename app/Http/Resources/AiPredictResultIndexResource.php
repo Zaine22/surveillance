@@ -15,7 +15,7 @@ class AiPredictResultIndexResource extends JsonResource
     {
         return [
             'id'                 => $this->id,
-            'file_name'          => optional($this->aiModelTask)->file_name,
+            'file_name'          => $this->aiModelTask?->file_name,
             'keywords'           => $this->keywords,
             'ai_score'           => $this->ai_score,
             'analysis_result'    => $this->analysis_result,
@@ -23,6 +23,8 @@ class AiPredictResultIndexResource extends JsonResource
             'audit_status'       => $this->audit_status,
             'ai_analysis_result' => $this->ai_analysis_result,
             'ai_analysis_detail' => $this->ai_analysis_detail,
+            'lexicon_id'         => $this->lexicon_id,
+            'lexicon_name'       => $this->lexicon?->name,
             'created_at'         => $this->created_at,
 
         ];

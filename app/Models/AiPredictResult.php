@@ -64,4 +64,9 @@ class AiPredictResult extends Model
         );
     }
 
+    public function lexicon()
+    {
+        return $this->belongsTo(Lexicon::class, 'lexicon_id');
+    }
+
 }
