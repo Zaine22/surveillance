@@ -30,7 +30,7 @@ return new class extends Migration
                 'case_not_established',
                 'tracking_completed',
                 'external_pending',
-            ])->default('pending');
+            ])->default('pending_notification');
 
             $table->text('comment')->nullable();
             $table->timestamps();

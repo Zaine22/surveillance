@@ -20,7 +20,7 @@ class CaseManagement extends Model
     ];
 
     protected $casts = [
-        'keywords' => 'array', // ✅ FIX
+        'keywords' => 'array', 
     ];
 
     public function result()
