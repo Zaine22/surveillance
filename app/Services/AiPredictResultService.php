@@ -448,20 +448,11 @@ class AiPredictResultService extends BaseFilterService
                 'summary'              => "Valid: {$validCount}, Invalid: {$invalidCount}",
             ]);
 
-            if ($case) {
-
-                if ($invalidCount > 0) {
-                    // illegal content → notify authority
-                    $case->update([
-                        'status' => 'notified',
-                    ]);
-                } else {
-                    // no issue → close case
-                    $case->update([
-                        'status' => 'case_not_established',
-                    ]);
-                }
-            }
+            $case->update([
+                'status' => $invalidCount > 0
+                    ? 'notified'
+                    : 'case_not_established',
+            ]);
 
             return $result->fresh([
                 'items',

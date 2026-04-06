@@ -121,20 +121,16 @@ class AiPredictResultSeeder extends Seeder
                         ]);
                     }
                 }
-
-                if ($status === 'finished' && $aiAnalysisResult === 'abnormal') {
-
-                    DB::table('case_management')->insert([
-                        'id'                   => (string) Str::uuid(),
-                        'ai_predict_result_id' => $predictId,
-                        'internal_case_no'     => $this->generateInternalCaseNo(),
-                        'keywords'             => $keywords,
-                        'status'               => 'pending_notification',
-                        'comment'              => 'Auto generated case (abnormal)',
-                        'created_at'           => now(),
-                        'updated_at'           => now(),
-                    ]);
-                }
+                DB::table('case_management')->insert([
+                    'id'                   => (string) Str::uuid(),
+                    'ai_predict_result_id' => $predictId,
+                    'internal_case_no'     => $this->generateInternalCaseNo(),
+                    'keywords'             => $keywords,
+                    'status'               => 'pending_notification',
+                    'comment'              => 'Auto generated case (abnormal)',
+                    'created_at'           => now(),
+                    'updated_at'           => now(),
+                ]);
             }
         });
     }
