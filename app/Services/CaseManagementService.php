@@ -62,12 +62,12 @@ class CaseManagementService extends BaseFilterService
                 //     '不成案' => 'auto_offline',
                 // ];
                 $statusMap = [
-                    '待通知性影像中心'     => 'pending_notification',
-                    '已通知性影像中心'     => 'notified',
-                    '案件已建立' => 'case_established',
-                    '案件不成立'        => 'case_not_established',
-                    '案件已完成擷圖追縱'    => 'tracking_completed',
-                    '外部成案待建立'      => 'external_pending',
+                    '待通知性影像中心'  => 'pending_notification',
+                    '已通知性影像中心'  => 'notified',
+                    '案件已建立'     => 'case_established',
+                    '案件不成立'     => 'case_not_established',
+                    '案件已完成擷圖追縱' => 'tracking_completed',
+                    '外部成案待建立'   => 'external_pending',
                 ];
 
                 if (isset($statusMap[$filters['status']])) {
@@ -291,17 +291,21 @@ class CaseManagementService extends BaseFilterService
     public function captureCaseScreenshot(string $id, array $data)
     {
         try {
-            $case = CaseManagementItem::findOrFail($id);
+            $caseItem = CaseManagementItem::findOrFail($id);
         } catch (ModelNotFoundException $e) {
             throw new ModelNotFoundException('Case not found');
         }
 
-        $case->update([
+        $caseItem->update([
             'media_url' => $data['media_url'],
-            'status'    => $data['status'] ?? $case->status,
+            'status'    => $data['status'] ?? $caseItem->status,
         ]);
 
-        return $case;
+        $caseItem->case->update([
+            'status' => 'tracking_completed',
+        ]);
+
+        return $caseItem;
     }
 
     public function getExternalCase(array $filters): LengthAwarePaginator
