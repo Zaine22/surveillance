@@ -64,7 +64,7 @@ class CaseManagementService extends BaseFilterService
                 $statusMap = [
                     '待通知性影像中心'     => 'pending_notification',
                     '已通知性影像中心'     => 'notified',
-                    '案件已建立(追縱下架中)' => 'case_established',
+                    '案件已建立' => 'case_established',
                     '案件不成立'        => 'case_not_established',
                     '案件已完成擷圖追縱'    => 'tracking_completed',
                     '外部成案待建立'      => 'external_pending',
