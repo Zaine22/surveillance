@@ -437,6 +437,7 @@ class AiPredictResultService extends BaseFilterService
 
             $result->update([
                 'review_status' => $finalDecision,
+                'audit_status'  => $finalDecision,
             ]);
 
             AiPredictResultAudit::create([
