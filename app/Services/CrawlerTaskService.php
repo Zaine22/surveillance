@@ -344,7 +344,7 @@ class CrawlerTaskService extends BaseFilterService
 
     public function destroy(CrawlerTask $task): array
     {
-        dd($task->id, $task->status);
+        
 
         DB::transaction(function () use ($task) {
 
