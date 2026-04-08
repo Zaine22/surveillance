@@ -54,13 +54,13 @@ class TaskManagerService
             if ($task->status === 'deleted') {
                 return;
             }
-
+            $filePath = basename($filePath);
             $item->update([
                 'status'          => 'syncing',
                 'result_file'     => $filePath,
                 'crawler_machine' => $crawlerMachine,
             ]);
-    
+
         });
     }
 
