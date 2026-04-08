@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services;
 
 use App\Models\CrawlerTaskItem;
@@ -26,34 +25,46 @@ class DataSyncOrchestratorService
         ]);
 
         // Handle URL-based source paths (e.g., http://45.77.241.149/static/zips/file.zip)
+        // if (filter_var($sourcePath, FILTER_VALIDATE_URL)) {
+        //     // Get the path after the domain (e.g., /static/zips/file.zip)
+        //     $path = parse_url($sourcePath, PHP_URL_PATH);
+
+        //     // Map the web path /static/ to the SFTP jail path /storage/
+        //     // Use a regex to only match it at the start of the path
+        //     $sourcePath = preg_replace('/^\/static\//', 'storage/', $path);
+
+        //     Log::info('Converted URL to remote filesystem path', [
+        //         'original' => $item->result_file,
+        //         'mapped' => $sourcePath,
+        //     ]);
+        // }
+
         if (filter_var($sourcePath, FILTER_VALIDATE_URL)) {
-            // Get the path after the domain (e.g., /static/zips/file.zip)
-            $path = parse_url($sourcePath, PHP_URL_PATH);
 
-            // Map the web path /static/ to the SFTP jail path /storage/
-            // Use a regex to only match it at the start of the path
-            $sourcePath = preg_replace('/^\/static\//', 'storage/', $path);
+            $fileName = basename($sourcePath);
 
-            Log::info('Converted URL to remote filesystem path', [
+            $sourcePath = "zips/{$fileName}";
+
+            Log::info('Converted URL to SFTP path (FIXED)', [
                 'original' => $item->result_file,
-                'mapped' => $sourcePath,
+                'mapped'   => $sourcePath,
             ]);
         }
 
         $fileName = basename($sourcePath);
-        $target = storage_path('app/public/nas/'.$fileName);
+        $target   = storage_path('app/public/nas/' . $fileName);
 
         // 1. Create the sync record
         $record = DB::transaction(function () use ($item, $target) {
             return DataSyncRecord::create([
-                'id' => (string) Str::uuid(),
+                'id'          => (string) Str::uuid(),
                 'source_path' => $item->result_file,
                 'target_path' => $target,
-                'file_name' => basename($target),
-                'status' => 'transferring',
+                'file_name'   => basename($target),
+                'status'      => 'transferring',
                 'retry_count' => 0,
-                'max_retry' => 3,
-                'started_at' => now(),
+                'max_retry'   => 3,
+                'started_at'  => now(),
             ]);
         });
 
@@ -65,20 +76,20 @@ class DataSyncOrchestratorService
             );
 
             Log::info('File sync orchestration successful', [
-                'item_id' => $item->id,
+                'item_id'     => $item->id,
                 'target_path' => $target,
             ]);
 
             // 3. Update sync record status
             $record->update([
-                'status' => 'completed',
+                'status'      => 'completed',
                 'finished_at' => now(),
             ]);
 
             // 4. Update the original CrawlerTaskItem status and public URL
-            $publicUrl = \Illuminate\Support\Facades\Storage::url('nas/'.$fileName);
+            $publicUrl = \Illuminate\Support\Facades\Storage::url('nas/' . $fileName);
             $item->update([
-                'status' => 'synced',
+                'status'      => 'synced',
                 'result_file' => $publicUrl,
             ]);
             $this->aiTaskManagerService->createFromCrawlerItem($item);
@@ -92,20 +103,20 @@ class DataSyncOrchestratorService
         } catch (Throwable $e) {
             Log::error('File sync orchestration failed', [
                 'item_id' => $item->id,
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ]);
 
             // 5. Update sync record status on failure
             $record->update([
-                'status' => 'failed',
-                'retry_count' => $record->retry_count + 1,
+                'status'        => 'failed',
+                'retry_count'   => $record->retry_count + 1,
                 'error_message' => $e->getMessage(),
-                'finished_at' => now(),
+                'finished_at'   => now(),
             ]);
 
             // 6. Update the original CrawlerTaskItem to error
             $item->update([
-                'status' => 'error',
+                'status'        => 'error',
                 'error_message' => $e->getMessage(),
             ]);
 
