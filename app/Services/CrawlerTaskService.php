@@ -251,7 +251,7 @@ class CrawlerTaskService extends BaseFilterService
             ->get();
     }
 
-    public function start(CrawlerTask $task): array
+    public function start($task): array
     {
         if (! in_array($task->status, ['pending', 'paused'])) {
             return [
@@ -281,7 +281,7 @@ class CrawlerTaskService extends BaseFilterService
             'status'  => 'processing',
         ];
     }
-    public function pause(CrawlerTask $task): array
+    public function pause($task): array
     {
         if ($task->status !== 'processing') {
             return [
@@ -311,7 +311,7 @@ class CrawlerTaskService extends BaseFilterService
             'status'  => 'paused',
         ];
     }
-    public function resume(CrawlerTask $task): array
+    public function resume($task): array
     {
         if ($task->status !== 'paused') {
             return [
@@ -342,10 +342,8 @@ class CrawlerTaskService extends BaseFilterService
         ];
     }
 
-    public function destroy(CrawlerTask $task): array
+    public function destroy($task): array
     {
-        
-
         DB::transaction(function () use ($task) {
 
             foreach ($task->items as $item) {

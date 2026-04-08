@@ -88,8 +88,15 @@ class CrawlerTaskController extends Controller
         ]);
     }
 
-    public function start(CrawlerTask $task)
+    public function start(String $id)
     {
+        $task = CrawlerTask::find($id);
+        if (! $task) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Task not found.',
+            ], 404);
+        }
         $result = $this->crawlerTaskService->start($task);
 
         return response()->json(
@@ -98,8 +105,15 @@ class CrawlerTaskController extends Controller
         );
     }
 
-    public function pause(CrawlerTask $task)
+    public function pause(String $id)
     {
+        $task = CrawlerTask::find($id);
+        if (! $task) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Task not found.',
+            ], 404);
+        }
         $result = $this->crawlerTaskService->pause($task);
 
         return response()->json(
@@ -108,8 +122,15 @@ class CrawlerTaskController extends Controller
         );
     }
 
-    public function resume(CrawlerTask $task)
+    public function resume(String $id)
     {
+        $task = CrawlerTask::find($id);
+        if (! $task) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Task not found.',
+            ], 404);
+        }
         $result = $this->crawlerTaskService->resume($task);
 
         return response()->json(
@@ -118,9 +139,15 @@ class CrawlerTaskController extends Controller
         );
     }
 
-    public function destroy(CrawlerTask $task)
+    public function destroy(String $id)
     {
-        dd($task->id, $task->status);
+        $task = CrawlerTask::find($id);
+        if (! $task) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Task not found.',
+            ], 404);
+        }
         $result = $this->crawlerTaskService->destroy($task);
 
         return response()->json($result, $result['success'] ? 200 : 409);

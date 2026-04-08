@@ -82,6 +82,7 @@ Route::middleware([
 
     Route::prefix('crawler-tasks')->group(function () {
         Route::post('{task}/start', [CrawlerTaskController::class, 'start']);
+         Route::post('{task}/resume', [CrawlerTaskController::class, 'resume']);
         Route::post('{task}/pause', [CrawlerTaskController::class, 'pause']);
         Route::delete('{task}', [CrawlerTaskController::class, 'destroy']);
         Route::get('{task}/failed-items', [CrawlerTaskController::class, 'failedTasks']);
