@@ -6,6 +6,8 @@ use App\Models\DataSyncRecord;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Http;
 use Throwable;
 
 class DataSyncOrchestratorService
@@ -123,5 +125,61 @@ class DataSyncOrchestratorService
             throw $e;
         }
 
+    }
+
+    public function syncCrawlerFileToNasWithHttp(CrawlerTaskItem $item): string
+    {
+        $url = $item->result_file;
+
+        Log::info('HTTP download started', [
+            'url'     => $url,
+            'item_id' => $item->id,
+        ]);
+
+        $fileName  = basename($url);
+        $localPath = "public/nas/{$fileName}";
+
+
+        $response = retry(3, function () use ($url) {
+            return Http::timeout(300)->get($url);
+        }, 2);
+
+        if (! $response->successful()) {
+            Log::error('HTTP download failed', [
+                'url'    => $url,
+                'status' => $response->status(),
+            ]);
+
+            throw new \RuntimeException("HTTP download failed: {$url}");
+        }
+
+
+        Storage::put($localPath, $response->body());
+
+
+        $fullPath = storage_path("app/{$localPath}");
+
+        if (! file_exists($fullPath) || filesize($fullPath) === 0) {
+            Log::error('Downloaded file invalid', [
+                'path' => $fullPath,
+            ]);
+
+            throw new \RuntimeException('Downloaded file missing or empty');
+        }
+
+        $publicUrl = Storage::url("nas/{$fileName}");
+
+        Log::info('HTTP download success', [
+            'item_id' => $item->id,
+            'path'    => $fullPath,
+            'url'     => $publicUrl,
+        ]);
+
+        $item->update([
+            'status'      => 'synced',
+            'result_file' => $publicUrl,
+        ]);
+
+        return $fullPath;
     }
 }

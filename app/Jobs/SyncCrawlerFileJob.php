@@ -21,8 +21,8 @@ class SyncCrawlerFileJob implements ShouldQueue
             'item_id'     => $this->item->id,
             'result_file' => $this->item->result_file,
         ]);
-        $orchestrator->syncCrawlerFileToNas($this->item);
-       
+        // $orchestrator->syncCrawlerFileToNas($this->item);
+        $orchestrator->syncCrawlerFileToNasWithHttp($this->item);
 
     }
 }
