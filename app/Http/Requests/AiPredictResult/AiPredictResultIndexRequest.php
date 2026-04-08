@@ -18,7 +18,7 @@ class AiPredictResultIndexRequest extends FormRequest
         if ($this->has('review_status')) {
 
             $map = [
-                'approved' => 'reviewed', // 👈 key fix
+                'reviewed' => 'approved',
                 'pending'  => 'pending',
                 'rejected' => 'rejected',
             ];
