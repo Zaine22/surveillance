@@ -344,13 +344,7 @@ class CrawlerTaskService extends BaseFilterService
 
     public function destroy(CrawlerTask $task): array
     {
-        if ($task->status === 'processing') {
-            return [
-                'success' => false,
-                'message' => 'Cannot delete a running task.',
-                'status'  => $task->status,
-            ];
-        }
+        dd($task->id, $task->status);
 
         DB::transaction(function () use ($task) {
 
@@ -359,7 +353,7 @@ class CrawlerTaskService extends BaseFilterService
                 $item->update(['status' => 'pending']);
             }
 
-            $task->delete();
+            $task->forceDelete();
         });
 
         return [
