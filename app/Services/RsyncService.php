@@ -82,6 +82,7 @@ class RsyncService
             $config['password'],
             'sftp',
             '-o', 'StrictHostKeyChecking=no',
+            '-P', $config['port'],
             sprintf('%s@%s', $config['username'], $config['host']),
         ];
     }
