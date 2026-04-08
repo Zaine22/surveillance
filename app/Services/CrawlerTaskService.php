@@ -342,7 +342,7 @@ class CrawlerTaskService extends BaseFilterService
         ];
     }
 
-    public function delete(CrawlerTask $task): array
+    public function destroy(CrawlerTask $task): array
     {
         if ($task->status === 'processing') {
             return [
@@ -359,7 +359,7 @@ class CrawlerTaskService extends BaseFilterService
                 $item->update(['status' => 'pending']);
             }
 
-            $task->update(['status' => 'deleted']);
+            $task->delete();
         });
 
         return [

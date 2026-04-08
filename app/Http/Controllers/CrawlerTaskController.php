@@ -118,7 +118,7 @@ class CrawlerTaskController extends Controller
         );
     }
 
-    public function delete(CrawlerTask $task)
+    public function destroy(CrawlerTask $task)
     {
         $result = $this->crawlerTaskService->delete($task);
 
