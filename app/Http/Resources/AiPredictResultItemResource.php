@@ -6,23 +6,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class AiPredictResultItemResource extends JsonResource
 {
-
-    public function validationData(): array
-    {
-        $data = parent::validationData();
-
-        if (isset($data['review_status'])) {
-            $map = [
-                'approved' => 'reviewed',
-                'pending'  => 'pending',
-                'rejected' => 'rejected',
-            ];
-
-            $data['review_status'] = $map[$data['review_status']] ?? $data['review_status'];
-        }
-
-        return $data;
-    }
     /**
      * Transform the resource into an array.
      *

@@ -13,6 +13,22 @@ class AiPredictResultIndexRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('review_status')) {
+
+            $map = [
+                'approved' => 'reviewed', // 👈 key fix
+                'pending'  => 'pending',
+                'rejected' => 'rejected',
+            ];
+
+            $this->merge([
+                'review_status' => $map[$this->review_status] ?? $this->review_status,
+            ]);
+        }
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *
