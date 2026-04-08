@@ -8,15 +8,16 @@ class CrawlerTask extends Model
 {
     use HasUuids;
 
-    protected $table = 'crawler_tasks';
+    public $incrementing = false;
+
+    protected $keyType = 'string';
+    protected $table   = 'crawler_tasks';
 
     protected $fillable = [
         'crawler_config_id',
         'lexicon_id',
         'status',
     ];
-
-
 
     public function crawlerConfig()
     {
