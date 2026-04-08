@@ -4,10 +4,10 @@ namespace App\Services;
 use App\Models\CrawlerTaskItem;
 use App\Models\DataSyncRecord;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Throwable;
 
 class DataSyncOrchestratorService
@@ -132,14 +132,37 @@ class DataSyncOrchestratorService
         $url = $item->result_file;
 
         Log::info('HTTP download started', [
-            'url'     => $url,
             'item_id' => $item->id,
+            'url'     => $url,
         ]);
 
-        $fileName  = basename($url);
+        // ✅ 1. Validate URL
+        if (! filter_var($url, FILTER_VALIDATE_URL)) {
+            throw new \RuntimeException("Invalid URL: {$url}");
+        }
+
+        // ✅ 2. Extract clean filename (IMPORTANT FIX)
+        $fileName = basename(parse_url($url, PHP_URL_PATH));
+
         $localPath = "public/nas/{$fileName}";
+        $fullPath  = storage_path("app/{$localPath}");
 
+        // ✅ 3. Skip if already exists (prevent duplicate download)
+        if (Storage::exists($localPath)) {
+            Log::info('File already exists, skipping download', [
+                'path' => $fullPath,
+            ]);
 
+            // still update DB to correct URL
+            $item->update([
+                'status'      => 'synced',
+                'result_file' => Storage::url("nas/{$fileName}"),
+            ]);
+
+            return $fullPath;
+        }
+
+        // ✅ 4. Download with retry (handle slow python server)
         $response = retry(3, function () use ($url) {
             return Http::timeout(300)->get($url);
         }, 2);
@@ -153,18 +176,15 @@ class DataSyncOrchestratorService
             throw new \RuntimeException("HTTP download failed: {$url}");
         }
 
-
+        // ✅ 5. Save file
         Storage::put($localPath, $response->body());
-
-
-        $fullPath = storage_path("app/{$localPath}");
 
         if (! file_exists($fullPath) || filesize($fullPath) === 0) {
             Log::error('Downloaded file invalid', [
                 'path' => $fullPath,
             ]);
 
-            throw new \RuntimeException('Downloaded file missing or empty');
+            throw new \RuntimeException("Downloaded file missing or empty: {$fileName}");
         }
 
         $publicUrl = Storage::url("nas/{$fileName}");
