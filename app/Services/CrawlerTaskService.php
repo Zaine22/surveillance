@@ -347,8 +347,7 @@ class CrawlerTaskService extends BaseFilterService
         DB::transaction(function () use ($task) {
 
             foreach ($task->items as $item) {
-                $this->dispatchService->dispatchPauseItems($item);
-                $item->update(['status' => 'pending']);
+                $this->dispatchService->dispatchPauseItems($item);  
             }
 
             $task->forceDelete();

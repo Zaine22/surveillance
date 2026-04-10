@@ -21,6 +21,9 @@ class CrawlerTaskItem extends Model
         'status',
         'error_message',
     ];
+    protected $casts = [
+        'keywords' => 'array',
+    ];
 
     public $incrementing = false;
     protected $keyType   = 'string';

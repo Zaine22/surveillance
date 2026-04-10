@@ -21,7 +21,7 @@ class CrawlerDispatchService
             '*',
             [
                 'task_item_id'   => (string) $item->id,
-                'keywords'       => (string) $item->keywords,
+                'keywords'       => json_encode($item->keywords, JSON_UNESCAPED_UNICODE),
                 'crawl_location' => (string) $item->crawl_location,
                 'type'           => $type,
             ]

@@ -16,16 +16,23 @@ class CrawlerTaskItemService
 
     public function createFromTask(CrawlerTask $task, CrawlerConfig $config, Lexicon $lexicon): void
     {
+
         $keywords = $lexicon->keywords()
             ->where('status', 'enabled')
             ->pluck('keywords')
             ->map(function ($keywords) {
-                return is_array($keywords)
+
+                $decoded = is_array($keywords)
                     ? $keywords
                     : json_decode($keywords, true);
+
+                return is_array($decoded) ? array_values($decoded) : [];
             })
-            ->filter()
-            ->values();
+            ->filter(function ($item) {
+                return ! empty($item);
+            })
+            ->values()
+            ->toArray();
 
         $sources = [];
 
@@ -36,15 +43,16 @@ class CrawlerTaskItemService
         }
 
         foreach ($sources as $source) {
-            foreach ($keywords as $keyword) {
+            foreach ($keywords as $keywordGroup) {
 
                 $item = CrawlerTaskItem::create([
                     'task_id'        => (string) $task->id,
-                    'keywords'       => json_encode(array_values($keyword)),
+                    'keywords'       => $keywordGroup,
                     'status'         => 'pending',
                     'crawl_location' => $source,
                     'error_message'  => null,
                 ]);
+
                 $this->dispatchService->dispatch($item);
 
                 $item->update([
