@@ -126,14 +126,9 @@ class CrawlerTaskItemService
     }
     public function delete($item): array
     {
-        if (strtolower($item->status) === 'crawling') {
-            return [
-                'success' => false,
-                'message' => 'Cannot delete item while crawling.',
-            ];
-        }
-
+        $this->dispatchService->dispatchPauseItems($item);
         $id = $item->id;
+
         try {
             DB::transaction(function () use ($item) {
 
