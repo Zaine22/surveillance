@@ -41,9 +41,10 @@ class CrawlerConfigService extends BaseFilterService
 
             $status = $filters['status'];
 
-            $query->whereHas('tasks', function ($q) use ($status) {
-                $q->where('status', $status);
-            });
+            // $query->whereHas('tasks', function ($q) use ($status) {
+            //     $q->where('status', $status);
+            // });
+              $query->where('status', $status);
         }
 
         return $this->applyFilters(

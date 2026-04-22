@@ -80,7 +80,9 @@ class OperationLogger
         $executionTime = round((microtime(true) - $startTime) * 1000);
 
         $user = auth()->user();
-
+        if (! $user && $request->input('email')) {
+            $user = \App\Models\User::where('email', $request->input('email'))->first();
+        }
 
         $path = $request->path();
 

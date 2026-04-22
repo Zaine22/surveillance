@@ -107,7 +107,7 @@ class SurveillanceSystemSeeder extends Seeder
                         DB::table('crawler_task_items')->insert([
                             'id'              => $itemId,
                             'task_id'         => $taskId,
-                            'keywords'        => "keyword$i",
+                            'keywords'        => json_encode(["keyword$i"]),
                             'crawler_machine' => "bot-" . rand(1, 20),
                             'result_file'     => "file$i.zip",
                             'crawl_location'  => "https://example.com/$i",

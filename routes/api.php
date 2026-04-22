@@ -26,7 +26,12 @@ use App\Http\Controllers\SystemNoticeController;
 use App\Http\Controllers\ValidationRecordController;
 use Illuminate\Support\Facades\Route;
 
-Route::post('/login', [AuthController::class, 'login']);
+Route::middleware(
+    'operation.log'
+)->group(function () {
+    Route::post('/login', [AuthController::class, 'login']);
+});
+
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/send-otp', [AuthController::class, 'sendOtp']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
@@ -82,7 +87,7 @@ Route::middleware([
 
     Route::prefix('crawler-tasks')->group(function () {
         Route::post('{task}/start', [CrawlerTaskController::class, 'start']);
-         Route::post('{task}/resume', [CrawlerTaskController::class, 'resume']);
+        Route::post('{task}/resume', [CrawlerTaskController::class, 'resume']);
         Route::post('{task}/pause', [CrawlerTaskController::class, 'pause']);
         Route::delete('{task}', [CrawlerTaskController::class, 'destroy']);
         Route::get('{task}/failed-items', [CrawlerTaskController::class, 'failedTasks']);

@@ -23,7 +23,6 @@ class CaseManagementService extends BaseFilterService
         $query = CaseManagement::with([
             'aiPredictResult.aiModelTask',
         ]);
-
         if (! empty($filters['search'])) {
             $search = strtolower($filters['search']);
 
@@ -76,8 +75,8 @@ class CaseManagementService extends BaseFilterService
             }
         }
 
-        if (! empty($filters['dateRange'])) {
-            $dateRange = $filters['dateRange'];
+        if (! empty($filters['range'])) {
+            $dateRange = $filters['range'];
             $now       = now();
 
             switch ($dateRange) {
@@ -91,10 +90,10 @@ class CaseManagementService extends BaseFilterService
                     $query->whereBetween('created_at', [$now->copy()->startOfYear(), $now->copy()->endOfYear()]);
                     break;
                 case '自行選擇範圍':
-                    if (! empty($filters['from']) && ! empty($filters['to'])) {
+                    if (! empty($filters['from_date']) && ! empty($filters['to_date'])) {
                         $query->whereBetween('created_at', [
-                            \Carbon\Carbon::parse($filters['from'])->startOfDay(),
-                            \Carbon\Carbon::parse($filters['to'])->endOfDay(),
+                            \Carbon\Carbon::parse($filters['from_date'])->startOfDay(),
+                            \Carbon\Carbon::parse($filters['to_date'])->endOfDay(),
                         ]);
                     }
                     break;
