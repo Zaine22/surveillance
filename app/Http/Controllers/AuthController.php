@@ -33,36 +33,54 @@ class AuthController extends Controller
         ], 201);
     }
 
+    // public function login(LoginUserRequest $request)
+    // {
+    //     $data = $request->validated();
+
+    //     $result = $this->authService->login(
+    //         $data['email'],
+    //         $data['password'],
+    //         $data['otp']
+    //     );
+
+    //     if ($result['error'] ?? false) {
+    //         return response()->json([
+    //             'message' => $result['error'],
+    //         ], 403);
+    //     }
+
+    //     $result = $this->authService->login(
+    //         $data['email'],
+    //         $data['password'],
+    //         $data['otp']
+    //     );
+
+    //     if ($result['error'] ?? false) {
+    //         return response()->json([
+    //             'message' => $result['error'],
+    //         ], 403);
+    //     }
+
+    //     return response()->json($result);
+    // }
     public function login(LoginUserRequest $request)
-    {
-        $data = $request->validated();
+{
+    $data = $request->validated();
 
-        $result = $this->authService->login(
-            $data['email'],
-            $data['password'],
-            $data['otp']
-        );
+    $result = $this->authService->login(
+        $data['email'],
+        $data['password'],
+        $data['otp']
+    );
 
-        if ($result['error'] ?? false) {
-            return response()->json([
-                'message' => $result['error'],
-            ], 403);
-        }
-
-        $result = $this->authService->login(
-            $data['email'],
-            $data['password'],
-            $data['otp']
-        );
-
-        if ($result['error'] ?? false) {
-            return response()->json([
-                'message' => $result['error'],
-            ], 403);
-        }
-
-        return response()->json($result);
+    if ($result['error'] ?? false) {
+        return response()->json([
+            'message' => $result['error'],
+        ], 403);
     }
+
+    return response()->json($result);
+}
 
     public function changePassword(ChangePasswordRequest $request)
     {
