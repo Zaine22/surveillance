@@ -19,7 +19,12 @@ class AiPredictResultShowResource extends JsonResource
             'ai_model_task_id'   => $this->ai_model_task_id,
             'lexicon_id'         => $this->lexicon_id,
             'lexicon_name'       => $this->lexicon?->name,
-            'keywords'           => $this->keywords,
+            // 'keywords'           => $this->keywords,
+            'keywords'           => is_array($this->keywords)
+                ? implode(', ', $this->keywords)
+                : (is_string($this->keywords)
+                    ? trim($this->keywords)
+                    : ''),
             'ai_score'           => $this->ai_score,
             'analysis_result'    => $this->analysis_result,
             'review_status'      => $this->review_status,
