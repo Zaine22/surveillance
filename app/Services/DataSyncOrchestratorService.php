@@ -147,20 +147,17 @@ class DataSyncOrchestratorService
             'path' => $fullPath,
         ]);
 
-
         $response = Http::timeout(300)->get($url);
 
         if (! $response->successful()) {
             throw new \RuntimeException("Download failed: {$url}");
         }
 
-
         $written = file_put_contents($fullPath, $response->body());
 
         if ($written === false) {
             throw new \RuntimeException("Failed to write file: {$fullPath}");
         }
-
 
         if (! file_exists($fullPath)) {
             throw new \RuntimeException("File does not exist after write");
@@ -180,6 +177,12 @@ class DataSyncOrchestratorService
         $item->update([
             'status'      => 'synced',
             'result_file' => $publicUrl,
+        ]);
+
+        $this->aiTaskManagerService->createFromCrawlerItem($item);
+
+        $item->task()->update([
+            'status' => 'completed',
         ]);
 
         return $fullPath;

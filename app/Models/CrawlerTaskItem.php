@@ -97,4 +97,9 @@ class CrawlerTaskItem extends Model
     {
         return $this->belongsTo(CrawlerTask::class, 'task_id');
     }
+
+    public function aiModelTask()
+    {
+        return $this->hasOne(AiModelTask::class, 'crawler_task_item_id');
+    }
 }
