@@ -16,7 +16,9 @@ class AiModelTaskSeeder extends Seeder
 
     public function run(): void
     {
-        $items = CrawlerTaskItem::whereDoesntHave('aiModelTask')->get();
+        $items = CrawlerTaskItem::where('status', 'synced')
+            ->whereDoesntHave('aiModelTask')
+            ->get();
 
         foreach ($items as $item) {
             $this->service->createFromCrawlerItem($item);
