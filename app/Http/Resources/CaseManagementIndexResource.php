@@ -30,7 +30,7 @@ class CaseManagementIndexResource extends JsonResource
             'comment'          => $this->comment,
             'file_name'        => optional($this->aiPredictResult?->aiModelTask)->file_name,
             'created_at'       => $this->created_at,
-            'due_date' => optional($this->items->first())->due_date,
+            'screenshot_deadline' => optional($this->items->first())->due_date,
             'lexicon_id'       => $this->aiPredictResult?->lexicon_id,
         ];
     }
