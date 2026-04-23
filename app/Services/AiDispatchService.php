@@ -15,14 +15,15 @@ class AiDispatchService
     {
 
         Redis::hMSet("ai_task:{$task->id}", [
-            'status'    => 'pending',
-            'params'    => json_encode($params, JSON_UNESCAPED_UNICODE),
-            'timestamp' => now()->toDateTimeString(),
+
         ]);
 
         Redis::xadd($this->stream, '*', [
-            'event'   => 'new',
-            'task_id' => (string) $task->id,
+            'event'     => 'new',
+            'task_id'   => (string) $task->id,
+            'status'    => 'pending',
+            'params'    => json_encode($params, JSON_UNESCAPED_UNICODE),
+            'timestamp' => now()->toDateTimeString(),
         ]);
     }
 }
