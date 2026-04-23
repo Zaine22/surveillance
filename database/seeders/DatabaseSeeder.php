@@ -23,10 +23,10 @@ class DatabaseSeeder extends Seeder
             // AllowedIpSeeder::class,
             // TestSeeder::class,
             // SurveillanceSystemSeeder::class,
-            // AiPredictResultSeeder::class,
+            AiPredictResultSeeder::class,
             // ExternalCaseManagementSeeder::class
             // SystemNoticeSeeder::class,
-            AiModelTaskSeeder::class,
+            // AiModelTaskSeeder::class,
         ]);
     }
 }
