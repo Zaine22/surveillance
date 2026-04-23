@@ -21,7 +21,7 @@ class CaseManagementSeeder extends Seeder
                 'id'                   => (string) Str::uuid(),
                 'ai_predict_result_id' => $result->id,
                 'keywords'             => $result->keywords,
-                'internal_case_no'     => 'INT-' . strtoupper(uniqid()),
+                'internal_case_no'     => 'CASE-' . strtoupper(uniqid()),
                 'status'               => 'pending_notification',
             ]);
         }

@@ -28,7 +28,7 @@ class DatabaseSeeder extends Seeder
             // ExternalCaseManagementSeeder::class
             // SystemNoticeSeeder::class,
 
-            // CaseManagementSeeder::class
+            CaseManagementSeeder::class
         ]);
     }
 }
