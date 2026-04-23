@@ -25,7 +25,7 @@ class DatabaseSeeder extends Seeder
             // SurveillanceSystemSeeder::class,
             AiModelTaskSeeder::class,
             AiPredictResultSeeder::class,
-            ExternalCaseManagementSeeder::class
+            // ExternalCaseManagementSeeder::class
             // SystemNoticeSeeder::class,
 
             // CaseManagementSeeder::class
