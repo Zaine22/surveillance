@@ -53,7 +53,7 @@ class ExternalCaseManagementSeeder extends Seeder
 
             DB::table('case_management')->insert([
                 'id'                     => $caseId,
-                'ai_predict_result_id'  => null, 
+                'ai_predict_result_id'  => null,
                 'internal_case_no'      => null,
                 'external_case_no'      => 'EXT-' . strtoupper(Str::random(6)),
                 'keywords'              => json_encode(
@@ -76,12 +76,10 @@ class ExternalCaseManagementSeeder extends Seeder
                     'id'                  => (string) Str::uuid(),
                     'case_management_id'  => $caseId,
 
-                    // ✅ your requirement
                     'media_url'           => "https://picsum.photos/300/200",
 
                     'crawler_page_url'    => "https://example.com/page/" . rand(1, 100),
 
-                    // external = manual
                     'ai_result'           => $aiResults[array_rand($aiResults)],
 
                     'status'              => $itemStatuses[array_rand($itemStatuses)],
