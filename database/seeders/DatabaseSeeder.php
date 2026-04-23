@@ -26,7 +26,7 @@ class DatabaseSeeder extends Seeder
             // AiPredictResultSeeder::class,
             // ExternalCaseManagementSeeder::class
             // SystemNoticeSeeder::class,
-            AiModelSeeder::class,
+            AiModelTaskSeeder::class,
         ]);
     }
 }
