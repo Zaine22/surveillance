@@ -21,20 +21,10 @@ class AiPredictResultService extends BaseFilterService
         $query = AiPredictResult::with('aiModelTask');
 
         if (! empty($filters['search'])) {
-            $search = strtolower($filters['search']);
+            $search = $filters['search'];
 
-            $query->where(function ($q) use ($search) {
-
-                $q->orWhereRaw(
-                    'LOWER(analysis_result) LIKE ?',
-                    ["%{$search}%"]
-                )
-                    ->orWhereHas('aiModelTask', function ($task) use ($search) {
-                        $task->whereRaw(
-                            'LOWER(file_name) LIKE ?',
-                            ["%{$search}%"]
-                        );
-                    });
+            $query->whereHas('aiModelTask', function ($q) use ($search) {
+                $q->where('file_name', 'LIKE', "%{$search}%");
             });
         }
 
