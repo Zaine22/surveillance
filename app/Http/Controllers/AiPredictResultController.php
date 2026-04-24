@@ -26,7 +26,6 @@ class AiPredictResultController extends Controller
         $results = $this->service->getAll(
             $request->validated()
         );
-
         return AiPredictResultIndexResource::collection($results);
     }
 

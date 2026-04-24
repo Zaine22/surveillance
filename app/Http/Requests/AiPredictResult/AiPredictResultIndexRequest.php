@@ -27,6 +27,12 @@ class AiPredictResultIndexRequest extends FormRequest
                 'review_status' => $map[$this->review_status] ?? $this->review_status,
             ]);
         }
+
+        if ($this->has('analysis_result')) {
+            $this->merge([
+                'ai_analysis_result' => strtolower(trim($this->analysis_result)),
+            ]);
+        }
     }
 
     /**

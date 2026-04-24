@@ -18,6 +18,7 @@ class AiPredictResultService extends BaseFilterService
 
     public function getAll(array $filters): LengthAwarePaginator
     {
+
         $query = AiPredictResult::with('aiModelTask');
 
         if (! empty($filters['search'])) {
