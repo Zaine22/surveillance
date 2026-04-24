@@ -37,7 +37,7 @@ class AiModelTaskController extends Controller
     {
         return response()->json([
             'data' => [
-                'average_accuracy' => 98.5,
+                'average_accuracy' => 85.5,
                 'health_status' => 'Healthy',
                 'total_identified' => \App\Models\AiModelTask::where('status', 'completed')->count(),
             ],
