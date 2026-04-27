@@ -53,29 +53,29 @@ class LexiconService extends BaseFilterService
         );
     }
 
-    // public function getLexiconById(string $id): ?Lexicon
-    // {
-    //     return Lexicon::with('keywords')->withSum([
-    //         'keywords as crawl_hit_count' => function ($q) {
-    //             $q->where('status', 'enabled');
-    //         },
-    //     ], 'crawl_hit_count')->find($id);
-    // }
-
     public function getLexiconById(string $id): ?Lexicon
     {
-        return Lexicon::with([
-            'keywords' => function ($q) {
-                $q->whereNull('parent_id');
+        return Lexicon::with('keywords')->withSum([
+            'keywords as crawl_hit_count' => function ($q) {
+                $q->where('status', 'enabled');
             },
-        ])
-            ->withSum([
-                'keywords as crawl_hit_count' => function ($q) {
-                    $q->where('status', 'enabled');
-                },
-            ], 'crawl_hit_count')
-            ->find($id);
+        ], 'crawl_hit_count')->find($id);
     }
+
+    // public function getLexiconById(string $id): ?Lexicon
+    // {
+    //     return Lexicon::with([
+    //         'keywords' => function ($q) {
+    //             $q->whereNull('parent_id');
+    //         },
+    //     ])
+    //         ->withSum([
+    //             'keywords as crawl_hit_count' => function ($q) {
+    //                 $q->where('status', 'enabled');
+    //             },
+    //         ], 'crawl_hit_count')
+    //         ->find($id);
+    // }
 
     public function createLexicon(array $data): Lexicon
     {
