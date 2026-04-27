@@ -17,6 +17,7 @@ class LexiconKeywordResource extends JsonResource
         return [
             'id' => $this->id,
             'keywords' => $this->keywords,
+            'parent_id' => $this->parent_id,
             'crawl_hit_count' => $this->crawl_hit_count,
             'case_count' => $this->case_count,
             'status' => $this->status,
