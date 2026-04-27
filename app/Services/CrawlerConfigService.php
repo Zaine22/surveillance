@@ -179,7 +179,7 @@ class CrawlerConfigService extends BaseFilterService
         $from = ! empty($data['from']) ? Carbon::parse($data['from']) : now();
         $to   = ! empty($data['to']) ? Carbon::parse($data['to']) : null;
 
-        if ($from->isFuture()) {
+        if ($from->startOfDay()->gt(now()->startOfDay())) {
             $data['status'] = 'pending';
         } else {
             $data['status'] = 'enabled';

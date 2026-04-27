@@ -20,13 +20,13 @@ class DatabaseSeeder extends Seeder
             // LexiconSeeder::class,
             // AiModelSeeder::class,
             // BotSeeder::class,
-            AllowedIpSeeder::class,
+            // AllowedIpSeeder::class,
             // TestSeeder::class,
             // SurveillanceSystemSeeder::class,
             // AiModelTaskSeeder::class,
             // AiPredictResultSeeder::class,
             // ExternalCaseManagementSeeder::class
-            // SystemNoticeSeeder::class,
+            SystemNoticeSeeder::class,
 
             // CaseManagementSeeder::class
         ]);
