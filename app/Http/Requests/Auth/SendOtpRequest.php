@@ -33,6 +33,7 @@ class SendOtpRequest extends FormRequest
                         'gamil.com',
                         'gmial.com',
                         'gnail.com',
+                        'mail.co',
                     ];
 
                     if (in_array($domain, $blockedDomains, true)) {
