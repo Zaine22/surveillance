@@ -24,7 +24,6 @@ class StoreUserRequest extends FormRequest
         return [
             'name'       => 'required|string|max:255',
             'email'      => 'required|email|unique:users,email',
-            'password'   => 'required|string|min:8',
             'department' => [
                 'nullable',
                 'string',
@@ -56,9 +55,6 @@ class StoreUserRequest extends FormRequest
             'email.required'    => '邮箱不能为空',
             'email.email'       => '邮箱格式不正确',
             'email.unique'      => '邮箱已被注册',
-            'password.required' => '密码不能为空',
-            'password.string'   => '密码必须是字符串',
-            'password.min'      => '密码必须至少8个字符',
             'role.required'     => '角色不能为空',
             'role.string'       => '角色必须是字符串',
             'department.string' => '部门必须是字符串',

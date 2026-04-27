@@ -6,6 +6,7 @@ use App\Models\ValidationRecord;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthService
@@ -369,10 +370,11 @@ class AuthService
 
     public function createUserByAdmin(array $data): array
     {
-        $user = User::create([
+        $plainPassword = Str::random(10);
+        $user          = User::create([
             'name'                  => $data['name'],
             'email'                 => $data['email'],
-            'password'              => Hash::make($data['password']),
+            'password'              => Hash::make($plainPassword),
             'password_last_changed' => now(),
             'department'            => $data['department'] ?? null,
             'roles'                 => $data['roles'] ?? 'user',
@@ -384,7 +386,7 @@ class AuthService
             'password' => $user->password,
         ]);
 
-        $this->mailService->sendAccountCreated($data['email'], $data['password']);
+        $this->mailService->sendAccountCreated($data['email'], $plainPassword);
 
         return $user->toArray();
     }
