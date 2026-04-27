@@ -1,15 +1,14 @@
 <?php
-
 namespace App\Jobs;
 
+use App\Models\CrawlerConfig;
+use App\Models\Lexicon;
 use App\Services\CrawlerTaskService;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use App\Models\CrawlerConfig;
-use App\Models\Lexicon;
 
 class CrawlerScheduledJob implements ShouldQueue
 {
@@ -21,9 +20,9 @@ class CrawlerScheduledJob implements ShouldQueue
 
     public function __construct(string $configId, string $frequency, Carbon $endDate)
     {
-        $this->configId = $configId;
+        $this->configId  = $configId;
         $this->frequency = $frequency;
-        $this->endDate = $endDate;
+        $this->endDate   = $endDate;
     }
 
     public function handle()
@@ -36,16 +35,21 @@ class CrawlerScheduledJob implements ShouldQueue
 
         $config = CrawlerConfig::find($this->configId);
 
-        if (!$config) {
-            return; // Stop scheduling if config is not found
+        if (! $config || $config->status === 'disabled') {
+            return;
+        }
+
+        if ($config->status === 'pending') {
+            $config->update([
+                'status' => 'enabled',
+            ]);
         }
 
         $lexicon = Lexicon::find($config->lexicon_id);
 
-        if(!$lexicon) {
+        if (! $lexicon) {
             return; // Stop scheduling if lexicon is not found
         }
-
 
         // 🔥 Run your crawler logic here
         app(CrawlerTaskService::class)->createFromConfig($config, $lexicon);

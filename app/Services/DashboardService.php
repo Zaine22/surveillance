@@ -188,12 +188,13 @@ class DashboardService
 
         return $result;
     }
-    private function getSystemAnnouncements(): array
+    public function getSystemAnnouncements(int $limit = 5, int $offset = 0): array
     {
         return DB::table('system_notices')
             ->where('status', 'published')
             ->orderByDesc('created_at')
-            ->limit(5)
+            ->offset($offset)
+            ->limit($limit)
             ->get([
                 'id',
                 'title',

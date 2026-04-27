@@ -24,6 +24,8 @@ class DashboardStatsRequest extends FormRequest
             'range'     => 'nullable|in:today,one_week,one_month,this_week,this_month,one_year',
             'from_date' => 'nullable|date',
             'to_date'   => 'nullable|date',
+            'limit'     => 'nullable|integer|min:1|max:50',
+            'offset'    => 'nullable|integer|min:0',
         ];
     }
     public function withValidator($validator)

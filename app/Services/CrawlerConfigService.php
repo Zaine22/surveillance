@@ -44,7 +44,7 @@ class CrawlerConfigService extends BaseFilterService
             // $query->whereHas('tasks', function ($q) use ($status) {
             //     $q->where('status', $status);
             // });
-              $query->where('status', $status);
+            $query->where('status', $status);
         }
 
         return $this->applyFilters(
@@ -88,6 +88,59 @@ class CrawlerConfigService extends BaseFilterService
             ->paginate($perPage);
     }
 
+    //this is correct createConfig
+    // public function createConfig(array $data): CrawlerConfig
+    // {
+    //     $domains = collect($data['sources'])
+    //         ->map(function ($url) {
+
+    //             $url = trim($url);
+
+    //             if (! str_starts_with($url, 'http://') && ! str_starts_with($url, 'https://')) {
+    //                 $url = 'https://' . $url;
+    //             }
+
+    //             if (! filter_var($url, FILTER_VALIDATE_URL)) {
+    //                 return null;
+    //             }
+
+    //             $parts = parse_url($url);
+
+    //             if (empty($parts['host'])) {
+    //                 return null;
+    //             }
+
+    //             $scheme = $parts['scheme'] ?? 'https';
+    //             $host   = strtolower($parts['host']);
+    //             $path   = $parts['path'] ?? '';
+    //             $query  = isset($parts['query']) ? '?' . $parts['query'] : '';
+
+    //             return "{$scheme}://{$host}{$path}{$query}";
+    //         })
+    //         ->filter()
+    //         ->unique()
+    //         ->values()
+    //         ->toArray();
+
+    //     $data['sources'] = $domains;
+
+    //     $config = CrawlerConfig::create($data);
+
+    //     $lexicon = Lexicon::findOrFail($data['lexicon_id']);
+
+    //     $this->crawlerTaskService->createFromConfig($config, $lexicon);
+
+    //     if ($data['status'] === 'enabled' && ! empty($data['from']) && ! empty($data['to'])) {
+    //         $from = Carbon::parse($data['from']);
+    //         $to   = Carbon::parse($data['to']);
+
+    //         CrawlerScheduledJob::dispatch($config->id, $data['frequency_code'], $to)
+    //             ->delay($from);
+    //     }
+
+    //     return $config;
+    // }
+
     public function createConfig(array $data): CrawlerConfig
     {
         $domains = collect($data['sources'])
@@ -123,16 +176,24 @@ class CrawlerConfigService extends BaseFilterService
 
         $data['sources'] = $domains;
 
+        $from = ! empty($data['from']) ? Carbon::parse($data['from']) : now();
+        $to   = ! empty($data['to']) ? Carbon::parse($data['to']) : null;
+
+        if ($from->isFuture()) {
+            $data['status'] = 'pending';
+        } else {
+            $data['status'] = 'enabled';
+        }
+
         $config = CrawlerConfig::create($data);
-        // $this->globalWhitelistService->createMany($domains);
+
         $lexicon = Lexicon::findOrFail($data['lexicon_id']);
 
-        $this->crawlerTaskService->createFromConfig($config, $lexicon);
+        if ($data['status'] === 'enabled') {
+            $this->crawlerTaskService->createFromConfig($config, $lexicon);
+        }
 
-        if ($data['status'] === 'enabled' && ! empty($data['from']) && ! empty($data['to'])) {
-            $from = Carbon::parse($data['from']);
-            $to   = Carbon::parse($data['to']);
-
+        if ($data['status'] === 'pending' && $to) {
             CrawlerScheduledJob::dispatch($config->id, $data['frequency_code'], $to)
                 ->delay($from);
         }

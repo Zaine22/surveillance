@@ -18,10 +18,20 @@ class DashboardController extends Controller
 
     public function stats(DashboardStatsRequest $request)
     {
+        $validated = $request->validated();
+
+        $limit  = $validated['limit'] ?? 5;
+        $offset = $validated['offset'] ?? 0;
+
         return response()->json([
             'code'    => 0,
             'message' => 'success',
-            'data'    => $this->dashboardService->getStats($request->validated()),
+            'data'    => [
+                 ...$this->dashboardService->getStats($validated),
+
+                'system_announcements' => $this->dashboardService
+                    ->getSystemAnnouncements($limit, $offset),
+            ],
         ]);
     }
 
