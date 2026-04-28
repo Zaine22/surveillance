@@ -121,27 +121,29 @@ class CrawlerTaskItem extends Model
             $total      = $items->count();
             $synced     = $items->where('status', 'synced')->count();
             $processing = $items->whereIn('status', ['crawling', 'syncing'])->count();
+            $pending    = $items->where('status', 'pending')->count();
             $error      = $items->where('status', 'error')->count();
 
-            //  all done
-            if ($total > 0 && $synced === $total) {
-                $task->update(['status' => 'completed']);
-                return;
-            }
-
-            //  still running
+            //  1. running
             if ($processing > 0) {
                 $task->update(['status' => 'processing']);
                 return;
             }
 
-            //  nothing running → treat as paused/pending
-            if ($processing === 0) {
-                $task->update(['status' => 'pending']);
+            //  2. completed
+            if ($total > 0 && $synced === $total) {
+                $task->update(['status' => 'completed']);
                 return;
             }
-            // no crawling + no syncing→paused;
-            $task->update(['status' => 'pending']);
+
+            //  3. pending >= error → error
+            if ($pending >= $error) {
+                $task->update(['status' => 'error']);
+                return;
+            }
+
+            //  4. otherwise → paused
+            $task->update(['status' => 'paused']);
         });
     }
 
