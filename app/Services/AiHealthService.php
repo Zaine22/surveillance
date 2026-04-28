@@ -109,8 +109,8 @@ class AiHealthService
     {
         return [
             $this->randomItem(now()),
-            $this->randomItem(now()->subMinutes(rand(10, 120))),
-            $this->randomItem(now()->subMinutes(rand(120, 300))),
+            $this->randomItem(now()),
+            $this->randomItem(now()),
         ];
     }
     private function randomItem($time): array
