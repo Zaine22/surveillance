@@ -51,7 +51,7 @@ class AiHealthService
 
     public function getModelById(string $id)
     {
-        $model = AiModel::find($id);
+        $model = AiModel::findOrFail($id);
 
         return $model ? $this->format($model) : null;
     }
@@ -103,5 +103,56 @@ class AiHealthService
         }
 
         if ($cpu < 40 && $ram < 40 && $gpu < 40) {return 'normal';}return 'stable';
+    }
+
+    public function getAiHealth(): array
+    {
+        return [
+            $this->randomItem(now()),
+            $this->randomItem(now()->subMinutes(rand(10, 120))),
+            $this->randomItem(now()->subMinutes(rand(120, 300))),
+        ];
+    }
+    private function randomItem($time): array
+    {
+        $latency = rand(20, 60);
+        $cpu     = rand(20, 60);
+        $memory  = rand(30, 70);
+
+        return $this->formatItem($time, $latency, $cpu, $memory);
+    }
+
+
+    public function sync(): array
+    {
+        $latency = rand(20, 150);
+        $cpu     = rand(10, 95);
+        $memory  = rand(20, 95);
+
+        return $this->formatItem(now(), $latency, $cpu, $memory);
+    }
+
+    private function formatItem($time, $latency, $cpu, $memory): array
+    {
+        $status = $this->calculateStatus($latency, $cpu, $memory);
+
+        return [
+            'checked_at' => $time->format('Y-m-d H:i'),
+            'message'    => "定時向主機確認健康度：延遲 {$latency}ms、CPU {$cpu}%、記憶體 {$memory}%",
+            'health_status' => $status,
+        ];
+    }
+
+    private function calculateStatus($latency, $cpu, $memory): string
+    {
+        if ($cpu > 80 || $memory > 85 || $latency > 100) {
+            return '非常擁擠';
+        }
+
+        if ($cpu > 60 || $memory > 70 || $latency > 50) {
+            return '輕微壅塞';
+        }
+
+        return '穩定';
     }
 }

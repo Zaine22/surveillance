@@ -40,6 +40,14 @@ class AiModelController extends Controller
         ]);
     }
 
+    public function health(): JsonResponse
+    {
+
+        return response()->json([
+            'data' => $this->service->getAiHealth(),
+        ]);
+    }
+
     public function check(string $id): JsonResponse
     {
         $model = \App\Models\AiModel::findOrFail($id);
