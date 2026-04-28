@@ -24,7 +24,7 @@ class CrawlerTaskIndexRequest extends FormRequest
             'search'     => ['nullable', 'string', 'max:100'],
             'status'     => [
                 'nullable',
-                'in:pending,running,completed,failed',
+                'in:pending,running,completed,failed,paused',
             ],
             'range'      => [
                 'nullable',
