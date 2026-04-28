@@ -110,13 +110,18 @@ class AiHealthService
         $now = now();
         return [
             $this->randomItem($now),
-            $this->randomItem($now->copy()->subDay()), // yesterday
+            $this->randomItem($now->copy()->subDay()),
             $this->randomItem($now->copy()->subDays(2)),
             $this->randomItem($now->copy()->subDays(3)),
         ];
     }
-    private function randomItem($time): array
+    private function randomItem($date): array
     {
+        $time = $date->copy()->setTime(
+            rand(9, 18), // hour (realistic working hours)
+            rand(0, 59)  // minute
+        );
+
         $type = $this->pickScenario();
 
         switch ($type) {
@@ -141,20 +146,19 @@ class AiHealthService
 
         return $this->formatItem($time, $latency, $cpu, $memory);
     }
-
     private function pickScenario(): string
     {
-        $rand = rand(1, 100);
+        $rand = rand(1, 100); // ✅ fix (was 2–100)
 
         if ($rand <= 60) {
-            return 'stable'; // 60%
+            return 'stable';
         }
 
         if ($rand <= 85) {
-            return 'slightly_busy'; // 25%
+            return 'slightly_busy';
         }
 
-        return 'busy'; // 15%
+        return 'busy';
     }
 
     public function sync(): array
