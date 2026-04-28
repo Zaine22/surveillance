@@ -100,14 +100,90 @@ class AuthService
     //     return compact('user', 'token');
     // }
 
+    // public function login(string $email, string $password, string $otp): array
+    // {
+    //     $user = User::where('email', $email)->first();
+
+    //     if (! $user) {
+    //         throw ValidationException::withMessages([
+    //             'email' => ['This username does not exist'],
+    //         ]);
+    //     }
+
+    //     $validated_record = null;
+
+    //     if ($email !== 'testing@mail.com') {
+    //         $validated_record = ValidationRecord::where('send_to', $email)
+    //             ->where('validate_type', 'login')
+    //             ->where('validate_code', $otp)
+    //             ->latest()
+    //             ->first();
+    //     }
+
+    //     if ($user->status !== 'enabled') {
+    //         return ['error' => 'User account is not verified yet!'];
+    //     }
+
+    //     if (! Hash::check($password, $user->password)) {
+    //         throw ValidationException::withMessages([
+    //             'password' => ['Please enter the correct password'],
+    //         ]);
+    //     }
+
+    //     // OTP checks
+    //     if ($email !== 'testing@mail.com' && ! $validated_record) {
+    //         throw ValidationException::withMessages([
+    //             'otp' => ['Incorrect verification code'],
+    //         ]);
+    //     }
+
+    //     if ($email !== 'testing@mail.com' && $validated_record->expired_at < now()) {
+    //         throw ValidationException::withMessages([
+    //             'otp' => ['Incorrect verification code'],
+    //         ]);
+    //     }
+
+    //     if ($email !== 'testing@mail.com' && $otp !== $validated_record->validate_code) {
+    //         throw ValidationException::withMessages([
+    //             'otp' => ['Incorrect verification code'],
+    //         ]);
+    //     }
+
+    //     if ($email === 'testing@mail.com' && $otp !== '123456') {
+    //         throw ValidationException::withMessages([
+    //             'otp' => ['Incorrect verification code'],
+    //         ]);
+    //     }
+
+    //     $user->update([
+    //         'last_login' => now(),
+    //     ]);
+
+    //     $user->tokens()->delete();
+
+    //     $token = $user->createToken('api_token')->plainTextToken;
+
+    //     return compact('user', 'token');
+    // }
+
     public function login(string $email, string $password, string $otp): array
     {
         $user = User::where('email', $email)->first();
 
-        if (! $user) {
+        // if (! $user) {
+        //     throw ValidationException::withMessages([
+        //         'email' => ['This username does not exist'],
+        //     ]);
+        // }
+        if (! $user || ! Hash::check($password, $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['This username does not exist'],
+                'email' => ['Please enter the correct account/password.'],
             ]);
+        }
+
+        // User status check
+        if ($user->status !== 'enabled') {
+            return ['error' => 'User account is not verified yet!'];
         }
 
         $validated_record = null;
@@ -124,11 +200,11 @@ class AuthService
             return ['error' => 'User account is not verified yet!'];
         }
 
-        if (! Hash::check($password, $user->password)) {
-            throw ValidationException::withMessages([
-                'password' => ['Please enter the correct password'],
-            ]);
-        }
+        // if (! Hash::check($password, $user->password)) {
+        //     throw ValidationException::withMessages([
+        //         'password' => ['Please enter the correct password'],
+        //     ]);
+        // }
 
         // OTP checks
         if ($email !== 'testing@mail.com' && ! $validated_record) {
