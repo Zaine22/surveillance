@@ -48,16 +48,13 @@ class CrawlerTaskItemService
                 $item = CrawlerTaskItem::create([
                     'task_id'        => (string) $task->id,
                     'keywords'       => $keywordGroup,
-                    'status'         => 'pending',
+                    'status'         => 'crawling',
                     'crawl_location' => $source,
                     'error_message'  => null,
                 ]);
 
                 $this->dispatchService->dispatch($item);
 
-                $item->update([
-                    'status' => 'crawling',
-                ]);
             }
         }
 
@@ -97,7 +94,7 @@ class CrawlerTaskItemService
         $this->dispatchService->dispatchPauseItems($item);
 
         $item->update([
-            'status' => 'pending',
+            'status' => 'paused',
         ]);
 
         return [
@@ -118,7 +115,7 @@ class CrawlerTaskItemService
         }
 
         $item->update([
-            'status'        => 'pending',
+            'status'        => 'crawling',
             'error_message' => null,
             'result_file'   => null,
         ]);
