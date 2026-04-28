@@ -123,7 +123,7 @@ class AuthController extends Controller
         // 3️⃣ Handle error response
         if (isset($result['error'])) {
             return response()->json([
-                'message' => $result['error'][0] ?? 'Failed to send OTP. Please try again later.',
+                'message' => $result['error'] ?? 'Failed to send OTP. Please try again later.',
             ], 400);
         }
 
