@@ -299,9 +299,9 @@ class AuthService
             $user = User::where('email', $email)->first();
 
             if (! $user) {
-                throw ValidationException::withMessages([
-                    'email' => 'User not found.',
-                ]);
+                return [
+                    'error' => 'Please enter the correct account',
+                ];
             }
 
             $existing = ValidationRecord::where('send_to', $email)
