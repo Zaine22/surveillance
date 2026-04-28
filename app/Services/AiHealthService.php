@@ -115,13 +115,45 @@ class AiHealthService
     }
     private function randomItem($time): array
     {
-        $latency = rand(20, 60);
-        $cpu     = rand(20, 60);
-        $memory  = rand(30, 70);
+        $type = $this->pickScenario();
+
+        switch ($type) {
+            case 'stable':
+                $latency = rand(20, 50);
+                $cpu     = rand(10, 50);
+                $memory  = rand(20, 60);
+                break;
+
+            case 'slightly_busy':
+                $latency = rand(50, 100);
+                $cpu     = rand(50, 75);
+                $memory  = rand(60, 80);
+                break;
+
+            case 'busy':
+                $latency = rand(100, 150);
+                $cpu     = rand(75, 95);
+                $memory  = rand(80, 95);
+                break;
+        }
 
         return $this->formatItem($time, $latency, $cpu, $memory);
     }
 
+    private function pickScenario(): string
+    {
+        $rand = rand(1, 100);
+
+        if ($rand <= 60) {
+            return 'stable'; // 60%
+        }
+
+        if ($rand <= 85) {
+            return 'slightly_busy'; // 25%
+        }
+
+        return 'busy'; // 15%
+    }
 
     public function sync(): array
     {
