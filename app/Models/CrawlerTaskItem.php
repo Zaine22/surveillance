@@ -140,7 +140,8 @@ class CrawlerTaskItem extends Model
                 $task->update(['status' => 'pending']);
                 return;
             }
-            $task->update(['status' => 'processing']);
+            // no crawling + no syncing→paused;
+            $task->update(['status' => 'pending']);
         });
     }
 
