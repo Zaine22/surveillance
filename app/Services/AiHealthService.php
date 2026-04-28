@@ -107,10 +107,12 @@ class AiHealthService
 
     public function getAiHealth(): array
     {
+        $now = now();
         return [
-            $this->randomItem(now()),
-            $this->randomItem(now()),
-            $this->randomItem(now()),
+            $this->randomItem($now),
+            $this->randomItem($now->copy()->subDay()), // yesterday
+            $this->randomItem($now->copy()->subDays(2)),
+            $this->randomItem($now->copy()->subDays(3)),
         ];
     }
     private function randomItem($time): array
