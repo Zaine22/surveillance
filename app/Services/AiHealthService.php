@@ -1,6 +1,7 @@
 <?php
 namespace App\Services;
 
+use App\Models\AiHealthLog;
 use App\Models\AiModel;
 use Illuminate\Support\Facades\Http;
 
@@ -105,22 +106,37 @@ class AiHealthService
         if ($cpu < 40 && $ram < 40 && $gpu < 40) {return 'normal';}return 'stable';
     }
 
+    private function calculateStatus(int $latency, int $cpu, int $memory): string
+    {
+        if ($cpu > 80 || $memory > 85 || $latency > 100) {
+            return '非常擁擠';
+        }
+
+        if ($cpu > 60 || $memory > 70 || $latency > 50) {
+            return '輕微壅塞';
+        }
+
+        return '穩定';
+    }
     public function getAiHealth(): array
     {
-        $now = now();
-        return [
-            $this->randomItem($now),
-            $this->randomItem($now->copy()->subDay()),
-            $this->randomItem($now->copy()->subDays(2)),
-            $this->randomItem($now->copy()->subDays(3)),
-        ];
+
+        $this->createFakeRecord(now());
+
+        return AiHealthLog::orderBy('checked_at', 'desc')
+            ->limit(20)
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'checked_at'    => $item->checked_at->format('Y-m-d H:i'),
+                    'message'       => $item->message,
+                    'health_status' => $item->health_status,
+                ];
+            })
+            ->toArray();
     }
-    private function randomItem($date): array
+    private function createFakeRecord($date): void
     {
-        $time = $date->copy()->setTime(
-            rand(9, 18), // hour (realistic working hours)
-            rand(0, 59)  // minute
-        );
 
         $type = $this->pickScenario();
 
@@ -137,18 +153,27 @@ class AiHealthService
                 $memory  = rand(60, 80);
                 break;
 
-            case 'busy':
+            default:
                 $latency = rand(100, 150);
                 $cpu     = rand(75, 95);
                 $memory  = rand(80, 95);
                 break;
         }
 
-        return $this->formatItem($time, $latency, $cpu, $memory);
+        $status = $this->calculateStatus($latency, $cpu, $memory);
+
+        AiHealthLog::create([
+            'checked_at'    => $date,
+            'latency'       => $latency,
+            'cpu'           => $cpu,
+            'memory'        => $memory,
+            'health_status' => $status,
+            'message'       => "定時向主機確認健康度：延遲 {$latency}ms、CPU {$cpu}%、記憶體 {$memory}%",
+        ]);
     }
     private function pickScenario(): string
     {
-        $rand = rand(1, 100); // ✅ fix (was 2–100)
+        $rand = rand(1, 100);
 
         if ($rand <= 60) {
             return 'stable';
@@ -159,38 +184,5 @@ class AiHealthService
         }
 
         return 'busy';
-    }
-
-    public function sync(): array
-    {
-        $latency = rand(20, 150);
-        $cpu     = rand(10, 95);
-        $memory  = rand(20, 95);
-
-        return $this->formatItem(now(), $latency, $cpu, $memory);
-    }
-
-    private function formatItem($time, $latency, $cpu, $memory): array
-    {
-        $status = $this->calculateStatus($latency, $cpu, $memory);
-
-        return [
-            'checked_at' => $time->format('Y-m-d H:i'),
-            'message'    => "定時向主機確認健康度：延遲 {$latency}ms、CPU {$cpu}%、記憶體 {$memory}%",
-            'health_status' => $status,
-        ];
-    }
-
-    private function calculateStatus($latency, $cpu, $memory): string
-    {
-        if ($cpu > 80 || $memory > 85 || $latency > 100) {
-            return '非常擁擠';
-        }
-
-        if ($cpu > 60 || $memory > 70 || $latency > 50) {
-            return '輕微壅塞';
-        }
-
-        return '穩定';
     }
 }
