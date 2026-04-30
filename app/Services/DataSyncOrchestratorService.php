@@ -187,4 +187,59 @@ class DataSyncOrchestratorService
 
         return $fullPath;
     }
+
+    public function syncCaseScreenshotToNasWithHttp(\App\Models\CaseManagementItem $item): string
+    {
+        $url = $item->media_url;
+
+        Log::info('Screenshot HTTP download started', [
+            'item_id' => $item->id,
+            'url'     => $url,
+        ]);
+
+        if (! filter_var($url, FILTER_VALIDATE_URL)) {
+            throw new \RuntimeException("Invalid URL: {$url}");
+        }
+
+        $fileName = basename(parse_url($url, PHP_URL_PATH));
+
+        $fullPath = storage_path("app/public/nas/{$fileName}");
+
+        Log::info('Saving screenshot to path', [
+            'path' => $fullPath,
+        ]);
+
+        $response = Http::timeout(300)->get($url);
+
+        if (! $response->successful()) {
+            throw new \RuntimeException("Download failed: {$url}");
+        }
+
+        $written = file_put_contents($fullPath, $response->body());
+
+        if ($written === false) {
+            throw new \RuntimeException("Failed to write file: {$fullPath}");
+        }
+
+        if (! file_exists($fullPath)) {
+            throw new \RuntimeException("File does not exist after write");
+        }
+
+        if (filesize($fullPath) === 0) {
+            throw new \RuntimeException("File is empty");
+        }
+
+        $publicUrl = asset("storage/nas/{$fileName}");
+
+        Log::info('Screenshot download success', [
+            'path' => $fullPath,
+            'url'  => $publicUrl,
+        ]);
+
+        $item->update([
+            'media_url' => $publicUrl,
+        ]);
+
+        return $fullPath;
+    }
 }

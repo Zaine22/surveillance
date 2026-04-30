@@ -2,6 +2,7 @@
 namespace App\Services;
 
 use App\Jobs\ProcessExternalCaseJob;
+use App\Jobs\SyncCaseScreenshotJob;
 use App\Models\AiPredictResult;
 use App\Models\CaseFeedback;
 use App\Models\CaseManagement;
@@ -303,6 +304,10 @@ class CaseManagementService extends BaseFilterService
         $caseItem->case->update([
             'status' => 'tracking_completed',
         ]);
+
+        if ($data['media_url']) {
+            SyncCaseScreenshotJob::dispatch($caseItem);
+        }
 
         return $caseItem;
     }
