@@ -129,6 +129,16 @@ class CaseManagementService extends BaseFilterService
             ->findOrFail($id);
     }
 
+    public function findByExternalCaseId(string $externalCaseId): CaseManagement
+    {
+        return CaseManagement::query()
+            ->with([
+                'items',
+            ])
+            ->where('external_case_no', $externalCaseId)
+            ->firstOrFail();
+    }
+
     public function createFromPredictResult(AiPredictResult $result): CaseManagement
     {
         return DB::transaction(function () use ($result) {

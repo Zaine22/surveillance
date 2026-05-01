@@ -63,6 +63,7 @@ Route::middleware([
     Route::get('audits', [AiPredictResultController::class, 'getAudits']
     );
     Route::get('/case-managements/get-external-case', [CaseManagementController::class, 'getExternalCase']);
+    
     Route::get(
         'ai-predict-results/{result}/items',
         [AiPredictResultController::class, 'getResultItems']
@@ -124,6 +125,10 @@ Route::middleware('apikey')->group(function () {
     Route::post('/caseFeedback', [CaseManagementController::class, 'netChineseCaseFeedback']);
     Route::post('/newcaseCreate', [CaseManagementController::class, 'externalCaseCreate']);
     Route::post('/caseScreenshot', [CaseManagementController::class, 'netChineseCaseScreenshot']);
+});
+
+Route::middleware('allow.ip')->group(function () {
+    Route::get('/case-managements/get-external-case/{case_id}', [CaseManagementController::class, 'showExternalCase']);
 });
 
 Route::post('/case/captureScreenshot/{caseItemId}', [CaseManagementController::class, 'captureCaseScreenshot']);

@@ -108,4 +108,12 @@ class CaseManagementController extends Controller
 
         return new CaseManagementResource($result);
     }
+
+    public function showExternalCase(
+        string $caseId
+    ): CaseManagementResource {
+        $result = $this->caseManagementService->findByExternalCaseId($caseId);
+
+        return new CaseManagementResource($result);
+    }
 }
