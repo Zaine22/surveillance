@@ -2,6 +2,7 @@
 namespace App\Services;
 
 use App\Jobs\ProcessExternalCaseJob;
+use App\Jobs\SyncCaseScreenshotJob;
 use App\Models\AiPredictResult;
 use App\Models\CaseFeedback;
 use App\Models\CaseManagement;
@@ -126,6 +127,16 @@ class CaseManagementService extends BaseFilterService
                 'items',
             ])
             ->findOrFail($id);
+    }
+
+    public function findByExternalCaseId(string $externalCaseId): CaseManagement
+    {
+        return CaseManagement::query()
+            ->with([
+                'items',
+            ])
+            ->where('external_case_no', $externalCaseId)
+            ->firstOrFail();
     }
 
     public function createFromPredictResult(AiPredictResult $result): CaseManagement
@@ -303,6 +314,10 @@ class CaseManagementService extends BaseFilterService
         $caseItem->case->update([
             'status' => 'tracking_completed',
         ]);
+
+        if ($data['media_url']) {
+            SyncCaseScreenshotJob::dispatch($caseItem);
+        }
 
         return $caseItem;
     }
