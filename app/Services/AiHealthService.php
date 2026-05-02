@@ -4,31 +4,85 @@ namespace App\Services;
 use App\Models\AiHealthLog;
 use App\Models\AiModel;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class AiHealthService
 {
-
     public function check(AiModel $model): void
     {
-        $response = Http::timeout(5)->get(config('services.ai.metrics_url'));
+        try {
+            $response = Http::timeout(5)
+                ->retry(3, 200)
+                ->get(config('services.ai.metrics_url'));
 
-        if (! $response->successful()) {
-            return;
+            if (! $response->successful()) {
+                Log::warning('AI metrics request failed', [
+                    'status' => $response->status(),
+                    'body'   => $response->body(),
+                ]);
+                return;
+            }
+
+            $data = $response->json();
+
+            $cpu = data_get($data, 'cpu.usage_percent');
+            $ram = data_get($data, 'ram.usage_percent');
+
+            $gpuUsage = null;
+            $latency  = data_get($data, 'latency');
+
+            // ✅ detect GPU
+            if (isset($data['gpu'][0]['gpu_usage_percent'])) {
+                $gpuUsage = $data['gpu'][0]['gpu_usage_percent'];
+            }
+
+            // ✅ detect GPU error
+            $gpuError = data_get($data, 'gpu.error');
+
+            // ✅ determine status FIRST
+            $status = $this->mapHealth($cpu, $ram, $gpuUsage, $gpuError);
+
+            // ✅ build message AFTER status
+            if ($gpuError) {
+                $message = "GPU 異常（無法取得顯示卡資訊）";
+            } else {
+                $message = "定時向主機確認健康度："
+                    . ($latency ? "延遲 {$latency}ms、" : "")
+                    . "CPU {$cpu}%、記憶體 {$ram}%"
+                    . ($gpuUsage !== null ? "、GPU {$gpuUsage}%" : "");
+            }
+
+            // ✅ update model
+            $model->update([
+                'health_checked_at' => now(),
+                'health_status'     => $status,
+                'content'           => $data,
+            ]);
+
+            // ✅ log
+            AiHealthLog::create([
+                'id'            => (string) Str::uuid(),
+                'ai_model_id'   => $model->id,
+                'checked_at'    => now(),
+                'cpu_usage'     => $cpu,
+                'ram_usage'     => $ram,
+                'gpu_usage'     => $gpuUsage,
+                'metrics'       => $data,
+                'health_status' => $status,
+                'message'       => $message,
+            ]);
+
+        } catch (\Throwable $e) {
+            Log::error('AI health check failed', [
+                'model_id' => $model->id,
+                'error'    => $e->getMessage(),
+            ]);
+
+            $model->update([
+                'health_status' => 'error',
+            ]);
         }
-
-        $data = $response->json();
-
-        $cpu = $data['cpu']['usage_percent'] ?? 0;
-        $ram = $data['ram']['usage_percent'] ?? 0;
-        $gpu = $data['gpu'][0]['gpu_usage_percent'] ?? 0;
-
-        $status = $this->mapHealth($cpu, $ram, $gpu);
-
-        $model->update([
-            'health_checked_at' => now(),
-            'health_status'     => $status,
-            'content'           => $data,
-        ]);
     }
 
     public function getModels(array $filters = [])
@@ -64,7 +118,6 @@ class AiHealthService
             'busy'          => AiModel::where('health_status', 'busy')->count(),
             'slightly_busy' => AiModel::where('health_status', 'slightly_busy')->count(),
             'stable'        => AiModel::where('health_status', 'stable')->count(),
-            'normal'        => AiModel::where('health_status', 'normal')->count(),
         ];
     }
 
@@ -93,8 +146,14 @@ class AiHealthService
         ];
     }
 
-    protected function mapHealth($cpu, $ram, $gpu): string
+    protected function mapHealth($cpu, $ram, $gpu, $gpuError = null): string
     {
+        if ($gpuError) {
+            return 'error';
+        }
+
+        $gpu = $gpu ?? 0;
+
         if ($cpu > 85 || $ram > 85 || $gpu > 85) {
             return 'busy';
         }
@@ -103,7 +162,7 @@ class AiHealthService
             return 'slightly_busy';
         }
 
-        if ($cpu < 40 && $ram < 40 && $gpu < 40) {return 'normal';}return 'stable';
+        return 'stable';
     }
 
     private function calculateStatus(int $latency, int $cpu, int $memory): string
@@ -121,8 +180,8 @@ class AiHealthService
     public function getAiHealth(): array
     {
 
-        $this->createFakeRecord(now());
-
+        $model = AiModel::first();
+        $this->check($model);
         return AiHealthLog::orderBy('checked_at', 'desc')
             ->limit(20)
             ->get()
@@ -135,54 +194,15 @@ class AiHealthService
             })
             ->toArray();
     }
-    private function createFakeRecord($date): void
-    {
+    $rand = rand(1, 100);
 
-        $type = $this->pickScenario();
-
-        switch ($type) {
-            case 'stable':
-                $latency = rand(20, 50);
-                $cpu     = rand(10, 50);
-                $memory  = rand(20, 60);
-                break;
-
-            case 'slightly_busy':
-                $latency = rand(50, 100);
-                $cpu     = rand(50, 75);
-                $memory  = rand(60, 80);
-                break;
-
-            default:
-                $latency = rand(100, 150);
-                $cpu     = rand(75, 95);
-                $memory  = rand(80, 95);
-                break;
-        }
-
-        $status = $this->calculateStatus($latency, $cpu, $memory);
-
-        AiHealthLog::create([
-            'checked_at'    => $date,
-            'latency'       => $latency,
-            'cpu'           => $cpu,
-            'memory'        => $memory,
-            'health_status' => $status,
-            'message'       => "定時向主機確認健康度：延遲 {$latency}ms、CPU {$cpu}%、記憶體 {$memory}%",
-        ]);
+    if ($rand <= 60) {
+        return 'stable';
     }
-    private function pickScenario(): string
-    {
-        $rand = rand(1, 100);
 
-        if ($rand <= 60) {
-            return 'stable';
-        }
-
-        if ($rand <= 85) {
-            return 'slightly_busy';
-        }
-
-        return 'busy';
+    if ($rand <= 85) {
+        return 'slightly_busy';
     }
+
+    return 'busy';
 }

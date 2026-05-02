@@ -13,17 +13,20 @@ class AiDispatchService
 
     public function dispatch(AiModelTask $task, array $params): void
     {
+        $key = "task:{$task->id}";
 
-        Redis::hMSet("ai_task:{$task->id}", [
+        $redis = Redis::connection('ai');
 
+        $redis->hset($key, [
+            'status'    => 'pending',
+            'params'    => json_encode($params),
+            'timestamp' => now()->toDateTimeString(),
+            'result'    => '',
         ]);
 
-        Redis::xadd($this->stream, '*', [
-            'event'     => 'new',
-            'task_id'   => (string) $task->id,
-            'status'    => 'pending',
-            'params'    => json_encode($params, JSON_UNESCAPED_UNICODE),
-            'timestamp' => now()->toDateTimeString(),
+        $redis->xadd('ai:task:stream', '*', [
+            'event'   => 'new',
+            'task_id' => (string) $task->id,
         ]);
     }
 }

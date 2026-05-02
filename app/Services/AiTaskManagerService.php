@@ -41,19 +41,31 @@ class AiTaskManagerService
                 'status'               => 'pending',
             ]);
 
-            
             $params = [
-                'dir_path'   => $task->file_name,
+                'dir_path'   => $item->result_file,
                 'image_type' => 'element',
             ];
 
-            $this->dispatchService->dispatch(
-                $task, $params
-            );
+            try {
+                $this->dispatchService->dispatch($task, $params);
 
-            $task->update([
-                'status' => 'processing',
-            ]);
+
+                $task->update([
+                    'status' => 'processing',
+                ]);
+
+            } catch (\Throwable $e) {
+                Log::error('AI dispatch failed', [
+                    'task_id' => $task->id,
+                    'error'   => $e->getMessage(),
+                ]);
+
+                $task->update([
+                    'status' => 'failed',
+                ]);
+
+                throw $e; 
+            }
 
             return $task;
         });

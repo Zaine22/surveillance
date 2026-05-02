@@ -16,7 +16,6 @@ class AiResultConsumeService
 
     public function consume(): void
     {
-        $this->createGroupIfNotExists();
 
         Log::info('AiResultConsumeService started', [
             'stream'   => $this->stream,
@@ -26,7 +25,9 @@ class AiResultConsumeService
 
         while (true) {
             try {
-                $messages = Redis::xreadgroup(
+                $redis = Redis::connection('ai');
+
+                $messages = $redis->xreadgroup(
                     $this->group,
                     $this->consumer,
                     [$this->stream => '>'],
@@ -39,11 +40,11 @@ class AiResultConsumeService
                 }
 
                 foreach ($messages[$this->stream] as $id => $data) {
-                    // Log::info('🔥 REDIS MESSAGE RECEIVED', [
-                    //     'id'   => $id,
-                    //     'data' => $data,
-                    // ]);
-                    $this->handleMessage($id, $data);
+                    Log::info('🔥 REDIS MESSAGE RECEIVED', [
+                        'id'   => $id,
+                        'data' => $data,
+                    ]);
+                    $this->handleMessage($redis, $id, $data);
                 }
             } catch (\Throwable $e) {
                 Log::critical('AI consumer crashed', [
@@ -54,22 +55,8 @@ class AiResultConsumeService
             }
         }
     }
-    protected function createGroupIfNotExists(): void
-    {
-        try {
-            Redis::executeRaw([
-                'XGROUP', 'CREATE',
-                $this->stream,
-                $this->group,
-                '0',
-                'MKSTREAM',
-            ]);
-        } catch (\Throwable $e) {
-            // group already exists
-        }
-    }
 
-    protected function handleMessage(string $redisId, array $data): void
+    protected function handleMessage($redis, string $redisId, array $data): void
     {
         try {
             $rawPayload = json_decode($data['payload'], true) ?? [];
@@ -86,7 +73,7 @@ class AiResultConsumeService
 
             $this->resultService->saveFromAiCallback((string) $taskId, $payload);
 
-            Redis::xack($this->stream, $this->group, [$redisId]);
+            $redis->xack($this->stream, $this->group, [$redisId]);
         } catch (\Throwable $e) {
             Log::error('AI result process failed', [
                 'redis_id' => $redisId,

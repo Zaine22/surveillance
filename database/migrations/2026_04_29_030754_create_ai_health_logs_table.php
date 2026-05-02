@@ -13,15 +13,28 @@ return new class extends Migration
     {
         Schema::create('ai_health_logs', function (Blueprint $table) {
             $table->uuid('id')->primary();
+
+            $table->foreignUuid('ai_model_id')
+                ->constrained()
+                ->cascadeOnDelete();
             $table->timestamp('checked_at');
-            $table->integer('latency');
-            $table->integer('cpu');
-            $table->integer('memory');
-            $table->string('health_status');
-            $table->text('message');
+
+            $table->float('cpu_usage')->nullable();
+            $table->float('ram_usage')->nullable();
+            $table->float('gpu_usage')->nullable();
+            $table->json('metrics')->nullable();
+            $table->enum('health_status', [
+                'stable',
+                'slightly_busy',
+                'busy',
+                'error',
+            ])->default('stable');
+            $table->text('message')->nullable();
 
             $table->timestamps();
+            $table->index(['ai_model_id', 'checked_at']);
         });
+
     }
 
     /**
