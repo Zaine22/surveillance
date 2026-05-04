@@ -23,6 +23,6 @@ class SyncCaseScreenshotJob implements ShouldQueue
             'media_url' => $this->item->media_url,
         ]);
         
-        $orchestrator->syncCaseScreenshotToNasWithHttp($this->item);
+        $orchestrator->syncCaseScreenshotToNas($this->item);
     }
 }

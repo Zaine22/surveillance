@@ -188,58 +188,85 @@ class DataSyncOrchestratorService
         return $fullPath;
     }
 
-    public function syncCaseScreenshotToNasWithHttp(\App\Models\CaseManagementItem $item): string
+    public function syncCaseScreenshotToNas(\App\Models\CaseManagementItem $item): string
     {
-        $url = $item->media_url;
+        $sourcePath = $item->media_url;
 
-        Log::info('Screenshot HTTP download started', [
+        Log::info('Screenshot SFTP download started', [
             'item_id' => $item->id,
-            'url'     => $url,
+            'url'     => $sourcePath,
         ]);
 
-        if (! filter_var($url, FILTER_VALIDATE_URL)) {
-            throw new \RuntimeException("Invalid URL: {$url}");
+        if (filter_var($sourcePath, FILTER_VALIDATE_URL)) {
+            $fileName = basename(parse_url($sourcePath, PHP_URL_PATH));
+            
+            // Extract the directory from the URL path, assuming it matches the SFTP directory (e.g. 'screenshots' or 'zips')
+            $pathParts = explode('/', trim(parse_url($sourcePath, PHP_URL_PATH), '/'));
+            $folder = count($pathParts) >= 2 ? $pathParts[count($pathParts) - 2] : 'screenshots';
+            
+            $sourcePath = "{$folder}/{$fileName}";
+
+            Log::info('Converted screenshot URL to SFTP path', [
+                'original' => $item->media_url,
+                'mapped'   => $sourcePath,
+            ]);
+        } else {
+            $fileName = basename($sourcePath);
         }
 
-        $fileName = basename(parse_url($url, PHP_URL_PATH));
+        $target = storage_path("app/public/nas/{$fileName}");
 
-        $fullPath = storage_path("app/public/nas/{$fileName}");
+        $record = DB::transaction(function () use ($item, $target, $sourcePath) {
+            return DataSyncRecord::create([
+                'id'          => (string) Str::uuid(),
+                'source_path' => $item->media_url,
+                'target_path' => $target,
+                'file_name'   => basename($target),
+                'status'      => 'transferring',
+                'retry_count' => 0,
+                'max_retry'   => 3,
+                'started_at'  => now(),
+            ]);
+        });
 
-        Log::info('Saving screenshot to path', [
-            'path' => $fullPath,
-        ]);
+        try {
+            $this->rsyncService->syncCrawlerFileToNas(
+                $sourcePath,
+                $target
+            );
 
-        $response = Http::timeout(300)->get($url);
+            Log::info('Screenshot sync orchestration successful', [
+                'item_id'     => $item->id,
+                'target_path' => $target,
+            ]);
 
-        if (! $response->successful()) {
-            throw new \RuntimeException("Download failed: {$url}");
+            $record->update([
+                'status'      => 'completed',
+                'finished_at' => now(),
+            ]);
+
+            $publicUrl = asset("storage/nas/{$fileName}");
+
+            $item->update([
+                'media_url' => $publicUrl,
+            ]);
+
+            return $target;
+
+        } catch (Throwable $e) {
+            Log::error('Screenshot sync orchestration failed', [
+                'item_id' => $item->id,
+                'error'   => $e->getMessage(),
+            ]);
+
+            $record->update([
+                'status'        => 'failed',
+                'retry_count'   => $record->retry_count + 1,
+                'error_message' => $e->getMessage(),
+                'finished_at'   => now(),
+            ]);
+
+            throw $e;
         }
-
-        $written = file_put_contents($fullPath, $response->body());
-
-        if ($written === false) {
-            throw new \RuntimeException("Failed to write file: {$fullPath}");
-        }
-
-        if (! file_exists($fullPath)) {
-            throw new \RuntimeException("File does not exist after write");
-        }
-
-        if (filesize($fullPath) === 0) {
-            throw new \RuntimeException("File is empty");
-        }
-
-        $publicUrl = asset("storage/nas/{$fileName}");
-
-        Log::info('Screenshot download success', [
-            'path' => $fullPath,
-            'url'  => $publicUrl,
-        ]);
-
-        $item->update([
-            'media_url' => $publicUrl,
-        ]);
-
-        return $fullPath;
     }
 }
