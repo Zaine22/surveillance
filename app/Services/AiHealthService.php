@@ -194,15 +194,5 @@ class AiHealthService
             })
             ->toArray();
     }
-    $rand = rand(1, 100);
-
-    if ($rand <= 60) {
-        return 'stable';
-    }
-
-    if ($rand <= 85) {
-        return 'slightly_busy';
-    }
-
-    return 'busy';
+   
 }
