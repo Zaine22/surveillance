@@ -164,6 +164,7 @@ Route::get('/crawler/task-items', [CrawlerTaskItemController::class, 'results'])
 // });
 
 Route::get('/ai-test', function (AiTaskManagerService $service) {
+    dd('hit');
     try {
         Log::info('AI TEST START');
 
