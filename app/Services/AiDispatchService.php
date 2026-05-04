@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Redis;
 
 class AiDispatchService
 {
-    protected string $stream = 'ai:task:stream';
+    protected string $stream = 'task:new';
 
     public function __construct()
     {}
@@ -25,7 +25,7 @@ class AiDispatchService
             'result'    => '',
         ]);
 
-        $redis->xadd('ai:task:stream', '*', [
+        $redis->xadd('task:new', '*', [
             'event'   => 'new',
             'task_id' => (string) $task->id,
         ]);

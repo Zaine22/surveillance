@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Redis;
 
 class AiResultConsumeService
 {
-    protected string $stream   = 'ai:result:stream';
+    protected string $stream   = 'task:finished';
     protected string $group    = 'backend_ai_group';
     protected string $consumer = 'backend_ai_1';
 
@@ -16,7 +16,7 @@ class AiResultConsumeService
 
     public function consume(): void
     {
-
+        $redis = Redis::connection('ai');
         Log::info('AiResultConsumeService started', [
             'stream'   => $this->stream,
             'group'    => $this->group,
@@ -25,14 +25,13 @@ class AiResultConsumeService
 
         while (true) {
             try {
-                $redis = Redis::connection('ai');
 
                 $messages = $redis->xreadgroup(
                     $this->group,
                     $this->consumer,
                     [$this->stream => '>'],
                     10,
-                    5
+                    5000
                 );
 
                 if ($messages === false || empty($messages[$this->stream])) {
