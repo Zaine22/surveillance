@@ -18,7 +18,7 @@ class AiTaskManagerService
     public function createFromCrawlerItem(CrawlerTaskItem $item): AiModelTask
     {
         Log::info('here is createFromCrawlerItem');
-        dd('here');
+
         return DB::transaction(function () use ($item) {
             $existing = AiModelTask::where(
                 'crawler_task_item_id',
@@ -30,7 +30,7 @@ class AiTaskManagerService
             }
 
             $model = AiModel::where('status', 'enabled')->firstOrFail();
-            dd($model);
+
             $task = AiModelTask::create([
                 'id'                   => (string) Str::uuid(),
                 'ai_model_id'          => $model->id,
@@ -39,10 +39,15 @@ class AiTaskManagerService
                 'status'               => 'pending',
             ]);
 
+            $filePath           = parse_url($item->result_file, PHP_URL_PATH);
+            $fileName           = basename($filePath);
+            $fileNameWithoutZip = pathinfo($fileName, PATHINFO_FILENAME);
+
             $params = [
-                'dir_path'   => $item->result_file,
+                'dir_path'   => $fileNameWithoutZip,
                 'image_type' => 'element',
             ];
+
 
             try {
                 $this->dispatchService->dispatch($task, $params);

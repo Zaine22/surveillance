@@ -266,7 +266,6 @@ class CaseManagementService extends BaseFilterService
 
         $case = CaseManagement::where('external_case_no', $validated['case_id'])
             ->firstOrFail();
-
         $caseItem = CaseManagementItem::where('case_management_id', $case->id)
             ->where('crawler_page_url', $validated['url'])
             ->firstOrFail();
