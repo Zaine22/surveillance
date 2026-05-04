@@ -140,7 +140,14 @@ Route::post('/crawler/trigger', [CrawlerTaskItemController::class, 'trigger']);
 Route::get('/crawler/task-items', [CrawlerTaskItemController::class, 'results']);
 
 Route::get('/ai-test', function (AiTaskManagerService $service) {
-    $crawlerItem = CrawlerTaskItem::find('019dbe06-65c3-7238-9786-23c947d661b5');
+
+// dd(config('database.redis.ai'));
+    dd([
+        'config' => config('database.redis.ai'),
+        'ping'   => $redis->ping(),
+    ]);
+
+    $crawlerItem = CrawlerTaskItem::find('019dbe90-c9b4-71ba-9333-09b3c1071bda');
 
     if (! $crawlerItem) {
         return response()->json([
