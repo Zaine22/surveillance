@@ -25,10 +25,6 @@ use App\Http\Controllers\OperationLogController;
 use App\Http\Controllers\SystemDataController;
 use App\Http\Controllers\SystemNoticeController;
 use App\Http\Controllers\ValidationRecordController;
-use App\Models\CrawlerTaskItem;
-use App\Services\AiTaskManagerService;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(
@@ -44,6 +40,7 @@ Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::middleware([
     'auth:sanctum',
     'operation.log'])->group(function () {
+    Route::get('/ai-test', [AiHealthLogController::class, 'aiTest']);
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
     Route::get('/dashboard/ranking', [DashboardController::class, 'ranking']);
     Route::get('/operation-logs', [OperationLogController::class, 'index']);
@@ -141,8 +138,6 @@ Route::post('/crawler/task-items/urls', [CrawlerTaskItemController::class, 'stor
 Route::post('/crawler/task-items/upload', [CrawlerTaskItemController::class, 'upload']);
 Route::post('/crawler/trigger', [CrawlerTaskItemController::class, 'trigger']);
 Route::get('/crawler/task-items', [CrawlerTaskItemController::class, 'results']);
-
-Route::get('/ai-test', [AiHealthLogController::class, 'aiTest']);
 
 // Route::get('/ai-test', function (AiTaskManagerService $service) {
 
