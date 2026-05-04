@@ -24,6 +24,8 @@ use App\Http\Controllers\OperationLogController;
 use App\Http\Controllers\SystemDataController;
 use App\Http\Controllers\SystemNoticeController;
 use App\Http\Controllers\ValidationRecordController;
+use App\Models\CrawlerTaskItem;
+use App\Services\AiTaskManagerService;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(
@@ -63,7 +65,7 @@ Route::middleware([
     Route::get('audits', [AiPredictResultController::class, 'getAudits']
     );
     Route::get('/case-managements/get-external-case', [CaseManagementController::class, 'getExternalCase']);
-    
+
     Route::get(
         'ai-predict-results/{result}/items',
         [AiPredictResultController::class, 'getResultItems']
@@ -136,3 +138,24 @@ Route::post('/crawler/task-items/urls', [CrawlerTaskItemController::class, 'stor
 Route::post('/crawler/task-items/upload', [CrawlerTaskItemController::class, 'upload']);
 Route::post('/crawler/trigger', [CrawlerTaskItemController::class, 'trigger']);
 Route::get('/crawler/task-items', [CrawlerTaskItemController::class, 'results']);
+
+Route::get('/ai-test', function (AiTaskManagerService $service) {
+    $crawlerItem = CrawlerTaskItem::find('019dbe06-65c3-7238-9786-23c947d661b5');
+
+    dd($crawlerItem);
+    if (! $crawlerItem) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Crawler task item not found',
+        ], 404);
+    }
+
+    $result = $service->createFromCrawlerItem($crawlerItem);
+
+    return response()->json([
+        'success'         => true,
+        'message'         => 'AI task created from crawler item',
+        'crawler_item_id' => $crawlerItem->id,
+        'result'          => $result,
+    ]);
+});
