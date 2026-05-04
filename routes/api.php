@@ -26,6 +26,7 @@ use App\Http\Controllers\SystemNoticeController;
 use App\Http\Controllers\ValidationRecordController;
 use App\Models\CrawlerTaskItem;
 use App\Services\AiTaskManagerService;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(
@@ -140,7 +141,7 @@ Route::post('/crawler/trigger', [CrawlerTaskItemController::class, 'trigger']);
 Route::get('/crawler/task-items', [CrawlerTaskItemController::class, 'results']);
 
 Route::get('/ai-test', function (AiTaskManagerService $service) {
-
+$redis = Redis::connection('ai');
 // dd(config('database.redis.ai'));
     dd([
         'config' => config('database.redis.ai'),
