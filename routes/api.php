@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AiHealthLogController;
 use App\Http\Controllers\AiModelController;
 use App\Http\Controllers\AiModelTaskController;
 use App\Http\Controllers\AiPredictResultController;
@@ -141,27 +142,7 @@ Route::post('/crawler/task-items/upload', [CrawlerTaskItemController::class, 'up
 Route::post('/crawler/trigger', [CrawlerTaskItemController::class, 'trigger']);
 Route::get('/crawler/task-items', [CrawlerTaskItemController::class, 'results']);
 
-Route::get('/ai-test', function () {
-  $service = app(AiTaskManagerService::class);
-
-    $crawlerItem = CrawlerTaskItem::find('019dbe90-c9b4-71ba-9333-09b3c1071bda');
-
-    if (! $crawlerItem) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Crawler task item not found',
-        ], 404);
-    }
-
-    $result = $service->createFromCrawlerItem($crawlerItem);
-
-    return response()->json([
-        'success'         => true,
-        'message'         => 'AI task created from crawler item',
-        'crawler_item_id' => $crawlerItem->id,
-        'result'          => $result,
-    ]);
-});
+Route::get('/ai-test', [AiHealthLogController::class, 'aiTest']);
 
 // Route::get('/ai-test', function (AiTaskManagerService $service) {
 
