@@ -141,8 +141,8 @@ Route::post('/crawler/trigger', [CrawlerTaskItemController::class, 'trigger']);
 Route::get('/crawler/task-items', [CrawlerTaskItemController::class, 'results']);
 
 Route::get('/ai-test', function (AiTaskManagerService $service) {
-// $redis = Redis::connection('ai');
-dd(config('database.redis.ai'));
+$redis = Redis::connection('ai');
+// dd(config('database.redis.ai'));
     dd([
         'config' => config('database.redis.ai'),
         'ping'   => $redis->ping(),
