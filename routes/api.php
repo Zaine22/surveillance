@@ -142,7 +142,6 @@ Route::get('/crawler/task-items', [CrawlerTaskItemController::class, 'results'])
 Route::get('/ai-test', function (AiTaskManagerService $service) {
     $crawlerItem = CrawlerTaskItem::find('019dbe06-65c3-7238-9786-23c947d661b5');
 
-    dd($crawlerItem);
     if (! $crawlerItem) {
         return response()->json([
             'success' => false,
