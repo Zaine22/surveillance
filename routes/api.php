@@ -141,8 +141,8 @@ Route::post('/crawler/task-items/upload', [CrawlerTaskItemController::class, 'up
 Route::post('/crawler/trigger', [CrawlerTaskItemController::class, 'trigger']);
 Route::get('/crawler/task-items', [CrawlerTaskItemController::class, 'results']);
 
-Route::get('/ai-test', function (AiTaskManagerService $service) {
-
+Route::get('/ai-test', function () {
+  $service = app(AiTaskManagerService::class);
     $crawlerItem = CrawlerTaskItem::find('019dbe90-c9b4-71ba-9333-09b3c1071bda');
 
     if (! $crawlerItem) {
