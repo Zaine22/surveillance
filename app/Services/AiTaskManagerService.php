@@ -40,7 +40,7 @@ class AiTaskManagerService
                 'file_name'            => basename($item->result_file),
                 'status'               => 'pending',
             ]);
-
+            dd(['task' => $task]);
             $params = [
                 'dir_path'   => $item->result_file,
                 'image_type' => 'element',
@@ -64,7 +64,7 @@ class AiTaskManagerService
                     'status' => 'failed',
                 ]);
 
-                throw $e; 
+                throw $e;
             }
 
             return $task;

@@ -186,7 +186,7 @@ Route::get('/ai-test', function (AiTaskManagerService $service) {
             'id' => $crawlerItem->id,
             'result_file' => $crawlerItem->result_file,
         ]);
-
+        dd($crawlerItem);
         $result = $service->createFromCrawlerItem($crawlerItem);
 
         Log::info('AI TEST DONE', [
