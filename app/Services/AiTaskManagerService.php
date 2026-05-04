@@ -32,7 +32,7 @@ class AiTaskManagerService
             }
 
             $model = AiModel::where('status', 'enabled')->firstOrFail();
-
+            dd(['model' => $model]);
             $task = AiModelTask::create([
                 'id'                   => (string) Str::uuid(),
                 'ai_model_id'          => $model->id,
@@ -40,7 +40,7 @@ class AiTaskManagerService
                 'file_name'            => basename($item->result_file),
                 'status'               => 'pending',
             ]);
-            dd(['task' => $task]);
+
             $params = [
                 'dir_path'   => $item->result_file,
                 'image_type' => 'element',
@@ -48,7 +48,6 @@ class AiTaskManagerService
 
             try {
                 $this->dispatchService->dispatch($task, $params);
-
 
                 $task->update([
                     'status' => 'processing',
