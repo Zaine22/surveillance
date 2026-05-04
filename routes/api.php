@@ -143,7 +143,7 @@ Route::get('/crawler/task-items', [CrawlerTaskItemController::class, 'results'])
 
 Route::get('/ai-test', function (AiTaskManagerService $service) {
 $redis = Redis::connection('ai');
-
+    dd($redis->ping());
     $crawlerItem = CrawlerTaskItem::find('019dbe90-c9b4-71ba-9333-09b3c1071bda');
 
     if (! $crawlerItem) {
