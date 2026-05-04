@@ -30,7 +30,7 @@ class AiTaskManagerService
             }
 
             $model = AiModel::where('status', 'enabled')->firstOrFail();
-            dd($model);
+
             $task = AiModelTask::create([
                 'id'                   => (string) Str::uuid(),
                 'ai_model_id'          => $model->id,

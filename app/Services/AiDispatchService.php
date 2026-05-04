@@ -36,7 +36,7 @@ class AiDispatchService
         $key = "task:{$task->id}";
 
         $redis = Redis::connection('ai');
-        dd(['redis' => $redis]);
+
         $payload = [
             'status'    => 'pending',
             'params'    => json_encode($params),
