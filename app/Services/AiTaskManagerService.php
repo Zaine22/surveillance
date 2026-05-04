@@ -17,9 +17,8 @@ class AiTaskManagerService
 
     public function createFromCrawlerItem(CrawlerTaskItem $item): AiModelTask
     {
-
         Log::info('here is createFromCrawlerItem');
-
+        dd('herer');
         return DB::transaction(function () use ($item) {
 
             $existing = AiModelTask::where(
