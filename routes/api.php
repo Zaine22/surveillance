@@ -151,7 +151,7 @@ Route::get('/ai-test', function (AiTaskManagerService $service) {
             'message' => 'Crawler task item not found',
         ], 404);
     }
-    dd($crawlerItem);
+
     $result = $service->createFromCrawlerItem($crawlerItem);
 
     return response()->json([

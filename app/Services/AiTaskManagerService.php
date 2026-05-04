@@ -25,13 +25,14 @@ class AiTaskManagerService
             $existing = AiModelTask::where(
                 'crawler_task_item_id',
                 $item->id
-            )->first();
+            )->firstOrFail();
 
             if ($existing) {
                 return $existing;
             }
 
             $model = AiModel::where('status', 'enabled')->firstOrFail();
+            dd($model);
             $task  = AiModelTask::create([
                 'id'                   => (string) Str::uuid(),
                 'ai_model_id'          => $model->id,
