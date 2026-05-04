@@ -266,11 +266,11 @@ class CaseManagementService extends BaseFilterService
 
         $case = CaseManagement::where('external_case_no', $validated['case_id'])
             ->firstOrFail();
-
+                    dd($case);
         $caseItem = CaseManagementItem::where('case_management_id', $case->id)
             ->where('crawler_page_url', $validated['url'])
             ->firstOrFail();
-dd($caseItem);
+
         $caseItem->update([
             'issue_date' => $validated['issue_date'],
             'due_date'   => $validated['due_date'],
