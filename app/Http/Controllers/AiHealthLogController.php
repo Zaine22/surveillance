@@ -2,7 +2,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CrawlerTaskItem;
-use App\Services\AiModelTaskService;
+
 use App\Services\AiTaskManagerService;
 
 class AiHealthLogController extends Controller
@@ -17,7 +17,7 @@ class AiHealthLogController extends Controller
                 'message' => 'Crawler task item not found',
             ], 404);
         }
-        dd($crawlerItem);
+
         $result = $service->createFromCrawlerItem($crawlerItem);
 
         return response()->json([
