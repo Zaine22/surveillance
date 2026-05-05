@@ -141,44 +141,44 @@ class DataSyncOrchestratorService
             throw new \RuntimeException("Invalid URL: {$url}");
         }
 
-        $fileName = basename(parse_url($url, PHP_URL_PATH));
+        // $fileName = basename(parse_url($url, PHP_URL_PATH));
 
-        $fullPath = storage_path("app/public/nas/{$fileName}");
+        // $fullPath = storage_path("app/public/nas/{$fileName}");
 
-        Log::info('Saving to path', [
-            'path' => $fullPath,
-        ]);
+        // Log::info('Saving to path', [
+        //     'path' => $fullPath,
+        // ]);
 
-        $response = Http::timeout(300)->get($url);
+        // $response = Http::timeout(300)->get($url);
 
-        if (! $response->successful()) {
-            throw new \RuntimeException("Download failed: {$url}");
-        }
+        // if (! $response->successful()) {
+        //     throw new \RuntimeException("Download failed: {$url}");
+        // }
 
-        $written = file_put_contents($fullPath, $response->body());
+        // $written = file_put_contents($fullPath, $response->body());
 
-        if ($written === false) {
-            throw new \RuntimeException("Failed to write file: {$fullPath}");
-        }
+        // if ($written === false) {
+        //     throw new \RuntimeException("Failed to write file: {$fullPath}");
+        // }
 
-        if (! file_exists($fullPath)) {
-            throw new \RuntimeException("File does not exist after write");
-        }
+        // if (! file_exists($fullPath)) {
+        //     throw new \RuntimeException("File does not exist after write");
+        // }
 
-        if (filesize($fullPath) === 0) {
-            throw new \RuntimeException("File is empty");
-        }
+        // if (filesize($fullPath) === 0) {
+        //     throw new \RuntimeException("File is empty");
+        // }
 
-        $publicUrl = asset("storage/nas/{$fileName}");
+        // $publicUrl = asset("storage/nas/{$fileName}");
 
         Log::info('Download success', [
-            'path' => $fullPath,
-            'url'  => $publicUrl,
+            // 'path' => $fullPath,
+            'url'  => $url,
         ]);
 
         $item->update([
             'status'      => 'synced',
-            'result_file' => $publicUrl,
+            'result_file' => $url,
         ]);
 
         $this->aiTaskManagerService->createFromCrawlerItem($item);
@@ -187,7 +187,7 @@ class DataSyncOrchestratorService
             'status' => 'completed',
         ]);
 
-        return $fullPath;
+        return $url;
     }
 
     public function syncCaseScreenshotToNas(\App\Models\CaseManagementItem $item): string
