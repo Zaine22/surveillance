@@ -314,10 +314,16 @@ class CaseManagementService extends BaseFilterService
             'status' => 'tracking_completed',
         ]);
 
-        if ($data['media_url']) {
-            SyncCaseScreenshotJob::dispatch($caseItem);
+        // if ($data['media_url']) {
+        //     SyncCaseScreenshotJob::dispatch($caseItem);
+        // }
+        if($data['media_url']){
+            Log::info('Case mediaurl updated successfully', [
+            'case_item_id' => $caseItem->id,
+            'media_url'    => $caseItem->media_url,
+        ]);
         }
-
+        
         return $caseItem;
     }
 
