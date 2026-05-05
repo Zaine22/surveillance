@@ -129,15 +129,16 @@ Route::middleware('apikey')->group(function () {
     Route::post('/caseScreenshot', [CaseManagementController::class, 'netChineseCaseScreenshot']);
 });
 
-Route::middleware('allow.ip')->group(function () {
-    Route::get('/case-managements/get-external-case/{case_id}', [CaseManagementController::class, 'showExternalCase']);
-});
+// Route::middleware('allow.ip')->group(function () {
+//     Route::get('/case-managements/get-external-case/{case_id}', [CaseManagementController::class, 'showExternalCase']);
+// });
 
 Route::post('/case/captureScreenshot/{caseItemId}', [CaseManagementController::class, 'captureCaseScreenshot']);
 Route::post('/crawler/task-items/urls', [CrawlerTaskItemController::class, 'store']);
 Route::post('/crawler/task-items/upload', [CrawlerTaskItemController::class, 'upload']);
 Route::post('/crawler/trigger', [CrawlerTaskItemController::class, 'trigger']);
 Route::get('/crawler/task-items', [CrawlerTaskItemController::class, 'results']);
+Route::get('/case-managements/get-external-case/{case_id}', [CaseManagementController::class, 'showExternalCase']);
 
 // Route::get('/ai-test', function (AiTaskManagerService $service) {
 
