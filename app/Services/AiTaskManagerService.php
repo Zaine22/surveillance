@@ -41,10 +41,9 @@ class AiTaskManagerService
 
             $filePath           = parse_url($item->result_file, PHP_URL_PATH);
             $fileName           = basename($filePath);
-            $fileNameWithoutZip = pathinfo($fileName, PATHINFO_FILENAME);
 
             $params = [
-                'dir_path'   => $fileNameWithoutZip,
+                'dir_path'   => $fileName,
                 'image_type' => 'element',
             ];
 

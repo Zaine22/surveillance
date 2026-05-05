@@ -70,7 +70,7 @@ class CrawlerResultConsumeService
     public function consume(): void
     {
         try {
-            Redis::executeRaw([
+            Redis::connection()->executeRaw([
                 'XGROUP', 'CREATE',
                 $this->stream,
                 $this->group,
@@ -89,7 +89,7 @@ class CrawlerResultConsumeService
 
         while (true) {
             try {
-                $messages = Redis::executeRaw([
+                $messages = Redis::connection()->executeRaw([
                     'XREADGROUP',
                     'GROUP', $this->group, $this->consumer,
                     'COUNT', 10,
@@ -113,7 +113,7 @@ class CrawlerResultConsumeService
 
                 if (str_contains($msg, 'no longer exists')) {
                     try {
-                        Redis::executeRaw([
+                        Redis::connection()->executeRaw([
                             'XGROUP', 'CREATE',
                             $this->stream,
                             $this->group,
@@ -218,7 +218,7 @@ class CrawlerResultConsumeService
 
         while (true) {
             try {
-                $messages = Redis::executeRaw([
+                $messages = Redis::connection()->executeRaw([
                     'XREADGROUP',
                     'GROUP', $this->group, $this->consumer,
                     'COUNT', 10,
@@ -236,7 +236,7 @@ class CrawlerResultConsumeService
                 if (str_contains($e->getMessage(), 'no longer exists')) {
                     // recreate stream + group
                     try {
-                        Redis::executeRaw([
+                        Redis::connection()->executeRaw([
                             'XGROUP', 'CREATE',
                             $this->stream,
                             $this->group,
@@ -298,7 +298,7 @@ class CrawlerResultConsumeService
                     );
                 }
 
-                Redis::executeRaw([
+                Redis::connection()->executeRaw([
                     'XACK',
                     $this->stream,
                     $this->group,
