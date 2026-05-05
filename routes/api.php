@@ -37,6 +37,8 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/send-otp', [AuthController::class, 'sendOtp']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 // 'allow.ip',
+
+Route::apiResource('case-management-items', CaseManagementItemController::class);
 Route::middleware([
     'auth:sanctum',
     'operation.log'])->group(function () {
@@ -88,7 +90,7 @@ Route::middleware([
     Route::apiResource('audit-ratios', AuditRatioController::class);
     Route::apiResource('bot-machines', BotMachineController::class);
     Route::apiResource('case-managements', CaseManagementController::class);
-    Route::apiResource('case-management-items', CaseManagementItemController::class);
+
     Route::apiResource('crawler-configs', CrawlerConfigController::class);
     Route::apiResource('crawler-tasks', CrawlerTaskController::class);
 
