@@ -299,6 +299,10 @@ class CaseManagementService extends BaseFilterService
 
     public function captureCaseScreenshot(string $id, array $data)
     {
+        Log::info('Case mediaurl update request', [
+            'id'    => $id,
+            'media_url' => $data['media_url'],
+        ]);
         try {
             $caseItem = CaseManagementItem::findOrFail($id);
         } catch (ModelNotFoundException $e) {
@@ -313,6 +317,7 @@ class CaseManagementService extends BaseFilterService
         $caseItem->case->update([
             'status' => 'tracking_completed',
         ]);
+
 
         // if ($data['media_url']) {
         //     SyncCaseScreenshotJob::dispatch($caseItem);
