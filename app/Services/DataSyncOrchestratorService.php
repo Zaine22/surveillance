@@ -72,7 +72,7 @@ class DataSyncOrchestratorService
         // 2. Perform the sync outside the transaction
         try {
             // comment for the frank server no sync
-            
+
             // $this->rsyncService->syncCrawlerFileToNas(
             //     $sourcePath,
             //     $target
@@ -183,9 +183,9 @@ class DataSyncOrchestratorService
 
         $this->aiTaskManagerService->createFromCrawlerItem($item);
 
-        $item->task()->update([
-            'status' => 'completed',
-        ]);
+        // $item->task()->update([
+        //     'status' => 'completed',
+        // ]);
 
         return $url;
     }
@@ -201,11 +201,11 @@ class DataSyncOrchestratorService
 
         if (filter_var($sourcePath, FILTER_VALIDATE_URL)) {
             $fileName = basename(parse_url($sourcePath, PHP_URL_PATH));
-            
+
             // Extract the directory from the URL path, assuming it matches the SFTP directory (e.g. 'screenshots' or 'zips')
             $pathParts = explode('/', trim(parse_url($sourcePath, PHP_URL_PATH), '/'));
             $folder = count($pathParts) >= 2 ? $pathParts[count($pathParts) - 2] : 'screenshots';
-            
+
             $sourcePath = "{$folder}/{$fileName}";
 
             Log::info('Converted screenshot URL to SFTP path', [
