@@ -7,11 +7,13 @@ use App\Models\AiPredictResult;
 use App\Models\CaseFeedback;
 use App\Models\CaseManagement;
 use App\Models\CaseManagementItem;
+use App\Services\BaseFilterService;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class CaseManagementService extends BaseFilterService
@@ -328,7 +330,7 @@ class CaseManagementService extends BaseFilterService
             'media_url'    => $caseItem->media_url,
         ]);
         }
-        
+
         return $caseItem;
     }
 
