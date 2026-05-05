@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 
 class ConsumeAiResult extends Command
 {
-    protected $signature   = 'task:finished';
+    protected $signature   = 'ai:consume-results';
     protected $description = 'Consume AI result stream from Redis';
 
     public function __construct(

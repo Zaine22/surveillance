@@ -14,9 +14,50 @@ class AiResultConsumeService
         protected AiPredictResultService $resultService
     ) {}
 
+    // public function consume(): void
+    // {
+    //     $redis = Redis::connection('ai');
+    //     Log::info('AiResultConsumeService started', [
+    //         'stream'   => $this->stream,
+    //         'group'    => $this->group,
+    //         'consumer' => $this->consumer,
+    //     ]);
+
+    //     while (true) {
+    //         try {
+
+    //             $messages = $redis->xreadgroup(
+    //                 $this->group,
+    //                 $this->consumer,
+    //                 [$this->stream => '>'],
+    //                 10,
+    //                 5000
+    //             );
+
+    //             if ($messages === false || empty($messages[$this->stream])) {
+    //                 continue;
+    //             }
+
+    //             foreach ($messages[$this->stream] as $id => $data) {
+    //                 Log::info('🔥 REDIS MESSAGE RECEIVED', [
+    //                     'id'   => $id,
+    //                     'data' => $data,
+    //                 ]);
+    //                 $this->handleMessage($redis, $id, $data);
+    //             }
+    //         } catch (\Throwable $e) {
+    //             Log::critical('AI consumer crashed', [
+    //                 'error' => $e->getMessage(),
+    //             ]);
+
+    //             sleep(2);
+    //         }
+    //     }
+    // }
     public function consume(): void
     {
         $redis = Redis::connection('ai');
+
         Log::info('AiResultConsumeService started', [
             'stream'   => $this->stream,
             'group'    => $this->group,
@@ -25,7 +66,6 @@ class AiResultConsumeService
 
         while (true) {
             try {
-
                 $messages = $redis->xreadgroup(
                     $this->group,
                     $this->consumer,
@@ -34,20 +74,24 @@ class AiResultConsumeService
                     5000
                 );
 
-                if ($messages === false || empty($messages[$this->stream])) {
+                if (empty($messages) || empty($messages[$this->stream])) {
                     continue;
                 }
 
-                foreach ($messages[$this->stream] as $id => $data) {
-                    Log::info('🔥 REDIS MESSAGE RECEIVED', [
-                        'id'   => $id,
-                        'data' => $data,
+                foreach ($messages[$this->stream] as $redisId => $data) {
+                    Log::info('REDIS TASK FINISHED MESSAGE RECEIVED', [
+                        'redis_id' => $redisId,
+                        'data'     => $data,
                     ]);
-                    $this->handleMessage($redis, $id, $data);
+
+                    $this->handleMessage($redis, $redisId, $data);
                 }
+
             } catch (\Throwable $e) {
                 Log::critical('AI consumer crashed', [
                     'error' => $e->getMessage(),
+                    'file'  => $e->getFile(),
+                    'line'  => $e->getLine(),
                 ]);
 
                 sleep(2);
@@ -55,29 +99,83 @@ class AiResultConsumeService
         }
     }
 
+    // protected function handleMessage($redis, string $redisId, array $data): void
+    // {
+    //     try {
+    //         $rawPayload = json_decode($data['payload'], true) ?? [];
+
+    //         $taskId = $rawPayload['task_id'] ?? $data['task_id'] ?? null;
+
+    //         if (! $taskId) {
+    //             throw new \RuntimeException('task_id missing');
+    //         }
+
+    //         $parsed = $this->parseAiResult($rawPayload);
+
+    //         $payload = array_merge($rawPayload, $parsed);
+
+    //         $this->resultService->saveFromAiCallback((string) $taskId, $payload);
+
+    //         $redis->xack($this->stream, $this->group, [$redisId]);
+    //     } catch (\Throwable $e) {
+    //         Log::error('AI result process failed', [
+    //             'redis_id' => $redisId,
+    //             'raw_data' => $data,
+    //             'error'    => $e->getMessage(),
+    //         ]);
+    //     }
+    // }
+
     protected function handleMessage($redis, string $redisId, array $data): void
     {
         try {
-            $rawPayload = json_decode($data['payload'], true) ?? [];
-
-            $taskId = $rawPayload['task_id'] ?? $data['task_id'] ?? null;
+            $taskId = $data['task_id'] ?? null;
+            $event  = $data['event'] ?? null;
 
             if (! $taskId) {
-                throw new \RuntimeException('task_id missing');
+                throw new \RuntimeException('task_id missing from stream message');
             }
 
-            $parsed = $this->parseAiResult($rawPayload);
+            $taskKey = "task:{$taskId}";
 
-            $payload = array_merge($rawPayload, $parsed);
+            $taskPayload = $redis->hgetall($taskKey);
+
+            if (empty($taskPayload)) {
+                throw new \RuntimeException("Task hash not found: {$taskKey}");
+            }
+
+            Log::info('AI task hash loaded', [
+                'redis_id' => $redisId,
+                'event'    => $event,
+                'task_id'  => $taskId,
+                'status'   => $taskPayload['status'] ?? null,
+            ]);
+
+            $parsed = $this->parseAiResult($taskPayload);
+
+            $payload = array_merge($taskPayload, [
+                'event'   => $event,
+                'task_id' => $taskId,
+                'parsed'  => $parsed,
+            ]);
 
             $this->resultService->saveFromAiCallback((string) $taskId, $payload);
 
             $redis->xack($this->stream, $this->group, [$redisId]);
+
+            Log::info('AI result acknowledged', [
+                'redis_id' => $redisId,
+                'task_id'  => $taskId,
+                'status'   => $taskPayload['status'] ?? null,
+            ]);
+
         } catch (\Throwable $e) {
             Log::error('AI result process failed', [
                 'redis_id' => $redisId,
                 'raw_data' => $data,
                 'error'    => $e->getMessage(),
+                'file'     => $e->getFile(),
+                'line'     => $e->getLine(),
             ]);
         }
     }
