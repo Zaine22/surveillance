@@ -16,7 +16,7 @@ class CrawlerDispatchService
             ? 'google_discovery_batch'
             : 'patrol';
 
-        Redis::xadd(
+        Redis::connection()->xadd(
             $this->stream,
             '*',
             [
@@ -31,7 +31,7 @@ class CrawlerDispatchService
     public function dispatchPauseItems(CrawlerTaskItem $item): void
     {
 
-        Redis::xadd(
+        Redis::connection()->xadd(
             $this->stream,
             '*',
             [
