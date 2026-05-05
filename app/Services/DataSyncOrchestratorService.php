@@ -71,14 +71,16 @@ class DataSyncOrchestratorService
 
         // 2. Perform the sync outside the transaction
         try {
-            $this->rsyncService->syncCrawlerFileToNas(
-                $sourcePath,
-                $target
-            );
+            // comment for the frank server no sync
+            
+            // $this->rsyncService->syncCrawlerFileToNas(
+            //     $sourcePath,
+            //     $target
+            // );
 
             Log::info('File sync orchestration successful', [
                 'item_id'     => $item->id,
-                'target_path' => $target,
+                // 'target_path' => $target, //comment for frank server
             ]);
 
             // 3. Update sync record status
@@ -91,7 +93,7 @@ class DataSyncOrchestratorService
             $publicUrl = \Illuminate\Support\Facades\Storage::url('nas/' . $fileName);
             $item->update([
                 'status'      => 'synced',
-                'result_file' => $publicUrl,
+                // 'result_file' => $publicUrl, //comment for frank server
             ]);
             $this->aiTaskManagerService->createFromCrawlerItem($item);
 
