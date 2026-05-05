@@ -6,9 +6,8 @@ use Illuminate\Support\Facades\Redis;
 
 class AiResultConsumeService
 {
-    protected string $stream   = 'task:finished';
-    protected string $group    = 'backend_ai_group';
-    protected string $consumer = 'backend_ai_1';
+    protected string $stream    = 'task:finished';
+    protected string $lastIdKey = 'backend:last_task_finished_id';
 
     public function __construct(
         protected AiPredictResultService $resultService
@@ -59,17 +58,20 @@ class AiResultConsumeService
         $redis = Redis::connection('ai');
 
         Log::info('AiResultConsumeService started', [
-            'stream'   => $this->stream,
-            'group'    => $this->group,
-            'consumer' => $this->consumer,
+            'stream' => $this->stream,
+            'mode'   => 'xread_without_group',
+        ]);
+
+        $lastId = $redis->get($this->lastIdKey) ?: '0-0';
+
+        Log::info('AI result consumer last ID', [
+            'last_id' => $lastId,
         ]);
 
         while (true) {
             try {
-                $messages = $redis->xreadgroup(
-                    $this->group,
-                    $this->consumer,
-                    [$this->stream => '>'],
+                $messages = $redis->xread(
+                    [$this->stream => $lastId],
                     10,
                     5000
                 );
@@ -85,6 +87,14 @@ class AiResultConsumeService
                     ]);
 
                     $this->handleMessage($redis, $redisId, $data);
+
+                    $lastId = $redisId;
+
+                    $redis->set($this->lastIdKey, $lastId);
+
+                    Log::info('AI result stream ID saved', [
+                        'last_id' => $lastId,
+                    ]);
                 }
 
             } catch (\Throwable $e) {
@@ -133,7 +143,12 @@ class AiResultConsumeService
             $event  = $data['event'] ?? null;
 
             if (! $taskId) {
-                throw new \RuntimeException('task_id missing from stream message');
+                Log::error('AI result task_id missing', [
+                    'redis_id' => $redisId,
+                    'data'     => $data,
+                ]);
+
+                return;
             }
 
             $taskKey = "task:{$taskId}";
@@ -141,13 +156,19 @@ class AiResultConsumeService
             $taskPayload = $redis->hgetall($taskKey);
 
             if (empty($taskPayload)) {
-                throw new \RuntimeException("Task hash not found: {$taskKey}");
+                Log::error('AI result task hash not found', [
+                    'redis_id' => $redisId,
+                    'task_id'  => $taskId,
+                    'task_key' => $taskKey,
+                ]);
+
+                return;
             }
 
-            Log::info('AI task hash loaded', [
+            Log::info('AI result task hash loaded', [
                 'redis_id' => $redisId,
-                'event'    => $event,
                 'task_id'  => $taskId,
+                'event'    => $event,
                 'status'   => $taskPayload['status'] ?? null,
             ]);
 
@@ -160,8 +181,6 @@ class AiResultConsumeService
             ]);
 
             $this->resultService->saveFromAiCallback((string) $taskId, $payload);
-
-            $redis->xack($this->stream, $this->group, [$redisId]);
 
             Log::info('AI result acknowledged', [
                 'redis_id' => $redisId,
@@ -192,6 +211,33 @@ class AiResultConsumeService
 
         return $data;
     }
+    // protected function parseAiResult(array $payload): array
+    // {
+    //     if (empty($payload['result'])) {
+    //         return [];
+    //     }
+
+    //     $raw = $payload['result'];
+
+    //     $json = str_replace("'", '"', $raw);
+
+    //     $json = str_replace(['True', 'False'], ['true', 'false'], $json);
+
+    //     $json = preg_replace('/\((.*?)\)/', '[$1]', $json);
+
+    //     $decoded = json_decode($json, true);
+
+    //     if (json_last_error() !== JSON_ERROR_NONE) {
+    //         Log::error('AI parse failed', [
+    //             'error' => json_last_error_msg(),
+    //             'raw'   => $raw,
+    //         ]);
+    //         return [];
+    //     }
+
+    //     return $decoded;
+    // }
+
     protected function parseAiResult(array $payload): array
     {
         if (empty($payload['result'])) {
@@ -200,9 +246,19 @@ class AiResultConsumeService
 
         $raw = $payload['result'];
 
+        if (($payload['status'] ?? null) === 'failed') {
+            return [
+                'error_message' => $raw,
+            ];
+        }
+
         $json = str_replace("'", '"', $raw);
 
-        $json = str_replace(['True', 'False'], ['true', 'false'], $json);
+        $json = str_replace(
+            ['True', 'False', 'None'],
+            ['true', 'false', 'null'],
+            $json
+        );
 
         $json = preg_replace('/\((.*?)\)/', '[$1]', $json);
 
@@ -213,6 +269,7 @@ class AiResultConsumeService
                 'error' => json_last_error_msg(),
                 'raw'   => $raw,
             ]);
+
             return [];
         }
 
