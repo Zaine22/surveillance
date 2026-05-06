@@ -46,7 +46,7 @@ class AiTaskManagerService
             $params = [
                 'dir_path'   => $fileNameWithoutZip,
                 // 'image_type' => 'element',
-                'image_type' => 'screenshot',
+                'image_type' => 'element',
             ];
 
 
