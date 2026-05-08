@@ -30,11 +30,11 @@ class VerifyUserRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.required' => '邮箱不能为空',
-            'email.email' => '邮箱格式不正确',
-            'otp.required' => 'OTP不能为空',
-            'otp.string' => 'OTP必须是字符串',
-            'otp.size' => 'OTP必须是6位',
+            'email.required' => '電子郵件不能為空',
+            'email.email' => '電子郵件格式不正確',
+            'otp.required' => 'OTP不能為空',
+            'otp.string' => 'OTP必須為字串',
+            'otp.size' => 'OTP必須為6位數',
         ];
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Requests\CaseManagement;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -21,25 +22,25 @@ class StoreExternalCaseRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'url'        => 'required|url',
+            'url' => 'required|url',
             'leakReason' => 'required|string',
-            'case_id'    => 'required|string|max:100',
+            'case_id' => 'required|string|max:100',
             'issue_date' => 'nullable|date',
-            'due_date'   => 'nullable|date',
+            'due_date' => 'nullable|date',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'url.required'        => 'URL不能为空',
-            'url.url'             => 'URL格式不正确',
-            'leakReason.required' => '泄露原因不能为空',
-            'leakReason.string'   => '泄露原因必须是字符串',
-            'case_id.required'    => '案件编号不能为空',
-            'case_id.string'      => '案件编号必须是字符串',
-            'issue_date.date'     => '发布日期格式不正确',
-            'due_date.date'       => '到期日期格式不正确',
+            'url.required' => 'URL不能為空',
+            'url.url' => 'URL格式不正確',
+            'leakReason.required' => '洩露原因不能為空',
+            'leakReason.string' => '洩露原因必須為字串',
+            'case_id.required' => '案件編號不能為空',
+            'case_id.string' => '案件編號必須為字串',
+            'issue_date.date' => '發佈日期格式不正確',
+            'due_date.date' => '到期日期格式不正確',
         ];
     }
 
@@ -47,7 +48,7 @@ class StoreExternalCaseRequest extends FormRequest
     {
         throw new \Illuminate\Validation\ValidationException($validator, response()->json([
             'message' => 'The given data was invalid.',
-            'errors'  => $validator->errors(),
+            'errors' => $validator->errors(),
         ], 422));
     }
 }

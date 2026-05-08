@@ -32,16 +32,16 @@ class RegisterUserRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => '用户名不能为空',
-            'name.string' => '用户名必须是字符串',
-            'name.max' => '用户名不能超过255个字符',
-            'email.required' => '邮箱不能为空',
-            'email.email' => '邮箱格式不正确',
-            'email.unique' => '邮箱已被注册',
-            'password.required' => '密码不能为空',
-            'password.string' => '密码必须是字符串',
-            'password.min' => '密码必须至少8个字符',
-            'department.string' => '部门必须是字符串',
+            'name.required' => '使用者名稱不能為空',
+            'name.string' => '使用者名稱必須為字串',
+            'name.max' => '使用者名稱不能超過255個字元',
+            'email.required' => '電子郵件不能為空',
+            'email.email' => '電子郵件格式不正確',
+            'email.unique' => '電子郵件已被註冊',
+            'password.required' => '密碼不能為空',
+            'password.string' => '密碼必須為字串',
+            'password.min' => '密碼至少需要8個字元',
+            'department.string' => '部門必須為字串',
         ];
     }
 }

@@ -108,11 +108,11 @@ class LexiconKeywordService
         $sheet = $spreadsheet->getActiveSheet();
 
         // Header row
-        $sheet->setCellValue('A1', 'Lexicon ID');
-        $sheet->setCellValue('B1', 'Keywords');
-        $sheet->setCellValue('C1', 'Crawl Hit Count');
-        $sheet->setCellValue('D1', 'Case Count');
-        $sheet->setCellValue('E1', 'Status');
+        $sheet->setCellValue('A1', '詞庫ID');
+        $sheet->setCellValue('B1', '關鍵字(支援多組)');
+        $sheet->setCellValue('C1', '爬網命中數');
+        $sheet->setCellValue('D1', '案件總數');
+        $sheet->setCellValue('E1', '狀態');
 
         $rowNumber = 2;
 
@@ -126,7 +126,7 @@ class LexiconKeywordService
             );
             $sheet->setCellValue('C'.$rowNumber, $item->crawl_hit_count);
             $sheet->setCellValue('D'.$rowNumber, $item->case_count);
-            $sheet->setCellValue('E'.$rowNumber, $item->status);
+            $sheet->setCellValue('E'.$rowNumber, $item->status === 'enabled' ? '上架' : '下架');
 
             $rowNumber++;
         }

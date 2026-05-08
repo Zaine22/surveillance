@@ -136,8 +136,8 @@ class CrawlerTaskItem extends Model
                 return;
             }
 
-            //  3. pending >= error → error
-            if ($error >= $pending) {
+            //  3. no pending left and there are errors → error
+            if ($error > 0 && $pending === 0) {
                 $task->update(['status' => 'error']);
                 return;
             }

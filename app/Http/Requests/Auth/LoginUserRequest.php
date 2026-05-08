@@ -31,13 +31,13 @@ class LoginUserRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.required' => '邮箱不能为空',
-            'email.email' => '邮箱格式不正确',
-            'password.required' => '密码不能为空',
-            'password.string' => '密码必须是字符串',
-            'password.min' => '密码必须至少8个字符',
-            'otp.string' => 'OTP必须是字符串',
-            'otp.size' => 'OTP必须是6位',
+            'email.required' => '電子郵件不能為空',
+            'email.email' => '電子郵件格式不正確',
+            'password.required' => '密碼不能為空',
+            'password.string' => '密碼必須為字串',
+            'password.min' => '密碼至少需要8個字元',
+            'otp.string' => 'OTP必須為字串',
+            'otp.size' => 'OTP必須為6位數',
         ];
     }
 }

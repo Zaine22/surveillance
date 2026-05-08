@@ -26,7 +26,7 @@ class SendOtpRequest extends FormRequest
                 'required',
                 'email:rfc,dns',
                 function ($attribute, $value, $fail) {
-                    $domain = strtolower(substr(strrchr($value, "@"), 1));
+                    $domain = strtolower(substr(strrchr($value, '@'), 1));
 
                     $blockedDomains = [
                         'gmail.co',
@@ -37,7 +37,7 @@ class SendOtpRequest extends FormRequest
                     ];
 
                     if (in_array($domain, $blockedDomains, true)) {
-                        $fail('邮箱格式不正确');
+                        $fail('電子郵件格式不正確');
                     }
                 },
             ],
@@ -47,8 +47,8 @@ class SendOtpRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.required' => '邮箱不能为空',
-            'email.email' => '邮箱格式不正确',
+            'email.required' => '電子郵件不能為空',
+            'email.email' => '電子郵件格式不正確',
         ];
     }
 }
