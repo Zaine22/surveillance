@@ -26,7 +26,7 @@ class SystemNoticeService
             $query->where('status', $status);
         }
 
-        return $query->orderBy('created_at', 'desc')->paginate($perPage, ['*'], 'page', $page);
+        return $query->orderBy('publish_date', 'desc')->paginate($perPage, ['*'], 'page', $page);
     }
 
     public function getNoticeById($id)
