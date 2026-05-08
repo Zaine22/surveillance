@@ -109,7 +109,6 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => '登出成功',
-            'redirect_to' => '/frontend',
         ]);
     }
 
