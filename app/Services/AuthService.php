@@ -275,7 +275,7 @@ class AuthService
             $checkUser->tokens()->delete();
 
             return [
-                'message' => '密碼已成功更改，請重新登入。',
+                'message' => '密碼已成功更改，請重新登入',
             ];
         } catch (\Throwable $e) {
             Log::error('Password change failed', [
@@ -313,7 +313,7 @@ class AuthService
 
             if ($existing) {
                 return [
-                    'message' => '驗證碼已發送，請檢查您的電子郵件。',
+                    'message' => '驗證碼已發送，請檢查您的電子郵件',
                 ];
             }
 
@@ -329,7 +329,7 @@ class AuthService
             );
 
             return [
-                'message' => '驗證碼已成功發送。',
+                'message' => '驗證碼已成功發送',
             ];
         } catch (\Throwable $e) {
             Log::error('OTP sending failed', [
@@ -338,7 +338,7 @@ class AuthService
             ]);
 
             return [
-                'error' => ['發送驗證碼失敗，請稍後再試。'],
+                'error' => ['發送驗證碼失敗，請稍後再試'],
             ];
         }
     }
@@ -347,7 +347,7 @@ class AuthService
     {
         $user = User::where('email', $email)->first();
         if (! $user) {
-            throw ValidationException::withMessages(['error' => "找不到電子郵件為 {$email} 的使用者。"]);
+            throw ValidationException::withMessages(['error' => "找不到電子郵件為 {$email} 的使用者"]);
         }
 
         $validated_record = ValidationRecord::where('send_to', $email)
@@ -357,15 +357,15 @@ class AuthService
             ->first();
 
         if (! $validated_record) {
-            throw ValidationException::withMessages(['message' => '找不到驗證記錄', 'otp' => ['無效的驗證碼。']]);
+            throw ValidationException::withMessages(['message' => '找不到驗證記錄', 'otp' => ['無效的驗證碼']]);
         }
 
         if ($validated_record->validate_code !== $otp) {
-            throw ValidationException::withMessages(['otp' => ['無效的驗證碼。']]);
+            throw ValidationException::withMessages(['otp' => ['無效的驗證碼']]);
         }
 
         if ($validated_record->expired_at < now()) {
-            throw ValidationException::withMessages(['otp' => ['驗證碼已過期。']]);
+            throw ValidationException::withMessages(['otp' => ['驗證碼已過期']]);
         }
 
         // Clear OTP after successful verification
@@ -373,7 +373,7 @@ class AuthService
             'status' => 'enabled',
         ]);
 
-        return ['message' => '驗證碼驗證成功。'];
+        return ['message' => '驗證碼驗證成功'];
     }
 
     public function checkPasswordExpiry(User $user): bool
