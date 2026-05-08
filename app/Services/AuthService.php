@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services;
 
 use App\Models\User;
@@ -19,13 +20,13 @@ class AuthService
     public function register(array $data): array
     {
         $user = User::create([
-            'name'                  => $data['name'],
-            'email'                 => $data['email'],
-            'password'              => Hash::make($data['password']),
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
             'password_last_changed' => now(),
-            'department'            => $data['department'] ?? null,
-            'roles'                 => $data['roles'] ?? 'user',
-            'status'                => 'disabled',
+            'department' => $data['department'] ?? null,
+            'roles' => $data['roles'] ?? 'user',
+            'status' => 'disabled',
         ]);
 
         $user->passwordHistories()->create([
@@ -177,13 +178,13 @@ class AuthService
         // }
         if (! $user || ! Hash::check($password, $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['Please enter the correct account/password.'],
+                'email' => ['請輸入正確的帳號/密碼。'],
             ]);
         }
 
         // User status check
         if ($user->status !== 'enabled') {
-            return ['error' => 'User account is not verified yet!'];
+            return ['error' => '使用者帳號尚未驗證！'];
         }
 
         $validated_record = null;
@@ -197,7 +198,7 @@ class AuthService
         }
 
         if ($user->status !== 'enabled') {
-            return ['error' => 'User account is not verified yet!'];
+            return ['error' => '使用者帳號尚未驗證！'];
         }
 
         // if (! Hash::check($password, $user->password)) {
@@ -209,25 +210,25 @@ class AuthService
         // OTP checks
         if ($email !== 'testing@mail.com' && ! $validated_record) {
             throw ValidationException::withMessages([
-                'otp' => ['Incorrect verification code'],
+                'otp' => ['驗證碼錯誤'],
             ]);
         }
 
         if ($email !== 'testing@mail.com' && $validated_record->expired_at < now()) {
             throw ValidationException::withMessages([
-                'otp' => ['Incorrect verification code'],
+                'otp' => ['驗證碼錯誤'],
             ]);
         }
 
         if ($email !== 'testing@mail.com' && $otp !== $validated_record->validate_code) {
             throw ValidationException::withMessages([
-                'otp' => ['Incorrect verification code'],
+                'otp' => ['驗證碼錯誤'],
             ]);
         }
 
         if ($email === 'testing@mail.com' && $otp !== '123456') {
             throw ValidationException::withMessages([
-                'otp' => ['Incorrect verification code'],
+                'otp' => ['驗證碼錯誤'],
             ]);
         }
 
@@ -248,7 +249,7 @@ class AuthService
             $checkUser = User::where('email', $user->email)->first();
             if (! Hash::check($currentPassword, $checkUser->password)) {
                 throw ValidationException::withMessages([
-                    'current_password' => ['Current password is incorrect'],
+                    'current_password' => ['目前密碼不正確'],
                 ]);
             }
 
@@ -263,7 +264,7 @@ class AuthService
             }
 
             $checkUser->update([
-                'password'              => Hash::make($newPassword),
+                'password' => Hash::make($newPassword),
                 'password_last_changed' => now(),
             ]);
 
@@ -274,7 +275,7 @@ class AuthService
             $checkUser->tokens()->delete();
 
             return [
-                'message' => 'Password changed successfully. Please login again.',
+                'message' => '密碼已成功更改，請重新登入。',
             ];
         } catch (\Throwable $e) {
             Log::error('Password change failed', [
@@ -300,7 +301,7 @@ class AuthService
 
             if (! $user) {
                 return [
-                    'error' => 'Please enter the correct account',
+                    'error' => '請輸入正確的帳號',
                 ];
             }
 
@@ -312,7 +313,7 @@ class AuthService
 
             if ($existing) {
                 return [
-                    'message' => 'OTP already sent. Please check your email.',
+                    'message' => '驗證碼已發送，請檢查您的電子郵件。',
                 ];
             }
 
@@ -328,7 +329,7 @@ class AuthService
             );
 
             return [
-                'message' => 'OTP sent successfully.',
+                'message' => '驗證碼已成功發送。',
             ];
         } catch (\Throwable $e) {
             Log::error('OTP sending failed', [
@@ -337,7 +338,7 @@ class AuthService
             ]);
 
             return [
-                'error' => ['Failed to send OTP. Please try again later.'],
+                'error' => ['發送驗證碼失敗，請稍後再試。'],
             ];
         }
     }
@@ -346,7 +347,7 @@ class AuthService
     {
         $user = User::where('email', $email)->first();
         if (! $user) {
-            throw ValidationException::withMessages(['error' => "User with email {$email} not found."]);
+            throw ValidationException::withMessages(['error' => "找不到電子郵件為 {$email} 的使用者。"]);
         }
 
         $validated_record = ValidationRecord::where('send_to', $email)
@@ -356,15 +357,15 @@ class AuthService
             ->first();
 
         if (! $validated_record) {
-            throw ValidationException::withMessages(['message' => 'No Record found', 'otp' => ['Invalid OTP code.']]);
+            throw ValidationException::withMessages(['message' => '找不到驗證記錄', 'otp' => ['無效的驗證碼。']]);
         }
 
         if ($validated_record->validate_code !== $otp) {
-            throw ValidationException::withMessages(['otp' => ['Invalid OTP code.']]);
+            throw ValidationException::withMessages(['otp' => ['無效的驗證碼。']]);
         }
 
         if ($validated_record->expired_at < now()) {
-            throw ValidationException::withMessages(['otp' => ['OTP code has expired.']]);
+            throw ValidationException::withMessages(['otp' => ['驗證碼已過期。']]);
         }
 
         // Clear OTP after successful verification
@@ -372,7 +373,7 @@ class AuthService
             'status' => 'enabled',
         ]);
 
-        return ['message' => 'OTP verified successfully.'];
+        return ['message' => '驗證碼驗證成功。'];
     }
 
     public function checkPasswordExpiry(User $user): bool
@@ -391,11 +392,11 @@ class AuthService
         $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
         $validation_record = ValidationRecord::create([
-            'send_type'     => 'email',
-            'send_to'       => $user->email,
+            'send_type' => 'email',
+            'send_to' => $user->email,
             'validate_type' => 'login',
             'validate_code' => $otp,
-            'expired_at'    => now()->addMinutes(5),
+            'expired_at' => now()->addMinutes(5),
         ]);
 
         return $validation_record;
@@ -412,7 +413,7 @@ class AuthService
     public function getAllUsers(Request $request): array
     {
         $pageSize = (int) $request->query('pageSize', 10);
-        $page     = (int) $request->query('page', 1);
+        $page = (int) $request->query('page', 1);
 
         $query = User::query()
             ->select(['id', 'name', 'email', 'status', 'created_at', 'phone', 'department', 'roles', 'last_login', 'password_last_changed'])
@@ -437,9 +438,9 @@ class AuthService
             'data' => $users->items(),
             'meta' => [
                 'current_page' => $users->currentPage(),
-                'pageSize'     => $users->perPage(),
-                'total'        => $users->total(),
-                'lastPage'     => $users->lastPage(),
+                'pageSize' => $users->perPage(),
+                'total' => $users->total(),
+                'lastPage' => $users->lastPage(),
             ],
         ];
     }
@@ -447,15 +448,15 @@ class AuthService
     public function createUserByAdmin(array $data): array
     {
         $plainPassword = Str::random(10);
-        $user          = User::create([
-            'name'                  => $data['name'],
-            'email'                 => $data['email'],
-            'password'              => Hash::make($plainPassword),
+        $user = User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($plainPassword),
             'password_last_changed' => now(),
-            'department'            => $data['department'] ?? null,
-            'roles'                 => $data['roles'] ?? 'user',
-            'status'                => $data['status'] ?? 'enabled',
-            'phone'                 => $data['phone'] ?? null,
+            'department' => $data['department'] ?? null,
+            'roles' => $data['roles'] ?? 'user',
+            'status' => $data['status'] ?? 'enabled',
+            'phone' => $data['phone'] ?? null,
         ]);
 
         $user->passwordHistories()->create([
