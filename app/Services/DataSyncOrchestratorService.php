@@ -207,38 +207,30 @@ class DataSyncOrchestratorService
 
     public function syncCaseScreenshotToNas(\App\Models\CaseManagementItem $item): string
     {
-        $sourcePath = $item->media_url;
+        $url = $item->media_url;
 
-        Log::info('Screenshot SFTP download started', [
+        Log::info('Screenshot HTTP download started', [
             'item_id' => $item->id,
-            'url'     => $sourcePath,
+            'url'     => $url,
         ]);
 
-        if (filter_var($sourcePath, FILTER_VALIDATE_URL)) {
-            $fileName = basename(parse_url($sourcePath, PHP_URL_PATH));
-
-            // Extract the directory from the URL path, assuming it matches the SFTP directory (e.g. 'screenshots' or 'zips')
-            $pathParts = explode('/', trim(parse_url($sourcePath, PHP_URL_PATH), '/'));
-            $folder = count($pathParts) >= 2 ? $pathParts[count($pathParts) - 2] : 'screenshots';
-
-            $sourcePath = "{$folder}/{$fileName}";
-
-            Log::info('Converted screenshot URL to SFTP path', [
-                'original' => $item->media_url,
-                'mapped'   => $sourcePath,
-            ]);
-        } else {
-            $fileName = basename($sourcePath);
+        if (! filter_var($url, FILTER_VALIDATE_URL)) {
+            throw new \RuntimeException("Invalid screenshot URL: {$url}");
         }
 
-        $target = '/mnt/task/' . $fileName;
+        $fileName = basename(parse_url($url, PHP_URL_PATH));
+        $fullPath = '/mnt/task/' . $fileName;
 
-        $record = DB::transaction(function () use ($item, $target, $sourcePath) {
+        Log::info('Saving screenshot to path', [
+            'path' => $fullPath,
+        ]);
+
+        $record = DB::transaction(function () use ($item, $fullPath) {
             return DataSyncRecord::create([
                 'id'          => (string) Str::uuid(),
                 'source_path' => $item->media_url,
-                'target_path' => $target,
-                'file_name'   => basename($target),
+                'target_path' => $fullPath,
+                'file_name'   => basename($fullPath),
                 'status'      => 'transferring',
                 'retry_count' => 0,
                 'max_retry'   => 3,
@@ -247,14 +239,30 @@ class DataSyncOrchestratorService
         });
 
         try {
-            $this->rsyncService->syncCrawlerFileToNas(
-                $sourcePath,
-                $target
-            );
+            $response = Http::timeout(300)->get($url);
 
-            Log::info('Screenshot sync orchestration successful', [
-                'item_id'     => $item->id,
-                'target_path' => $target,
+            if (! $response->successful()) {
+                throw new \RuntimeException("Download failed with status {$response->status()}: {$url}");
+            }
+
+            $written = file_put_contents($fullPath, $response->body());
+
+            if ($written === false) {
+                throw new \RuntimeException("Failed to write screenshot: {$fullPath}");
+            }
+
+            if (! file_exists($fullPath)) {
+                throw new \RuntimeException("Screenshot file does not exist after write: {$fullPath}");
+            }
+
+            if (filesize($fullPath) === 0) {
+                throw new \RuntimeException("Screenshot file is empty after write: {$fullPath}");
+            }
+
+            Log::info('Screenshot HTTP download success', [
+                'item_id' => $item->id,
+                'path'    => $fullPath,
+                'size'    => filesize($fullPath),
             ]);
 
             $record->update([
@@ -262,17 +270,16 @@ class DataSyncOrchestratorService
                 'finished_at' => now(),
             ]);
 
-            $publicUrl = '/mnt/task/' . $fileName;
-
             $item->update([
-                'media_url' => $publicUrl,
+                'media_url' => $fullPath,
             ]);
 
-            return $target;
+            return $fullPath;
 
         } catch (Throwable $e) {
-            Log::error('Screenshot sync orchestration failed', [
+            Log::error('Screenshot HTTP download failed', [
                 'item_id' => $item->id,
+                'url'     => $url,
                 'error'   => $e->getMessage(),
             ]);
 
