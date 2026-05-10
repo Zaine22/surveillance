@@ -30,11 +30,11 @@ class UpdateExternalKeywordsRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'case_id.required' => '案件编号不能为空',
-            'case_id.string' => '案件编号必须是字符串',
-            'case_id.max' => '案件编号不能超过100个字符',
-            'keywords.required' => '关键字不能为空',
-            'keywords.array' => '关键字必须是数组格式',
+            'case_id.required' => '案件編號不能為空',
+            'case_id.string' => '案件編號必須為字串',
+            'case_id.max' => '案件編號不能超過100個字元',
+            'keywords.required' => '關鍵字不能為空',
+            'keywords.array' => '關鍵字必須為陣列格式',
         ];
     }
 

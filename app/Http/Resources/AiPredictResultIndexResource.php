@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
@@ -14,19 +15,22 @@ class AiPredictResultIndexResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'                 => $this->id,
-            'file_name'          => $this->aiModelTask?->file_name,
-            'keywords'           => $this->keywords,
-            'ai_score'           => $this->ai_score,
-            'analysis_result'    => $this->analysis_result,
-            'review_status'      => $this->review_status,
-            'audit_status'       => $this->audit_status,
-            'ai_analysis_result' => $this->ai_analysis_result,
+            'id' => $this->id,
+            'file_name' => $this->aiModelTask?->file_name,
+            'keywords' => $this->keywords,
+            'ai_score' => $this->ai_score,
+            'analysis_result' => $this->analysis_result,
+            'review_status' => $this->review_status,
+            'audit_status' => $this->audit_status,
+            'ai_analysis_result' => match ($this->ai_analysis_result) {
+                'normal' => '正常',
+                'abnormal' => '異常',
+                default => $this->ai_analysis_result,
+            },
             'ai_analysis_detail' => $this->ai_analysis_detail,
-            'lexicon_id'         => $this->lexicon_id,
-            'lexicon_name'       => $this->lexicon?->name,
-            'created_at'         => $this->created_at,
-
+            'lexicon_id' => $this->lexicon_id,
+            'lexicon_name' => $this->lexicon?->name,
+            'created_at' => $this->created_at,
         ];
     }
 }

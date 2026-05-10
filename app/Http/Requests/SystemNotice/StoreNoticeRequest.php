@@ -24,7 +24,7 @@ class StoreNoticeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'required|string|max:255',
+            'title' => 'required|string|max:100',
             'content' => 'required|string',
             'status' => 'nullable|string|in:published,pending,to_be_published',
             'publish_date' => 'required|date',

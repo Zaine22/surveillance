@@ -33,11 +33,11 @@ class StoreCaseFeedbackRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'case_id.required' => '案件ID不能为空',
-            'url.required' => 'URL不能为空',
-            'url.url' => 'URL格式不正确',
-            'is_illegal.required' => '请指定是否违法',
-            'is_illegal.boolean' => 'is_illegal 必须是布尔值',
+            'case_id.required' => '案件ID不能為空',
+            'url.required' => 'URL不能為空',
+            'url.url' => 'URL格式不正確',
+            'is_illegal.required' => '請指定是否違法',
+            'is_illegal.boolean' => 'is_illegal 必須為布林值',
         ];
     }
 }

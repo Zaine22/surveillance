@@ -64,23 +64,23 @@ class AuthController extends Controller
     //     return response()->json($result);
     // }
     public function login(LoginUserRequest $request)
-{
-    $data = $request->validated();
+    {
+        $data = $request->validated();
 
-    $result = $this->authService->login(
-        $data['email'],
-        $data['password'],
-        $data['otp']
-    );
+        $result = $this->authService->login(
+            $data['email'],
+            $data['password'],
+            $data['otp']
+        );
 
-    if ($result['error'] ?? false) {
-        return response()->json([
-            'message' => $result['error'],
-        ], 403);
+        if ($result['error'] ?? false) {
+            return response()->json([
+                'message' => $result['error'],
+            ], 403);
+        }
+
+        return response()->json($result);
     }
-
-    return response()->json($result);
-}
 
     public function changePassword(ChangePasswordRequest $request)
     {
@@ -108,7 +108,7 @@ class AuthController extends Controller
         $this->authService->logout($request->user());
 
         return response()->json([
-            'message' => 'Logged out successfully',
+            'message' => '登出成功',
         ]);
     }
 

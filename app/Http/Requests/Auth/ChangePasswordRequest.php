@@ -30,10 +30,10 @@ class ChangePasswordRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'current_password.required' => '当前密码不能为空',
-            'new_password.required' => '新密码不能为空',
-            'new_password.string' => '新密码必须是字符串',
-            'new_password.min' => '新密码必须至少8个字符',
+            'current_password.required' => '当前密碼不能為空',
+            'new_password.required' => '新密碼不能為空',
+            'new_password.string' => '新密碼必須為字串',
+            'new_password.min' => '新密碼至少需要8個字元',
         ];
     }
 }

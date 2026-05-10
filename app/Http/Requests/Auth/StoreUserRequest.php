@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Requests\Auth;
 
 use Illuminate\Auth\Access\AuthorizationException;
@@ -22,16 +23,16 @@ class StoreUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name'       => 'required|string|max:255',
-            'email'      => 'required|email|unique:users,email',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
             'department' => [
                 'nullable',
                 'string',
                 'exists:departments,name',
             ],
-            'roles'      => 'required|string',
-            'status'     => 'required|string',
-            'phone'      => 'nullable|string',
+            'roles' => 'required|string',
+            'status' => 'required|string',
+            'phone' => 'nullable|string',
         ];
     }
 
@@ -49,21 +50,21 @@ class StoreUserRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required'     => '用户名不能为空',
-            'name.string'       => '用户名必须是字符串',
-            'name.max'          => '用户名不能超过255个字符',
-            'email.required'    => '邮箱不能为空',
-            'email.email'       => '邮箱格式不正确',
-            'email.unique'      => '邮箱已被注册',
-            'role.required'     => '角色不能为空',
-            'role.string'       => '角色必须是字符串',
-            'department.string' => '部门必须是字符串',
-            'roles.required'    => '角色不能为空',
-            'roles.string'      => '角色必须是字符串',
-            'status.required'   => '状态不能为空',
-            'status.string'     => '状态必须是字符串',
-            'phone.string'      => '电话必须是字符串',
-            'phone.nullable'    => '电话可以为空',
+            'name.required' => '使用者名稱不能為空',
+            'name.string' => '使用者名稱必須為字串',
+            'name.max' => '使用者名稱不能超過255個字元',
+            'email.required' => '電子郵件不能為空',
+            'email.email' => '電子郵件格式不正確',
+            'email.unique' => '電子郵件已被註冊',
+            'role.required' => '角色不能為空',
+            'role.string' => '角色必須為字串',
+            'department.string' => '部門必須為字串',
+            'roles.required' => '角色不能為空',
+            'roles.string' => '角色必須為字串',
+            'status.required' => '狀態不能為空',
+            'status.string' => '狀態必須為字串',
+            'phone.string' => '電話必須為字串',
+            'phone.nullable' => '電話可以為空',
         ];
     }
 }

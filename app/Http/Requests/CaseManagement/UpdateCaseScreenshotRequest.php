@@ -40,9 +40,9 @@ class UpdateCaseScreenshotRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'media_url.required' => '媒体URL不能为空',
-            'media_url.url' => '媒体URL格式不正确',
-            'status.in' => '状态必须是 valid 或 invalid',
+            'media_url.required' => '媒體URL不能為空',
+            'media_url.url' => '媒體URL格式不正確',
+            'status.in' => '狀態必須為 valid 或 invalid',
         ];
     }
 }

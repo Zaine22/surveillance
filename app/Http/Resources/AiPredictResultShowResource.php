@@ -29,7 +29,11 @@ class AiPredictResultShowResource extends JsonResource
             'analysis_result'    => $this->analysis_result,
             'review_status'      => $this->review_status,
             'audit_status'       => $this->audit_status,
-            'ai_analysis_result' => $this->ai_analysis_result,
+            'ai_analysis_result' => match ($this->ai_analysis_result) {
+                'normal' => '正常',
+                'abnormal' => '異常',
+                default => $this->ai_analysis_result,
+            },
             'ai_analysis_detail' => $this->ai_analysis_detail,
             'created_at'         => $this->created_at,
             'items'              => AiPredictResultItemResource::collection(
