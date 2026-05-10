@@ -218,11 +218,18 @@ class DataSyncOrchestratorService
             throw new \RuntimeException("Invalid screenshot URL: {$url}");
         }
 
+        // The Laravel and Python servers are on the same machine.
+        // Replace the external IP with 127.0.0.1 to avoid loopback timeout.
+        $parsedHost = parse_url($url, PHP_URL_HOST);
+        $downloadUrl = str_replace($parsedHost, '127.0.0.1', $url);
+
         $fileName = basename(parse_url($url, PHP_URL_PATH));
         $fullPath = '/mnt/task/' . $fileName;
 
         Log::info('Saving screenshot to path', [
-            'path' => $fullPath,
+            'original_url' => $url,
+            'download_url' => $downloadUrl,
+            'path'         => $fullPath,
         ]);
 
         $record = DB::transaction(function () use ($item, $fullPath) {
@@ -239,7 +246,7 @@ class DataSyncOrchestratorService
         });
 
         try {
-            $response = Http::timeout(300)->get($url);
+            $response = Http::timeout(300)->get($downloadUrl);
 
             if (! $response->successful()) {
                 throw new \RuntimeException("Download failed with status {$response->status()}: {$url}");
@@ -270,11 +277,13 @@ class DataSyncOrchestratorService
                 'finished_at' => now(),
             ]);
 
+            $publicUrl = config('app.url') . '/api/task/' . $fileName;
+
             $item->update([
-                'media_url' => $fullPath,
+                'media_url' => $publicUrl,
             ]);
 
-            return $fullPath;
+            return $publicUrl;
 
         } catch (Throwable $e) {
             Log::error('Screenshot HTTP download failed', [

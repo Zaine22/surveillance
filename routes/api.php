@@ -136,6 +136,18 @@ Route::middleware('apikey')->group(function () {
 // });
 
 Route::post('/case/captureScreenshot/{caseItemId}', [CaseManagementController::class, 'captureCaseScreenshot']);
+
+// Serve files saved to /mnt/task/ — public, no auth required
+Route::get('/task/{filename}', function (string $filename) {
+    $path = '/mnt/task/' . $filename;
+
+    if (! file_exists($path)) {
+        abort(404);
+    }
+
+    return response()->file($path);
+})->where('filename', '.+');
+
 Route::post('/crawler/task-items/urls', [CrawlerTaskItemController::class, 'store']);
 Route::post('/crawler/task-items/upload', [CrawlerTaskItemController::class, 'upload']);
 Route::post('/crawler/trigger', [CrawlerTaskItemController::class, 'trigger']);
