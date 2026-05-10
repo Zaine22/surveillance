@@ -53,7 +53,7 @@ class DataSyncOrchestratorService
         }
 
         $fileName = basename($sourcePath);
-        $target   = storage_path('app/public/nas/' . $fileName);
+        $target   = '/mnt/task/' . $fileName;
 
         // 1. Create the sync record
         $record = DB::transaction(function () use ($item, $target) {
@@ -90,7 +90,7 @@ class DataSyncOrchestratorService
             ]);
 
             // 4. Update the original CrawlerTaskItem status and public URL
-            $publicUrl = \Illuminate\Support\Facades\Storage::url('nas/' . $fileName);
+            $publicUrl = '/mnt/task/' . $fileName;
             $item->update([
                 'status'      => 'synced',
                 // 'result_file' => $publicUrl, //comment for frank server
@@ -216,7 +216,7 @@ class DataSyncOrchestratorService
             $fileName = basename($sourcePath);
         }
 
-        $target = storage_path("app/public/nas/{$fileName}");
+        $target = '/mnt/task/' . $fileName;
 
         $record = DB::transaction(function () use ($item, $target, $sourcePath) {
             return DataSyncRecord::create([
@@ -247,7 +247,7 @@ class DataSyncOrchestratorService
                 'finished_at' => now(),
             ]);
 
-            $publicUrl = asset("storage/nas/{$fileName}");
+            $publicUrl = '/mnt/task/' . $fileName;
 
             $item->update([
                 'media_url' => $publicUrl,
