@@ -141,54 +141,69 @@ class DataSyncOrchestratorService
             throw new \RuntimeException("Invalid URL: {$url}");
         }
 
-        // $fileName = basename(parse_url($url, PHP_URL_PATH));
+        $fileName = basename(parse_url($url, PHP_URL_PATH));
+        $fullPath = '/mnt/task/' . $fileName;
 
-        // $fullPath = storage_path("app/public/nas/{$fileName}");
-
-        // Log::info('Saving to path', [
-        //     'path' => $fullPath,
-        // ]);
-
-        // $response = Http::timeout(300)->get($url);
-
-        // if (! $response->successful()) {
-        //     throw new \RuntimeException("Download failed: {$url}");
-        // }
-
-        // $written = file_put_contents($fullPath, $response->body());
-
-        // if ($written === false) {
-        //     throw new \RuntimeException("Failed to write file: {$fullPath}");
-        // }
-
-        // if (! file_exists($fullPath)) {
-        //     throw new \RuntimeException("File does not exist after write");
-        // }
-
-        // if (filesize($fullPath) === 0) {
-        //     throw new \RuntimeException("File is empty");
-        // }
-
-        // $publicUrl = asset("storage/nas/{$fileName}");
-
-        Log::info('Download success', [
-            // 'path' => $fullPath,
-            'url'  => $url,
+        Log::info('Saving to path', [
+            'path' => $fullPath,
         ]);
 
-        $item->update([
-            'status'      => 'synced',
-            'result_file' => $url,
-        ]);
+        try {
+            $response = Http::timeout(300)->get($url);
 
-        $this->aiTaskManagerService->createFromCrawlerItem($item);
+            if (! $response->successful()) {
+                throw new \RuntimeException("Download failed with status {$response->status()}: {$url}");
+            }
 
-        // $item->task()->update([
-        //     'status' => 'completed',
-        // ]);
+            $written = file_put_contents($fullPath, $response->body());
 
-        return $url;
+            if ($written === false) {
+                throw new \RuntimeException("Failed to write file: {$fullPath}");
+            }
+
+            if (! file_exists($fullPath)) {
+                throw new \RuntimeException("File does not exist after write: {$fullPath}");
+            }
+
+            if (filesize($fullPath) === 0) {
+                throw new \RuntimeException("File is empty after write: {$fullPath}");
+            }
+
+            Log::info('HTTP download success', [
+                'path' => $fullPath,
+                'url'  => $url,
+                'size' => filesize($fullPath),
+            ]);
+
+            $item->update([
+                'status'      => 'synced',
+                'result_file' => $fullPath,
+            ]);
+
+            $this->aiTaskManagerService->createFromCrawlerItem($item);
+
+            $item->task()->update([
+                'status' => 'completed',
+            ]);
+
+            return $fullPath;
+
+        } catch (Throwable $e) {
+            Log::error('HTTP download failed', [
+                'item_id' => $item->id,
+                'url'     => $url,
+                'error'   => $e->getMessage(),
+            ]);
+
+            $item->update([
+                'status'        => 'error',
+                'error_message' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
     }
+
 
     public function syncCaseScreenshotToNas(\App\Models\CaseManagementItem $item): string
     {
