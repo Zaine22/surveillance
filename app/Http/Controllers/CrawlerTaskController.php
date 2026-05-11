@@ -10,6 +10,7 @@ use App\Http\Resources\CrawlerTaskShowResource;
 use App\Http\Resources\FailedCrawlerTaskItemResource;
 use App\Models\CrawlerTask;
 use App\Services\CrawlerTaskService;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class CrawlerTaskController extends Controller
 {
@@ -17,7 +18,7 @@ class CrawlerTaskController extends Controller
         protected CrawlerTaskService $crawlerTaskService
     ) {}
 
-    public function index(CrawlerTaskIndexRequest $request)
+    public function index(CrawlerTaskIndexRequest $request): AnonymousResourceCollection
     {
 
         $filters = $request->validated();
@@ -26,15 +27,15 @@ class CrawlerTaskController extends Controller
 
         $summary = $this->crawlerTaskService->getTaskItemSummary($filters);
 
-        return response()->json([
-            'total_tasks'    => (int) ($summary->total_tasks ?? 0),
-            'total_pending'  => (int) ($summary->total_pending ?? 0),
-            'total_crawling' => (int) ($summary->total_crawling ?? 0),
-            'total_syncing'  => (int) ($summary->total_syncing ?? 0),
-            'total_synced'   => (int) ($summary->total_synced ?? 0),
-            'total_error'    => (int) ($summary->total_error ?? 0),
-            'data'           => CrawlerTaskIndexResource::collection($tasks->items()),
-        ]);
+        return CrawlerTaskIndexResource::collection($tasks)
+            ->additional([
+                'total_tasks'    => (int) ($summary->total_tasks ?? 0),
+                'total_pending'  => (int) ($summary->total_pending ?? 0),
+                'total_crawling' => (int) ($summary->total_crawling ?? 0),
+                'total_syncing'  => (int) ($summary->total_syncing ?? 0),
+                'total_synced'   => (int) ($summary->total_synced ?? 0),
+                'total_error'    => (int) ($summary->total_error ?? 0),
+            ]);
     }
     public function show(
         CrawlerTask $crawlerTask,
