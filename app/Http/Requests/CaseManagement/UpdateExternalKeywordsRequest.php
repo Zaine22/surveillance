@@ -23,7 +23,8 @@ class UpdateExternalKeywordsRequest extends FormRequest
     {
         return [
             'case_id' => 'required|string|max:100',
-            'keywords' => 'required|array',
+            // 'keywords' => 'required|array',
+            'lexicon_id' => 'required|string|max:100'
         ];
     }
 
@@ -33,8 +34,9 @@ class UpdateExternalKeywordsRequest extends FormRequest
             'case_id.required' => '案件編號不能為空',
             'case_id.string' => '案件編號必須為字串',
             'case_id.max' => '案件編號不能超過100個字元',
-            'keywords.required' => '關鍵字不能為空',
-            'keywords.array' => '關鍵字必須為陣列格式',
+            'lexicon_id.required' => '詞庫編號不能為空',
+            'lexicon_id.string' => '詞庫編號必須為字串',
+            'lexicon_id.max' => '詞庫編號不能超過100個字元',
         ];
     }
 

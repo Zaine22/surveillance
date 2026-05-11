@@ -17,6 +17,7 @@ class CaseManagement extends Model
         'keywords',
         'status',
         'comment',
+        'lexicon_id'
     ];
 
     protected $casts = [
@@ -36,6 +37,11 @@ class CaseManagement extends Model
     public function aiPredictResult()
     {
         return $this->hasOne(AiPredictResult::class, 'id', 'ai_predict_result_id');
+    }
+
+    public function lexicon()
+    {
+        return $this->belongsTo(Lexicon::class, 'lexicon_id');
     }
 
 }
