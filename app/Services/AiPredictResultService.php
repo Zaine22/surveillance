@@ -112,7 +112,14 @@ class AiPredictResultService extends BaseFilterService
             $victims = $parsed['victim'] ?? [];
             $ages    = $parsed['age'] ?? [];
             $nsfws   = $parsed['nsfw'] ?? [];
-
+            Log::info('AI PARSED CHECK', [
+                'task_id'       => $task->id,
+                'parsed'        => $parsed,
+                'victim_count'  => count($victims),
+                'age_count'     => count($ages),
+                'nsfw_count'    => count($nsfws),
+                'max_age_score' => $this->getMaxAgeScore($ages),
+            ]);
             $hasVictim    = $this->hasVictim($victims);
             $maxAgeScore  = $this->getMaxAgeScore($ages);
             $maxPornScore = $this->getMaxPornScore($nsfws);
@@ -152,6 +159,10 @@ class AiPredictResultService extends BaseFilterService
     }
     protected function parseAiResult(array $payload): array
     {
+        if (isset($payload['parsed']) && is_array($payload['parsed'])) {
+            return $payload['parsed'];
+        }
+
         $result = $payload['result'] ?? null;
 
         if (is_array($result)) {
@@ -159,14 +170,12 @@ class AiPredictResultService extends BaseFilterService
         }
 
         if (is_string($result)) {
-            // First try normal JSON
             $decoded = json_decode($result, true);
 
             if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
                 return $decoded;
             }
 
-            // Temporary fallback because your AI returns Python dict string with single quotes
             $fixed = str_replace(
                 ["'", 'None', 'True', 'False'],
                 ['"', 'null', 'true', 'false'],
