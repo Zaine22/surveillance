@@ -107,7 +107,7 @@ class AiPredictResultService extends BaseFilterService
                 throw new \RuntimeException("Unsupported status: {$status}");
             }
 
-            $parsed = $payload;
+            $parsed = $this->parseAiResult($payload);
 
             $victims = $parsed['victim'] ?? [];
             $ages    = $parsed['age'] ?? [];
@@ -149,6 +149,42 @@ class AiPredictResultService extends BaseFilterService
 
             return $result;
         });
+    }
+    protected function parseAiResult(array $payload): array
+    {
+        $result = $payload['result'] ?? null;
+
+        if (is_array($result)) {
+            return $result;
+        }
+
+        if (is_string($result)) {
+            // First try normal JSON
+            $decoded = json_decode($result, true);
+
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return $decoded;
+            }
+
+            // Temporary fallback because your AI returns Python dict string with single quotes
+            $fixed = str_replace(
+                ["'", 'None', 'True', 'False'],
+                ['"', 'null', 'true', 'false'],
+                $result
+            );
+
+            $decoded = json_decode($fixed, true);
+
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return $decoded;
+            }
+        }
+
+        return [
+            'victim' => [],
+            'age'    => [],
+            'nsfw'   => [],
+        ];
     }
     protected function collectLexiconKeywords($lexicon): array
     {
@@ -275,6 +311,28 @@ class AiPredictResultService extends BaseFilterService
         }
     }
 
+    // protected function createAgeItems(
+    //     AiPredictResult $result,
+    //     AiModelTask $task,
+    //     array $ages
+    // ): void {
+    //     foreach ($ages as $age) {
+    //         $score = (float) ($age['underage_probability'] ?? 0);
+
+    //         AiPredictResultItem::create([
+    //             'id'                   => (string) Str::uuid(),
+    //             'ai_predict_result_id' => $result->id,
+    //             'media_url'            => $age['path'] ?? null,
+    //             'crawler_page_url'     => $task->crawlerTaskItem?->crawl_location,
+    //             'ai_result'            => $score >= 0.70 ? 'abnormal' : 'normal',
+    //             'status'               => 'valid',
+    //             'reason'               => $score >= 0.70 ? 'minor_probability' : null,
+    //             'other_reason'         => null,
+    //             'ai_score'             => round($score, 2),
+    //             'keywords'             => $result->keywords, ($result->keywords),
+    //         ]);
+    //     }
+    // }
     protected function createAgeItems(
         AiPredictResult $result,
         AiModelTask $task,
@@ -293,10 +351,33 @@ class AiPredictResultService extends BaseFilterService
                 'reason'               => $score >= 0.70 ? 'minor_probability' : null,
                 'other_reason'         => null,
                 'ai_score'             => round($score, 2),
-                'keywords'             => $result->keywords, ($result->keywords),
+                'keywords'             => $result->keywords,
             ]);
         }
     }
+
+    // protected function createNsfwItems(
+    //     AiPredictResult $result,
+    //     AiModelTask $task,
+    //     array $nsfws
+    // ): void {
+    //     foreach ($nsfws as $nsfw) {
+    //         $porn = (float) ($nsfw['result']['porn'] ?? 0);
+
+    //         AiPredictResultItem::create([
+    //             'id'                   => (string) Str::uuid(),
+    //             'ai_predict_result_id' => $result->id,
+    //             'media_url'            => $nsfw['image'] ?? null,
+    //             'crawler_page_url'     => $task->crawlerTaskItem?->crawl_location,
+    //             'ai_result'            => $porn >= 0.60 ? 'abnormal' : 'normal',
+    //             'status'               => 'valid',
+    //             'reason'               => $porn >= 0.60 ? 'nsfw_porn' : null,
+    //             'other_reason'         => null,
+    //             'ai_score'             => round($porn, 2),
+    //             'keywords'             => $result->keywords, ($result->keywords),
+    //         ]);
+    //     }
+    // }
 
     protected function createNsfwItems(
         AiPredictResult $result,
@@ -316,7 +397,7 @@ class AiPredictResultService extends BaseFilterService
                 'reason'               => $porn >= 0.60 ? 'nsfw_porn' : null,
                 'other_reason'         => null,
                 'ai_score'             => round($porn, 2),
-                'keywords'             => $result->keywords, ($result->keywords),
+                'keywords'             => $result->keywords,
             ]);
         }
     }
