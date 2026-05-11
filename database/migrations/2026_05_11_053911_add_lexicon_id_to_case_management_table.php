@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('case_management', function (Blueprint $table) {
-            $table->uuid('lexicon_id')->nullable()->after('ai_predict_result_id');
+            $table->uuid('external_lexicon_id')->nullable();
 
-            $table->foreign('lexicon_id')
+            $table->foreign('external_lexicon_id')
                 ->references('id')
                 ->on('lexicons')
                 ->nullOnDelete();
@@ -27,8 +27,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('case_management', function (Blueprint $table) {
-            $table->dropForeign(['lexicon_id']);
-            $table->dropColumn('lexicon_id');
+            $table->dropForeign(['external_lexicon_id']);
+            $table->dropColumn('external_lexicon_id');
         });
     }
 };

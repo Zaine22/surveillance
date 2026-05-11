@@ -17,7 +17,7 @@ class CaseManagement extends Model
         'keywords',
         'status',
         'comment',
-        'lexicon_id'
+        'external_lexicon_id',
     ];
 
     protected $casts = [
@@ -41,7 +41,7 @@ class CaseManagement extends Model
 
     public function lexicon()
     {
-        return $this->belongsTo(Lexicon::class, 'lexicon_id');
+        return $this->belongsTo(Lexicon::class, 'external_lexicon_id');
     }
 
 }

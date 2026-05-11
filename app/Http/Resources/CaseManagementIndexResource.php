@@ -32,6 +32,11 @@ class CaseManagementIndexResource extends JsonResource
             'created_at'       => $this->created_at,
             'screenshot_deadline' => optional($this->items->first())->due_date,
             'lexicon_id'       => $this->aiPredictResult?->lexicon_id,
+            'external_lexicon_id' => $this->external_lexicon_id,
+            'lexicon'          => $this->whenLoaded('lexicon', fn () => $this->lexicon ? [
+                'id'   => $this->lexicon->id,
+                'name' => $this->lexicon->name,
+            ] : null),
         ];
     }
 }

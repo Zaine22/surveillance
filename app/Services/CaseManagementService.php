@@ -231,7 +231,7 @@ class CaseManagementService extends BaseFilterService
             ->firstOrFail();
 
         $case->update([
-            'lexicon_id' => $data['lexicon_id'],
+            'external_lexicon_id' => $data['external_lexicon_id'],
         ]);
 
         return $case;
