@@ -53,7 +53,7 @@ class DataSyncOrchestratorService
         }
 
         $fileName = basename($sourcePath);
-        $target   = storage_path('app/public/nas/' . $fileName);
+        $target   = '/mnt/task/' . $fileName;
 
         // 1. Create the sync record
         $record = DB::transaction(function () use ($item, $target) {
@@ -90,7 +90,7 @@ class DataSyncOrchestratorService
             ]);
 
             // 4. Update the original CrawlerTaskItem status and public URL
-            $publicUrl = \Illuminate\Support\Facades\Storage::url('nas/' . $fileName);
+            $publicUrl = '/mnt/task/' . $fileName;
             $item->update([
                 'status'      => 'synced',
                 // 'result_file' => $publicUrl, //comment for frank server
@@ -141,89 +141,103 @@ class DataSyncOrchestratorService
             throw new \RuntimeException("Invalid URL: {$url}");
         }
 
-        // $fileName = basename(parse_url($url, PHP_URL_PATH));
+        $fileName = basename(parse_url($url, PHP_URL_PATH));
+        $fullPath = '/mnt/task/' . $fileName;
 
-        // $fullPath = storage_path("app/public/nas/{$fileName}");
-
-        // Log::info('Saving to path', [
-        //     'path' => $fullPath,
-        // ]);
-
-        // $response = Http::timeout(300)->get($url);
-
-        // if (! $response->successful()) {
-        //     throw new \RuntimeException("Download failed: {$url}");
-        // }
-
-        // $written = file_put_contents($fullPath, $response->body());
-
-        // if ($written === false) {
-        //     throw new \RuntimeException("Failed to write file: {$fullPath}");
-        // }
-
-        // if (! file_exists($fullPath)) {
-        //     throw new \RuntimeException("File does not exist after write");
-        // }
-
-        // if (filesize($fullPath) === 0) {
-        //     throw new \RuntimeException("File is empty");
-        // }
-
-        // $publicUrl = asset("storage/nas/{$fileName}");
-
-        Log::info('Download success', [
-            // 'path' => $fullPath,
-            'url'  => $url,
+        Log::info('Saving to path', [
+            'path' => $fullPath,
         ]);
 
-        $item->update([
-            'status'      => 'synced',
-            'result_file' => $url,
-        ]);
+        try {
+            $response = Http::timeout(300)->get($url);
 
-        $this->aiTaskManagerService->createFromCrawlerItem($item);
+            if (! $response->successful()) {
+                throw new \RuntimeException("Download failed with status {$response->status()}: {$url}");
+            }
 
-        // $item->task()->update([
-        //     'status' => 'completed',
-        // ]);
+            $written = file_put_contents($fullPath, $response->body());
 
-        return $url;
+            if ($written === false) {
+                throw new \RuntimeException("Failed to write file: {$fullPath}");
+            }
+
+            if (! file_exists($fullPath)) {
+                throw new \RuntimeException("File does not exist after write: {$fullPath}");
+            }
+
+            if (filesize($fullPath) === 0) {
+                throw new \RuntimeException("File is empty after write: {$fullPath}");
+            }
+
+            Log::info('HTTP download success', [
+                'path' => $fullPath,
+                'url'  => $url,
+                'size' => filesize($fullPath),
+            ]);
+
+            $item->update([
+                'status'      => 'synced',
+                'result_file' => $fullPath,
+            ]);
+
+            $this->aiTaskManagerService->createFromCrawlerItem($item);
+
+            $item->task()->update([
+                'status' => 'completed',
+            ]);
+
+            return $fullPath;
+
+        } catch (Throwable $e) {
+            Log::error('HTTP download failed', [
+                'item_id' => $item->id,
+                'url'     => $url,
+                'error'   => $e->getMessage(),
+            ]);
+
+            $item->update([
+                'status'        => 'error',
+                'error_message' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
     }
+
 
     public function syncCaseScreenshotToNas(\App\Models\CaseManagementItem $item): string
     {
-        $sourcePath = $item->media_url;
+        $url = $item->media_url;
 
-        Log::info('Screenshot SFTP download started', [
+        Log::info('Screenshot HTTP download started', [
             'item_id' => $item->id,
-            'url'     => $sourcePath,
+            'url'     => $url,
         ]);
 
-        if (filter_var($sourcePath, FILTER_VALIDATE_URL)) {
-            $fileName = basename(parse_url($sourcePath, PHP_URL_PATH));
-
-            // Extract the directory from the URL path, assuming it matches the SFTP directory (e.g. 'screenshots' or 'zips')
-            $pathParts = explode('/', trim(parse_url($sourcePath, PHP_URL_PATH), '/'));
-            $folder = count($pathParts) >= 2 ? $pathParts[count($pathParts) - 2] : 'screenshots';
-
-            $sourcePath = "{$folder}/{$fileName}";
-
-            Log::info('Converted screenshot URL to SFTP path', [
-                'original' => $item->media_url,
-                'mapped'   => $sourcePath,
-            ]);
-        } else {
-            $fileName = basename($sourcePath);
+        if (! filter_var($url, FILTER_VALIDATE_URL)) {
+            throw new \RuntimeException("Invalid screenshot URL: {$url}");
         }
 
-        $target = storage_path("app/public/nas/{$fileName}");
+        // The Laravel and Python servers are on the same machine.
+        // Replace the external IP with 127.0.0.1 to avoid loopback timeout.
+        $parsedHost = parse_url($url, PHP_URL_HOST);
+        $downloadUrl = str_replace($parsedHost, '127.0.0.1', $url);
 
-        $record = DB::transaction(function () use ($item, $target, $sourcePath) {
+        $fileName = basename(parse_url($url, PHP_URL_PATH));
+        $fullPath = '/mnt/task/' . $fileName;
+
+        Log::info('Saving screenshot to path', [
+            'original_url' => $url,
+            'download_url' => $downloadUrl,
+            'path'         => $fullPath,
+        ]);
+
+        $record = DB::transaction(function () use ($item, $fullPath) {
             return DataSyncRecord::create([
                 'id'          => (string) Str::uuid(),
                 'source_path' => $item->media_url,
-                'target_path' => $target,
-                'file_name'   => basename($target),
+                'target_path' => $fullPath,
+                'file_name'   => basename($fullPath),
                 'status'      => 'transferring',
                 'retry_count' => 0,
                 'max_retry'   => 3,
@@ -232,14 +246,30 @@ class DataSyncOrchestratorService
         });
 
         try {
-            $this->rsyncService->syncCrawlerFileToNas(
-                $sourcePath,
-                $target
-            );
+            $response = Http::timeout(300)->get($downloadUrl);
 
-            Log::info('Screenshot sync orchestration successful', [
-                'item_id'     => $item->id,
-                'target_path' => $target,
+            if (! $response->successful()) {
+                throw new \RuntimeException("Download failed with status {$response->status()}: {$url}");
+            }
+
+            $written = file_put_contents($fullPath, $response->body());
+
+            if ($written === false) {
+                throw new \RuntimeException("Failed to write screenshot: {$fullPath}");
+            }
+
+            if (! file_exists($fullPath)) {
+                throw new \RuntimeException("Screenshot file does not exist after write: {$fullPath}");
+            }
+
+            if (filesize($fullPath) === 0) {
+                throw new \RuntimeException("Screenshot file is empty after write: {$fullPath}");
+            }
+
+            Log::info('Screenshot HTTP download success', [
+                'item_id' => $item->id,
+                'path'    => $fullPath,
+                'size'    => filesize($fullPath),
             ]);
 
             $record->update([
@@ -247,17 +277,18 @@ class DataSyncOrchestratorService
                 'finished_at' => now(),
             ]);
 
-            $publicUrl = asset("storage/nas/{$fileName}");
+            $publicUrl = config('app.url') . '/api/task/' . $fileName;
 
             $item->update([
                 'media_url' => $publicUrl,
             ]);
 
-            return $target;
+            return $publicUrl;
 
         } catch (Throwable $e) {
-            Log::error('Screenshot sync orchestration failed', [
+            Log::error('Screenshot HTTP download failed', [
                 'item_id' => $item->id,
+                'url'     => $url,
                 'error'   => $e->getMessage(),
             ]);
 

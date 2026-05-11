@@ -20,14 +20,14 @@ class PublishSystemNoticeJob implements ShouldQueue
         // Safety check
         if (
             ! $notice ||
-            $notice->status !== 'scheduled' ||
+            $notice->status !== 'pending' ||
             $notice->publish_date->isFuture()
         ) {
             return;
         }
 
         $notice->update([
-            'status' => 'published'
+            'status' => 'published',
         ]);
 
         broadcast(new SystemNoticeEvent($notice));
