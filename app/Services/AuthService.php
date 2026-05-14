@@ -361,7 +361,6 @@ class AuthService
             $user->update([
                 'password'              => $hashedPassword,
                 'password_last_changed' => null,
-                'status'                => 'password_expired',
             ]);
 
             $user->passwordHistories()->create([
