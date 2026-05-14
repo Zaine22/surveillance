@@ -79,7 +79,7 @@ class DataSyncOrchestratorService
             // );
 
             Log::info('File sync orchestration successful', [
-                'item_id'     => $item->id,
+                'item_id' => $item->id,
                 // 'target_path' => $target, //comment for frank server
             ]);
 
@@ -92,7 +92,7 @@ class DataSyncOrchestratorService
             // 4. Update the original CrawlerTaskItem status and public URL
             $publicUrl = '/mnt/task/' . $fileName;
             $item->update([
-                'status'      => 'synced',
+                'status' => 'synced',
                 // 'result_file' => $publicUrl, //comment for frank server
             ]);
             $this->aiTaskManagerService->createFromCrawlerItem($item);
@@ -128,6 +128,82 @@ class DataSyncOrchestratorService
 
     }
 
+    // public function syncCrawlerFileToNasWithHttp(CrawlerTaskItem $item): string
+    // {
+    //     $url = $item->result_file;
+
+    //     Log::info('HTTP download started', [
+    //         'item_id' => $item->id,
+    //         'url'     => $url,
+    //     ]);
+
+    //     if (! filter_var($url, FILTER_VALIDATE_URL)) {
+    //         throw new \RuntimeException("Invalid URL: {$url}");
+    //     }
+
+    //     $fileName = basename(parse_url($url, PHP_URL_PATH));
+    //     $fullPath = '/mnt/task/' . $fileName;
+
+    //     Log::info('Saving to path', [
+    //         'path' => $fullPath,
+    //     ]);
+
+    //     try {
+    //         $response = Http::timeout(300)->get($url);
+
+    //         if (! $response->successful()) {
+    //             throw new \RuntimeException("Download failed with status {$response->status()}: {$url}");
+    //         }
+
+    //         $written = file_put_contents($fullPath, $response->body());
+
+    //         if ($written === false) {
+    //             throw new \RuntimeException("Failed to write file: {$fullPath}");
+    //         }
+
+    //         if (! file_exists($fullPath)) {
+    //             throw new \RuntimeException("File does not exist after write: {$fullPath}");
+    //         }
+
+    //         if (filesize($fullPath) === 0) {
+    //             throw new \RuntimeException("File is empty after write: {$fullPath}");
+    //         }
+
+    //         Log::info('HTTP download success', [
+    //             'path' => $fullPath,
+    //             'url'  => $url,
+    //             'size' => filesize($fullPath),
+    //         ]);
+
+    //         $item->update([
+    //             'status'      => 'synced',
+    //             'result_file' => $fullPath,
+    //         ]);
+
+    //         $this->aiTaskManagerService->createFromCrawlerItem($item);
+
+    //         $item->task()->update([
+    //             'status' => 'completed',
+    //         ]);
+
+    //         return $fullPath;
+
+    //     } catch (Throwable $e) {
+    //         Log::error('HTTP download failed', [
+    //             'item_id' => $item->id,
+    //             'url'     => $url,
+    //             'error'   => $e->getMessage(),
+    //         ]);
+
+    //         $item->update([
+    //             'status'        => 'error',
+    //             'error_message' => $e->getMessage(),
+    //         ]);
+
+    //         throw $e;
+    //     }
+    // }
+
     public function syncCrawlerFileToNasWithHttp(CrawlerTaskItem $item): string
     {
         $url = $item->result_file;
@@ -141,32 +217,66 @@ class DataSyncOrchestratorService
             throw new \RuntimeException("Invalid URL: {$url}");
         }
 
-        $fileName = basename(parse_url($url, PHP_URL_PATH));
-        $fullPath = '/mnt/task/' . $fileName;
-
-        Log::info('Saving to path', [
-            'path' => $fullPath,
-        ]);
-
         try {
-            $response = Http::timeout(300)->get($url);
+            $item->loadMissing('task.crawlerConfig');
+
+            $sanitizeFileNamePart = function (?string $value, string $fallback): string {
+                $value = trim((string) $value);
+
+                if ($value === '') {
+                    $value = $fallback;
+                }
+
+                // Remove invalid filename characters
+                $value = preg_replace('/[\\\\\/:*?"<>|]/', '_', $value);
+
+                // Replace multiple spaces with single underscore
+                $value = preg_replace('/\s+/', '_', $value);
+
+                return $value ?: $fallback;
+            };
+
+            $crawlerConfigName = $sanitizeFileNamePart(
+                $item->task?->crawlerConfig?->name ?? 'CrawlerConfig',
+                'CrawlerConfig'
+            );
+
+            $keywords = is_array($item->keywords)
+                ? $item->keywords
+                : json_decode($item->keywords ?? '[]', true);
+
+            $firstKeyword = $sanitizeFileNamePart(
+                $keywords[0] ?? 'Keyword',
+                'Keyword'
+            );
+
+            $crawlLocation = $sanitizeFileNamePart(
+                $item->crawl_location ?? 'Location',
+                'Location'
+            );
+
+            $fileName = "{$crawlerConfigName}_{$firstKeyword}_{$crawlLocation}.zip";
+            $fullPath = '/mnt/task/' . $fileName;
+
+            Log::info('Saving to path', [
+                'path'      => $fullPath,
+                'file_name' => $fileName,
+            ]);
+
+            $response = Http::timeout(300)
+                ->sink($fullPath)
+                ->get($url);
 
             if (! $response->successful()) {
                 throw new \RuntimeException("Download failed with status {$response->status()}: {$url}");
             }
 
-            $written = file_put_contents($fullPath, $response->body());
-
-            if ($written === false) {
-                throw new \RuntimeException("Failed to write file: {$fullPath}");
-            }
-
             if (! file_exists($fullPath)) {
-                throw new \RuntimeException("File does not exist after write: {$fullPath}");
+                throw new \RuntimeException("File does not exist after download: {$fullPath}");
             }
 
             if (filesize($fullPath) === 0) {
-                throw new \RuntimeException("File is empty after write: {$fullPath}");
+                throw new \RuntimeException("File is empty after download: {$fullPath}");
             }
 
             Log::info('HTTP download success', [
@@ -204,7 +314,6 @@ class DataSyncOrchestratorService
         }
     }
 
-
     public function syncCaseScreenshotToNas(\App\Models\CaseManagementItem $item): string
     {
         $url = $item->media_url;
@@ -220,7 +329,7 @@ class DataSyncOrchestratorService
 
         // The Laravel and Python servers are on the same machine.
         // Replace the external IP with 127.0.0.1 to avoid loopback timeout.
-        $parsedHost = parse_url($url, PHP_URL_HOST);
+        $parsedHost  = parse_url($url, PHP_URL_HOST);
         $downloadUrl = str_replace($parsedHost, '127.0.0.1', $url);
 
         $fileName = basename(parse_url($url, PHP_URL_PATH));

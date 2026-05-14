@@ -192,7 +192,7 @@ class DashboardService
     {
         return DB::table('system_notices')
             ->where('status', 'published')
-            ->orderByDesc('created_at')
+            ->orderByDesc('publish_date')
             ->offset($offset)
             ->limit($limit)
             ->get([

@@ -1,7 +1,7 @@
 <?php
-
 namespace App\Services;
 
+use App\Models\Lexicon;
 use App\Models\LexiconKeyword;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -30,17 +30,17 @@ class LexiconKeywordService
 
     public function createLexiconKeyword(array $data): array
     {
-        $keywords = $data['keywords'];
+        $keywords        = $data['keywords'];
         $createdKeywords = [];
 
         DB::transaction(function () use ($data, $keywords, &$createdKeywords) {
             foreach ($keywords as $keywordItem) {
                 $createdKeywords[] = LexiconKeyword::create([
-                    'lexicon_id' => $data['lexicon_id'],
-                    'keywords' => (array) $keywordItem,
-                    'status' => $data['status'] ?? 'enabled',
+                    'lexicon_id'      => $data['lexicon_id'],
+                    'keywords'        => (array) $keywordItem,
+                    'status'          => $data['status'] ?? 'enabled',
                     'crawl_hit_count' => $data['crawl_hit_count'] ?? 0,
-                    'case_count' => $data['case_count'] ?? 0,
+                    'case_count'      => $data['case_count'] ?? 0,
                 ]);
             }
         });
@@ -63,8 +63,8 @@ class LexiconKeywordService
     public function import(UploadedFile $file): void
     {
         $spreadsheet = IOFactory::load($file->getRealPath());
-        $sheet = $spreadsheet->getActiveSheet();
-        $rows = $sheet->toArray(null, true, true, true);
+        $sheet       = $spreadsheet->getActiveSheet();
+        $rows        = $sheet->toArray(null, true, true, true);
 
         DB::transaction(function () use ($rows) {
             foreach ($rows as $index => $row) {
@@ -79,12 +79,12 @@ class LexiconKeywordService
                 }
 
                 LexiconKeyword::create([
-                    'id' => Str::uuid(),
-                    'lexicon_id' => trim($row['A']),
-                    'keywords' => $this->parseKeywords($row['B']),
+                    'id'              => Str::uuid(),
+                    'lexicon_id'      => trim($row['A']),
+                    'keywords'        => $this->parseKeywords($row['B']),
                     'crawl_hit_count' => (int) ($row['C'] ?? 0),
-                    'case_count' => (int) ($row['D'] ?? 0),
-                    'status' => $row['E'] ?? 'enabled',
+                    'case_count'      => (int) ($row['D'] ?? 0),
+                    'status'          => $row['E'] ?? 'enabled',
                 ]);
             }
         });
@@ -94,7 +94,7 @@ class LexiconKeywordService
     {
         return array_values(array_unique(array_filter(
             array_map(
-                fn ($word) => trim($word),
+                fn($word) => trim($word),
                 preg_split('/[,|\n]/', $keywords)
             )
         )));
@@ -102,10 +102,11 @@ class LexiconKeywordService
 
     public function export(string $lexiconId): StreamedResponse
     {
-        $data = LexiconKeyword::where('lexicon_id', $lexiconId)->get();
+        $lexicon = Lexicon::findOrFail($lexiconId);
+        $data    = LexiconKeyword::where('lexicon_id', $lexiconId)->get();
 
         $spreadsheet = new Spreadsheet;
-        $sheet = $spreadsheet->getActiveSheet();
+        $sheet       = $spreadsheet->getActiveSheet();
 
         // Header row
         // $sheet->setCellValue('A1', '詞庫ID');
@@ -119,21 +120,25 @@ class LexiconKeywordService
         foreach ($data as $item) {
             // $sheet->setCellValue('A'.$rowNumber, $item->lexicon_id);
             $sheet->setCellValue(
-                'A'.$rowNumber,
+                'A' . $rowNumber,
                 is_array($item->keywords)
                     ? implode(',', $item->keywords)
                     : $item->keywords
             );
-            $sheet->setCellValue('B'.$rowNumber, $item->crawl_hit_count);
-            $sheet->setCellValue('C'.$rowNumber, $item->case_count);
-            $sheet->setCellValue('D'.$rowNumber, $item->status === 'enabled' ? '上架' : '下架');
+            $sheet->setCellValue('B' . $rowNumber, $item->crawl_hit_count);
+            $sheet->setCellValue('C' . $rowNumber, $item->case_count);
+            $sheet->setCellValue('D' . $rowNumber, $item->status === 'enabled' ? '上架' : '下架');
 
             $rowNumber++;
         }
 
         $writer = new Xlsx($spreadsheet);
 
-        $fileName = 'lexicon_keywords_'.now()->format('Y-m-d_H-i-s').'.xlsx';
+        // $fileName = 'lexicon_keywords_'.now()->format('Y-m-d_H-i-s').'.xlsx';
+
+        $lexiconName = preg_replace('/[\\\\\/:*?"<>|]/', '_', $lexicon->name);
+
+        $fileName = $lexiconName . '_Keyword_List.xlsx';
 
         return response()->streamDownload(
             function () use ($writer) {
@@ -160,14 +165,14 @@ class LexiconKeywordService
         return LexiconKeyword::updateOrCreate(
             [
                 'parent_id' => $parent->id,
-                'language' => $language,
+                'language'  => $language,
             ],
             [
-                'lexicon_id' => $parent->lexicon_id,
-                'keywords' => array_values(array_unique($keywords)),
+                'lexicon_id'      => $parent->lexicon_id,
+                'keywords'        => array_values(array_unique($keywords)),
                 'crawl_hit_count' => 0,
-                'case_count' => 0,
-                'status' => 'enabled',
+                'case_count'      => 0,
+                'status'          => 'enabled',
             ]
         );
     }
