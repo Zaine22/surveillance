@@ -1,6 +1,7 @@
 <?php
 namespace App\Services;
 
+use App\Models\CaseManagement;
 use App\Models\Lexicon;
 use App\Models\LexiconKeyword;
 use Illuminate\Support\Facades\DB;
@@ -83,8 +84,8 @@ class LexiconService extends BaseFilterService
 
             $keywordGroups = $data['keywords'] ?? [];
             unset($data['keywords']);
-
-            $lexicon = Lexicon::create($data);
+            $caseManagementId = $data['case_management_id'] ?? null;
+            $lexicon          = Lexicon::create($data);
 
             foreach ($keywordGroups as $group) {
 
@@ -99,6 +100,12 @@ class LexiconService extends BaseFilterService
                     'crawl_hit_count' => 0,
                     'case_count'      => 0,
                     'status'          => 'enabled',
+                ]);
+            }
+
+            if ($caseManagementId) {
+                CaseManagement::where('id', $caseManagementId)->update([
+                    'external_lexicon_id' => $lexicon->id,
                 ]);
             }
 

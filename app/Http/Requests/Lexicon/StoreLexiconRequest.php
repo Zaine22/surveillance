@@ -28,6 +28,7 @@ class StoreLexiconRequest extends FormRequest
             'keywords' => ['required', 'array'],
             'keywords.*' => ['required', 'array'],
             'keywords.*.*' => ['required', 'string', 'min:1', 'max:100'],
+            'case_management_id'  => ['nullable', 'exists:case_management,id'],
         ];
     }
 }
