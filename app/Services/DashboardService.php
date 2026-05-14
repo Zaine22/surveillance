@@ -7,6 +7,26 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardService
 {
+    // public function getStats(array $params): array
+    // {
+    //     [$from, $to, $range] = $this->resolveRange($params);
+
+    //     $from = Carbon::parse($from)->startOfDay();
+    //     $to   = Carbon::parse($to)->endOfDay();
+
+    //     $cacheKey = "dashboard:all:{$range}:{$from->timestamp}:{$to->timestamp}";
+
+    //     return Cache::remember($cacheKey, 5, function () use ($from, $to, $params) {
+    //         return [
+    //             'stats'                 => $this->compute($from, $to),
+    //             'top_keywords'          => app(KeywordRankingService::class)
+    //                 ->getRankingWithDate($from, $to, 5),
+    //             'prejudgement_sources'  => $this->computeSources($from, $to),
+    //             'casemanagment_sources' => $this->computeCaseDomainStats($from, $to),
+    //             'system_announcements'  => $this->getSystemAnnouncements(),
+    //         ];
+    //     });
+    // }
     public function getStats(array $params): array
     {
         [$from, $to, $range] = $this->resolveRange($params);
@@ -14,16 +34,22 @@ class DashboardService
         $from = Carbon::parse($from)->startOfDay();
         $to   = Carbon::parse($to)->endOfDay();
 
-        $cacheKey = "dashboard:all:{$range}:{$from->timestamp}:{$to->timestamp}";
+        $cacheKey = 'dashboard:all:' . md5(json_encode([
+            'range'     => $range,
+            'from_date' => $from->toDateTimeString(),
+            'to_date'   => $to->toDateTimeString(),
+        ]));
 
-        return Cache::remember($cacheKey, 5, function () use ($from, $to, $params) {
+        return Cache::remember($cacheKey, 5, function () use ($from, $to) {
             return [
                 'stats'                 => $this->compute($from, $to),
+
                 'top_keywords'          => app(KeywordRankingService::class)
                     ->getRankingWithDate($from, $to, 5),
+
                 'prejudgement_sources'  => $this->computeSources($from, $to),
+
                 'casemanagment_sources' => $this->computeCaseDomainStats($from, $to),
-                'system_announcements'  => $this->getSystemAnnouncements(),
             ];
         });
     }
@@ -293,33 +319,77 @@ class DashboardService
 
     }
 
-    private function resolveRange(array $params): array
+    // private function resolveRange(array $params): array
+    // {
+    //     if (! empty($params['from_date']) && ! empty($params['to_date'])) {
+    //         return [
+    //             Carbon::parse($params['from_date'])->startOfDay(),
+    //             Carbon::parse($params['to_date'])->endOfDay(),
+    //             'custom',
+    //         ];
+    //     }
+
+    //     $range = $params['range'] ?? null;
+
+    //     switch ($range) {
+    //         case 'today':
+    //             return [now()->startOfDay(), now()->endOfDay(), 'today'];
+    //         case 'one_week':
+    //             return [now()->subDays(7)->startOfDay(), now()->endOfDay(), 'one_week'];
+    //         case 'one_month':
+    //             return [now()->subDays(30)->startOfDay(), now()->endOfDay(), 'one_month'];
+    //         case 'this_week':
+    //             return [now()->startOfWeek(), now()->endOfWeek(), 'this_week'];
+    //         case 'this_month':
+    //             return [now()->startOfMonth(), now()->endOfMonth(), 'this_month'];
+    //         case 'one_year':
+    //             return [now()->subDays(365)->startOfDay(), now()->endOfDay(), 'one_year'];
+    //     }
+
+    //     return [now()->subDays(7)->startOfDay(), now()->endOfDay(), 'default'];
+    // }
+    protected function resolveRange(array $params): array
     {
         if (! empty($params['from_date']) && ! empty($params['to_date'])) {
             return [
                 Carbon::parse($params['from_date'])->startOfDay(),
                 Carbon::parse($params['to_date'])->endOfDay(),
-                'custom',
+                'custom_range',
             ];
         }
 
-        $range = $params['range'] ?? null;
+        $range = $params['range'] ?? 'one_week';
 
-        switch ($range) {
-            case 'today':
-                return [now()->startOfDay(), now()->endOfDay(), 'today'];
-            case 'one_week':
-                return [now()->subDays(7)->startOfDay(), now()->endOfDay(), 'one_week'];
-            case 'one_month':
-                return [now()->subDays(30)->startOfDay(), now()->endOfDay(), 'one_month'];
-            case 'this_week':
-                return [now()->startOfWeek(), now()->endOfWeek(), 'this_week'];
-            case 'this_month':
-                return [now()->startOfMonth(), now()->endOfMonth(), 'this_month'];
-            case 'one_year':
-                return [now()->subDays(365)->startOfDay(), now()->endOfDay(), 'one_year'];
-        }
+        return match ($range) {
+            'today'     => [
+                now()->startOfDay(),
+                now()->endOfDay(),
+                'today',
+            ],
 
-        return [now()->subDays(7)->startOfDay(), now()->endOfDay(), 'default'];
+            'one_week'  => [
+                now()->subWeek()->startOfDay(),
+                now()->endOfDay(),
+                'one_week',
+            ],
+
+            'one_month' => [
+                now()->subMonth()->startOfDay(),
+                now()->endOfDay(),
+                'one_month',
+            ],
+
+            'one_year'  => [
+                now()->subYear()->startOfDay(),
+                now()->endOfDay(),
+                'one_year',
+            ],
+
+            default     => [
+                now()->subWeek()->startOfDay(),
+                now()->endOfDay(),
+                'one_week',
+            ],
+        };
     }
 }

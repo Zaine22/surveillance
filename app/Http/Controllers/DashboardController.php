@@ -23,11 +23,13 @@ class DashboardController extends Controller
         $limit  = $validated['limit'] ?? 5;
         $offset = $validated['offset'] ?? 0;
 
+        $dashboardData = $this->dashboardService->getStats($validated);
+
         return response()->json([
             'code'    => 0,
             'message' => 'success',
             'data'    => [
-                 ...$this->dashboardService->getStats($validated),
+                 ...$dashboardData,
 
                 'system_announcements' => $this->dashboardService
                     ->getSystemAnnouncements($limit, $offset),
