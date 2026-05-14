@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Auth\ChangePasswordRequest;
@@ -28,8 +27,8 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'User registered successfully',
-            'user' => $result['user'],
-            'token' => $result['token'],
+            'user'    => $result['user'],
+            'token'   => $result['token'],
         ], 201);
     }
 
@@ -177,7 +176,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'User updated successfully',
-            'user' => $updatedUser,
+            'user'    => $updatedUser,
         ]);
     }
 
@@ -194,7 +193,7 @@ class AuthController extends Controller
 
         $user = $request->user();
 
-        Log::info('user'.$user);
+        Log::info('user' . $user);
 
         $data['created_by'] = $user->id;
 
@@ -202,7 +201,30 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'User created successfully',
-            'user' => $user,
+            'user'    => $user,
         ], 201);
+    }
+
+    public function forgetPassword(Request $request)
+    {
+    $data = $request->validate([
+            'email' => ['required', 'email', 'exists:users,email'],
+        ], [
+            'email.required' => '請輸入電子郵件',
+            'email.email'    => '電子郵件格式錯誤',
+            'email.exists'   => '請輸入正確的帳號',
+        ]);
+
+        $result = $this->authService->forgetPassword($data['email']);
+
+        if ($result['error'] ?? false) {
+            return response()->json([
+                'message' => $result['error'],
+            ], 400);
+        }
+
+        return response()->json([
+            'message' => $result['message'] ?? '重置密碼通知信已成功發送',
+        ]);
     }
 }

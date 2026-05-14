@@ -1,0 +1,76 @@
+Component,Type,Variable/Key,English,Traditional Chinese
+AuthController,Response,message,User registered successfully,用戶註冊成功
+AuthController,Response,message,Password changed successfully. Please login again.,密碼已成功更改，請重新登入
+AuthController,Response,message,Logout successful,登出成功
+AuthController,Error,message,Failed to send OTP. Please try again later.,發送驗證碼失敗，請稍後再試。
+AuthController,Response,message,OTP sent successfully.,驗證碼已成功發送。
+AuthController,Response,message,OTP verified successfully,驗證碼驗證成功
+AuthController,Response,message,User updated successfully,用戶更新成功
+AuthController,Response,message,User created successfully,用戶創建成功
+AuthController,Validation,email.required,Please enter email,請輸入電子郵件
+AuthController,Validation,email.email,Email format is incorrect,電子郵件格式錯誤
+AuthController,Validation,email.exists,Please enter the correct account,請輸入正確的帳號
+AuthController,Response,message,Password reset notification email has been successfully sent,重置密碼通知信已成功發送
+AuthService,Validation,email,Please enter the correct account/password.,請輸入正確的帳號/密碼。
+AuthService,Error,error,User account is not verified yet!,使用者帳號尚未驗證！
+AuthService,Validation,otp,Incorrect verification code,驗證碼錯誤
+AuthService,Validation,current_password,Current password is incorrect,目前密碼不正確
+AuthService,Validation,new_password,New password cannot be the same as the last three used passwords,新密碼不能與前三次使用過之密碼相同
+AuthService,Response,message,Password changed successfully. Please login again.,密碼已成功更改，請重新登入
+AuthService,Error,error,Please enter the correct account,請輸入正確的帳號
+AuthService,Response,message,OTP has been sent please check your email,驗證碼已發送，請檢查您的電子郵件
+AuthService,Response,message,OTP sent successfully,驗證碼已成功發送
+AuthService,Error,error,Failed to send OTP please try again later,發送驗證碼失敗，請稍後再試
+AuthService,Validation,error,User with email {email} not found,找不到電子郵件為 {email} 的使用者
+AuthService,Validation,message,Verification record not found,找不到驗證記錄
+AuthService,Validation,otp,Invalid OTP code,無效的驗證碼
+AuthService,Validation,otp,Expired OTP code,驗證碼已過期
+AuthService,Response,message,OTP verified successfully,驗證碼驗證成功
+AuthService,Error,error,Please enter the correct account,請輸入正確的帳號
+AuthService,Error,error,User account is not yet enabled,使用者帳號尚未啟用
+AuthService,Response,message,Password reset notification email has been successfully sent,重置密碼通知信已成功發送
+AuthService,Error,error,Failed to reset password please try again later,重置密碼失敗，請稍後再試
+ChangePasswordRequest,Validation,current_password.required,Current password cannot be empty,当前密碼不能為空
+ChangePasswordRequest,Validation,new_password.required,New password cannot be empty,新密碼不能為空
+ChangePasswordRequest,Validation,new_password.string,New password must be a string,新密碼必須為字串
+ChangePasswordRequest,Validation,new_password.min,New password must be at least 8 characters,新密碼至少需要8個字元
+LoginUserRequest,Validation,email.required,Email cannot be empty,電子郵件不能為空
+LoginUserRequest,Validation,email.email,Email format is incorrect,電子郵件格式不正確
+LoginUserRequest,Validation,password.required,Password cannot be empty,密碼不能為空
+LoginUserRequest,Validation,password.string,Password must be a string,密碼必須為字串
+LoginUserRequest,Validation,password.min,Password must be at least 8 characters,密碼至少需要8個字元
+LoginUserRequest,Validation,otp.string,OTP must be a string,OTP必須為字串
+LoginUserRequest,Validation,otp.size,OTP must be 6 digits,OTP必須為6位數
+RegisterUserRequest,Validation,name.required,Username cannot be empty,使用者名稱不能為空
+RegisterUserRequest,Validation,name.string,Username must be a string,使用者名稱必須為字串
+RegisterUserRequest,Validation,name.max,Username cannot exceed 255 characters,使用者名稱不能超過255個字元
+RegisterUserRequest,Validation,email.required,Email cannot be empty,電子郵件不能為空
+RegisterUserRequest,Validation,email.email,Email format is incorrect,電子郵件格式不正確
+RegisterUserRequest,Validation,email.unique,Email is already registered,電子郵件已被註冊
+RegisterUserRequest,Validation,password.required,Password cannot be empty,密碼不能為空
+RegisterUserRequest,Validation,password.string,Password must be a string,密碼必須為字串
+RegisterUserRequest,Validation,password.min,Password must be at least 8 characters,密碼至少需要8個字元
+RegisterUserRequest,Validation,department.string,Department must be a string,部門必須為字串
+SendOtpRequest,Validation,email.required,Email cannot be empty,電子郵件不能為空
+SendOtpRequest,Validation,email.email,Email format is incorrect,電子郵件格式不正確
+StoreUserRequest,Authorization,Exception,You are not allowed to perform this action.,您無權執行此操作
+StoreUserRequest,Validation,name.required,Username cannot be empty,使用者名稱不能為空
+StoreUserRequest,Validation,name.string,Username must be a string,使用者名稱必須為字串
+StoreUserRequest,Validation,name.max,Username cannot exceed 255 characters,使用者名稱不能超過255個字元
+StoreUserRequest,Validation,email.required,Email cannot be empty,電子郵件不能為空
+StoreUserRequest,Validation,email.email,Email format is incorrect,電子郵件格式不正確
+StoreUserRequest,Validation,email.unique,Email is already registered,電子郵件已被註冊
+StoreUserRequest,Validation,role.required,Role cannot be empty,角色不能為空
+StoreUserRequest,Validation,role.string,Role must be a string,角色必須為字串
+StoreUserRequest,Validation,department.string,Department must be a string,部門必須為字串
+StoreUserRequest,Validation,roles.required,Roles cannot be empty,角色不能為空
+StoreUserRequest,Validation,roles.string,Roles must be a string,角色必須為字串
+StoreUserRequest,Validation,status.required,Status cannot be empty,狀態不能為空
+StoreUserRequest,Validation,status.string,Status must be a string,狀態必須為字串
+StoreUserRequest,Validation,phone.string,Phone must be a string,電話必須為字串
+StoreUserRequest,Validation,phone.nullable,Phone can be empty,電話可以為空
+VerifyUserRequest,Validation,email.required,Email cannot be empty,電子郵件不能為空
+VerifyUserRequest,Validation,email.email,Email format is incorrect,電子郵件格式不正確
+VerifyUserRequest,Validation,otp.required,OTP cannot be empty,OTP不能為空
+VerifyUserRequest,Validation,otp.string,OTP must be a string,OTP必須為字串
+VerifyUserRequest,Validation,otp.size,OTP must be 6 digits,OTP必須為6位數

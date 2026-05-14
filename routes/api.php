@@ -27,21 +27,27 @@ use App\Http\Controllers\SystemNoticeController;
 use App\Http\Controllers\ValidationRecordController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(
-    'operation.log'
-)->group(function () {
+Route::middleware([
+    'operation.log',
+    'allow.ip'
+])->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/forget-password', [AuthController::class, 'forgetPassword']);
     Route::apiResource('case-managements', CaseManagementController::class);
+    Route::get('/case-managements/get-external-case/{case_id}', [CaseManagementController::class, 'showExternalCase']);
 });
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/send-otp', [AuthController::class, 'sendOtp']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
+Route::post('/forget-password', [AuthController::class, 'forgetPassword']);
 // 'allow.ip',
 
 Route::middleware([
     'auth:sanctum',
-    'operation.log'])->group(function () {
+    'operation.log',
+    'allow.ip'
+])->group(function () {
     Route::get('/ai-test', [AiHealthLogController::class, 'aiTest']);
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
     Route::get('/dashboard/ranking', [DashboardController::class, 'ranking']);
@@ -152,7 +158,7 @@ Route::post('/crawler/task-items/urls', [CrawlerTaskItemController::class, 'stor
 Route::post('/crawler/task-items/upload', [CrawlerTaskItemController::class, 'upload']);
 Route::post('/crawler/trigger', [CrawlerTaskItemController::class, 'trigger']);
 Route::get('/crawler/task-items', [CrawlerTaskItemController::class, 'results']);
-Route::get('/case-managements/get-external-case/{case_id}', [CaseManagementController::class, 'showExternalCase']);
+
 
 // Route::get('/ai-test', function (AiTaskManagerService $service) {
 

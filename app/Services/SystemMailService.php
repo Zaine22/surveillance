@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services;
 
 use App\Mail\SystemMail;
@@ -14,7 +13,7 @@ class SystemMailService
                 subjectText: 'Your OTP Code',
                 viewname: 'emails.otp',
                 data: [
-                    'otp' => $otp,
+                    'otp'       => $otp,
                     'createdAt' => now()->format('Y-m-d H:i:s'),
                     'expiresIn' => 5,
                 ]
@@ -32,7 +31,7 @@ class SystemMailService
                 subjectText: $title,
                 viewname: 'emails.notification',
                 data: [
-                    'title' => $title,
+                    'title'   => $title,
                     'message' => $message,
                 ]
             )
@@ -42,15 +41,34 @@ class SystemMailService
     public function sendAccountCreated(string $email, string $password): void
     {
         $appName = config('app.name', 'Surveillance');
-        $title = "帳戶啟用通知信";
+        $title   = "帳戶啟用通知信";
 
         Mail::to($email)->send(
             new SystemMail(
                 subjectText: $title,
                 viewname: 'emails.account_created',
                 data: [
-                    'title' => $title,
-                    'email' => $email,
+                    'title'    => $title,
+                    'email'    => $email,
+                    'password' => $password,
+                ]
+            )
+        );
+    }
+
+    public function sendForgetPassword(string $email, string $password): void
+    {
+        $appName = config('app.name', 'Surveillance');
+
+        $title = "{$appName}重置密碼通知";
+
+        Mail::to($email)->send(
+            new SystemMail(
+                subjectText: $title,
+                viewname: 'emails.forget_password',
+                data: [
+                    'title'    => $title,
+                    'email'    => $email,
                     'password' => $password,
                 ]
             )
