@@ -35,7 +35,7 @@ class LoginUserRequest extends FormRequest
             'email.email' => '電子郵件格式不正確',
             'password.required' => '密碼不能為空',
             'password.string' => '密碼必須為字串',
-            'password.min' => '密碼至少需要8個字元',
+            // 'password.min' => '密碼至少需要8個字元',
             'otp.string' => 'OTP必須為字串',
             'otp.size' => 'OTP必須為6位數',
         ];
