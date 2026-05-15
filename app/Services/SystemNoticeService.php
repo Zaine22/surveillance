@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services;
 
 use App\Jobs\ExpireSystemNoticeJob;
@@ -11,10 +10,10 @@ class SystemNoticeService
 {
     public function getAllNotices(array $filters = [])
     {
-        $page = $filters['page'] ?? 1;
+        $page    = $filters['page'] ?? 1;
         $perPage = $filters['per_page'] ?? 15;
-        $search = $filters['search'] ?? null;
-        $status = $filters['status'] ?? null;
+        $search  = $filters['search'] ?? null;
+        $status  = $filters['status'] ?? null;
 
         $query = SystemNotice::with('creator');
 
@@ -39,7 +38,7 @@ class SystemNoticeService
 
             return $notice;
         } catch (\Exception $e) {
-            Log::error('Failed to retrieve system notice: '.$e->getMessage());
+            Log::error('Failed to retrieve system notice: ' . $e->getMessage());
             throw $e;
         }
     }
@@ -49,6 +48,12 @@ class SystemNoticeService
         if (auth()->check()) {
             $data['created_by'] = auth()->id();
         }
+
+        Log::info('System notice payload', [
+            'data'         => $data,
+            'app_timezone' => config('app.timezone'),
+            'now'          => now()->format('Y-m-d H:i:s P'),
+        ]);
 
         $systemNotice = SystemNotice::create($data);
 
