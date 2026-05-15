@@ -23,7 +23,7 @@ class LoginUserRequest extends FormRequest
     {
         return [
             'email' => 'required|email:rfc,dns',
-            'password' => 'required|string|min:8',
+            'password' => 'required|string',
             'otp' => 'nullable|string|size:6',
         ];
     }
