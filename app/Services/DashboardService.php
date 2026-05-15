@@ -2,7 +2,6 @@
 namespace App\Services;
 
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class DashboardService
@@ -27,6 +26,33 @@ class DashboardService
     //         ];
     //     });
     // }
+    // public function getStats(array $params): array
+    // {
+    //     [$from, $to, $range] = $this->resolveRange($params);
+
+    //     $from = Carbon::parse($from)->startOfDay();
+    //     $to   = Carbon::parse($to)->endOfDay();
+
+    //     $cacheKey = 'dashboard:all:' . md5(json_encode([
+    //         'range'     => $range,
+    //         'from_date' => $from->toDateTimeString(),
+    //         'to_date'   => $to->toDateTimeString(),
+    //     ]));
+
+    //     return Cache::remember($cacheKey, 5, function () use ($from, $to) {
+    //         return [
+    //             'stats'                 => $this->compute($from, $to),
+
+    //             'top_keywords'          => app(KeywordRankingService::class)
+    //                 ->getRankingWithDate($from, $to, 5),
+
+    //             'prejudgement_sources'  => $this->computeSources($from, $to),
+
+    //             'casemanagment_sources' => $this->computeCaseDomainStats($from, $to),
+    //         ];
+    //     });
+    // }
+
     public function getStats(array $params): array
     {
         [$from, $to, $range] = $this->resolveRange($params);
@@ -34,24 +60,16 @@ class DashboardService
         $from = Carbon::parse($from)->startOfDay();
         $to   = Carbon::parse($to)->endOfDay();
 
-        $cacheKey = 'dashboard:all:' . md5(json_encode([
-            'range'     => $range,
-            'from_date' => $from->toDateTimeString(),
-            'to_date'   => $to->toDateTimeString(),
-        ]));
+        return [
+            'stats'                 => $this->compute($from, $to),
 
-        return Cache::remember($cacheKey, 5, function () use ($from, $to) {
-            return [
-                'stats'                 => $this->compute($from, $to),
+            'top_keywords'          => app(KeywordRankingService::class)
+                ->getRankingWithDate($from, $to, 5),
 
-                'top_keywords'          => app(KeywordRankingService::class)
-                    ->getRankingWithDate($from, $to, 5),
+            'prejudgement_sources'  => $this->computeSources($from, $to),
 
-                'prejudgement_sources'  => $this->computeSources($from, $to),
-
-                'casemanagment_sources' => $this->computeCaseDomainStats($from, $to),
-            ];
-        });
+            'casemanagment_sources' => $this->computeCaseDomainStats($from, $to),
+        ];
     }
 
     private function computeSources($from, $to): array
