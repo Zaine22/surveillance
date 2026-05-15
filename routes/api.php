@@ -29,7 +29,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware([
     'operation.log',
-    'allow.ip'
+    // 'allow.ip'
 ])->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/forget-password', [AuthController::class, 'forgetPassword']);
