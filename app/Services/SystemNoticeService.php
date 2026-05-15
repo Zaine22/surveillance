@@ -6,6 +6,7 @@ use App\Jobs\PublishSystemNoticeJob;
 use App\Models\SystemNotice;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class SystemNoticeService
 {
@@ -133,12 +134,74 @@ class SystemNoticeService
     //     return null;
     // }
 
+    // public function updateNotice($id, $data)
+    // {
+    //     $notice = SystemNotice::find($id);
+
+    //     if (! $notice) {
+    //         return null;
+    //     }
+
+    //     if (! empty($data['publish_date'])) {
+    //         $date                 = substr(str_replace('T', ' ', $data['publish_date']), 0, 10);
+    //         $data['publish_date'] = $date . ' 00:00:00';
+    //     }
+
+    //     if (! empty($data['expire_at'])) {
+    //         $date              = substr(str_replace('T', ' ', $data['expire_at']), 0, 10);
+    //         $data['expire_at'] = $date . ' 23:59:59';
+    //     }
+
+    //     $notice->update($data);
+    //     $notice->refresh();
+
+    //     // Publish Job
+    //     if (! empty($notice->publish_date)) {
+    //         $publishAt = Carbon::parse($notice->publish_date);
+
+    //         if ($publishAt->isToday() || $publishAt->isPast()) {
+    //             PublishSystemNoticeJob::dispatch($notice->id);
+    //         } else {
+    //             PublishSystemNoticeJob::dispatch($notice->id)
+    //                 ->delay($publishAt);
+    //         }
+    //     }
+
+    //     // Expire Job
+    //     if (! empty($notice->expire_at)) {
+    //         $expireAt = Carbon::parse($notice->expire_at);
+
+    //         if ($expireAt->isFuture()) {
+    //             ExpireSystemNoticeJob::dispatch($notice->id)
+    //                 ->delay($expireAt);
+    //         }
+    //     }
+
+    //     return $notice;
+    // }
+
     public function updateNotice($id, $data)
     {
         $notice = SystemNotice::find($id);
 
         if (! $notice) {
             return null;
+        }
+
+        /*
+     * Validate status
+     * Only allowed: pending, published, removed
+     */
+        if (array_key_exists('status', $data)) {
+            $allowedStatuses = ['pending', 'published', 'removed'];
+
+            $data['status'] = strtolower(trim($data['status']));
+
+            if (! in_array($data['status'], $allowedStatuses, true)) {
+                throw ValidationException::withMessages([
+                    'status' => 'Invalid status. Allowed statuses are pending, published, removed.',
+                ]);
+            }
         }
 
         if (! empty($data['publish_date'])) {
@@ -154,8 +217,15 @@ class SystemNoticeService
         $notice->update($data);
         $notice->refresh();
 
+        /*
+     * Do not dispatch jobs if notice is removed
+     */
+        if ($notice->status === 'removed') {
+            return $notice;
+        }
+
         // Publish Job
-        if (! empty($notice->publish_date)) {
+        if (! empty($notice->publish_date) && $notice->status === 'pending') {
             $publishAt = Carbon::parse($notice->publish_date);
 
             if ($publishAt->isToday() || $publishAt->isPast()) {
@@ -167,7 +237,7 @@ class SystemNoticeService
         }
 
         // Expire Job
-        if (! empty($notice->expire_at)) {
+        if (! empty($notice->expire_at) && in_array($notice->status, ['pending', 'published'], true)) {
             $expireAt = Carbon::parse($notice->expire_at);
 
             if ($expireAt->isFuture()) {
