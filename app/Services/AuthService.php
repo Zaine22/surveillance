@@ -119,7 +119,7 @@ class AuthService
             $checkUser = User::where('email', $user->email)->first();
             if (! Hash::check($currentPassword, $checkUser->password)) {
                 throw ValidationException::withMessages([
-                    'current_password' => ['目前密碼不正確'],
+                    'current_password' => ['舊密碼(或隨機密碼)有誤'],
                 ]);
             }
 
