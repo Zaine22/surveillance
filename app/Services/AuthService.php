@@ -71,11 +71,11 @@ class AuthService
             return ['error' => '使用者帳號尚未驗證！'];
         }
 
-        // if (! Hash::check($password, $user->password)) {
-        //     throw ValidationException::withMessages([
-        //         'password' => ['Please enter the correct password'],
-        //     ]);
-        // }
+        if (! Hash::check($password, $user->password)) {
+            throw ValidationException::withMessages([
+                'password' => ['請輸入正確帳號/密碼'],
+            ]);
+        }
 
         // OTP checks
         if ($email !== 'testing@mail.com' && ! $validated_record) {
