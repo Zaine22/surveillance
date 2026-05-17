@@ -17,6 +17,7 @@ use App\Http\Controllers\CrawlerTaskItemController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataSyncRecordController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\FeatureCodeController;
 use App\Http\Controllers\GlobalWhitelistController;
 use App\Http\Controllers\LexiconController;
 use App\Http\Controllers\LexiconKeywordController;
@@ -128,6 +129,14 @@ Route::middleware([
     Route::apiResource('system-notices', SystemNoticeController::class);
     Route::apiResource('validation-records', ValidationRecordController::class);
     Route::post('/updateExternalKeywords', [CaseManagementController::class, 'updateExternalKeywords']);
+
+    Route::prefix('feature-codes')->group(function () {
+    Route::get('/', [FeatureCodeController::class, 'index']);
+    Route::post('/', [FeatureCodeController::class, 'store']);
+    Route::get('/{id}', [FeatureCodeController::class, 'show']);
+    Route::post('/{id}', [FeatureCodeController::class, 'update']);
+    Route::delete('/{id}', [FeatureCodeController::class, 'destroy']);
+});
 });
 
 Route::middleware('apikey')->group(function () {
