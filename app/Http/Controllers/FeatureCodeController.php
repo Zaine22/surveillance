@@ -1,11 +1,11 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\FeatureCode\GetAllFeatureCodeRequest;
 use App\Http\Requests\FeatureCode\StoreFeatureCodeRequest;
 use App\Http\Requests\FeatureCode\UpdateFeatureCodeRequest;
+use App\Http\Resources\FeatureCodeResource;
 use App\Services\FeatureCodeService;
 
 class FeatureCodeController extends Controller
@@ -22,7 +22,7 @@ class FeatureCodeController extends Controller
 
         return response()->json([
             'message' => '特徵碼列表',
-            'data' => $featureCodes,
+            'data'    => $featureCodes,
         ]);
     }
 
@@ -33,7 +33,7 @@ class FeatureCodeController extends Controller
 
             return response()->json([
                 'message' => '显示特徵碼',
-                'data' => $result,
+                'data'    => $result,
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -51,7 +51,7 @@ class FeatureCodeController extends Controller
 
             return response()->json([
                 'message' => '特徵碼创建成功',
-                'data' => $result,
+                'data'    => new FeatureCodeResource($result),
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
@@ -75,7 +75,7 @@ class FeatureCodeController extends Controller
 
             return response()->json([
                 'message' => "更新特徵碼 {$id}",
-                'data' => $result,
+                'data' => new FeatureCodeResource($result),
             ]);
         } catch (\Exception $e) {
             return response()->json([

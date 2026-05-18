@@ -49,7 +49,7 @@ class FeatureCodeService
     {
         try {
             $payload = Arr::only($data, [
-                'title',
+                // 'title',
                 'feature_code',
                 'remark',
             ]);
@@ -58,9 +58,9 @@ class FeatureCodeService
                 $payload['image_path'] = $this->uploadImage($data['image']);
             }
 
-            if (empty($payload['title']) && ! empty($payload['feature_code'])) {
-                $payload['title'] = $payload['feature_code'];
-            }
+            // if (empty($payload['title']) && ! empty($payload['feature_code'])) {
+            //     $payload['title'] = $payload['feature_code'];
+            // }
 
             Log::info('Feature code payload', [
                 'data' => $payload,
@@ -84,7 +84,7 @@ class FeatureCodeService
             }
 
             $payload = Arr::only($data, [
-                'title',
+                // 'title',
                 'feature_code',
                 'remark',
             ]);
@@ -105,16 +105,15 @@ class FeatureCodeService
              * So if title is not sent but feature_code is changed,
              * use feature_code as title.
              */
-            if (
-                ! array_key_exists('title', $payload) &&
-                ! empty($payload['feature_code'])
-            ) {
-                $payload['title'] = $payload['feature_code'];
-            }
+            // if (
+            //     ! array_key_exists('title', $payload) &&
+            //     ! empty($payload['feature_code'])
+            // ) {
+            //     $payload['title'] = $payload['feature_code'];
+            // }
 
             $featureCode->update($payload);
             $featureCode->refresh();
-
             return $featureCode;
         } catch (\Exception $e) {
             Log::error('Failed to update feature code: ' . $e->getMessage());
