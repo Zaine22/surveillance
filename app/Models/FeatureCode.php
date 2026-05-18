@@ -15,7 +15,7 @@ class FeatureCode extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        // 'title',
+        'title',
         'feature_code',
         'remark',
         'image_path',

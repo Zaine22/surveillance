@@ -24,7 +24,7 @@ class CheckIpWhitelist
 
         if (! $allowed) {
             return response()->json([
-                'message' => 'Access denied. Your IP is not allowed.',
+                'message' => '存取被拒。您的IP不被允許。',
             ], 403);
         }
 

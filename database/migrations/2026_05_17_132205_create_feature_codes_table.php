@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('feature_codes', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            // $table->string('title')->nullable()->comment('標題 / display title');
+            $table->string('title')->nullable()->comment('標題 / display title');
             $table->string('feature_code')->comment('特徵碼');
             $table->text('remark')->nullable()->comment('備註');
             $table->string('image_path')->nullable()->comment('圖片');

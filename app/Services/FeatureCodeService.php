@@ -49,7 +49,7 @@ class FeatureCodeService
     {
         try {
             $payload = Arr::only($data, [
-                // 'title',
+                'title',
                 'feature_code',
                 'remark',
             ]);
@@ -84,7 +84,7 @@ class FeatureCodeService
             }
 
             $payload = Arr::only($data, [
-                // 'title',
+                'title',
                 'feature_code',
                 'remark',
             ]);

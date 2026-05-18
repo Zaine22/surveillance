@@ -3,7 +3,6 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 class FeatureCodeResource extends JsonResource
 {
@@ -17,12 +16,11 @@ class FeatureCodeResource extends JsonResource
 
         return [
             'id'           => $this->id,
+            'title'        => $this->title,
             'feature_code' => $this->feature_code,
             'remark'       => $this->remark,
-
             'image_path'   => $this->image_path,
             'image_url'    => $this->image_url,
-
             'created_at'   => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at'   => $this->updated_at?->format('Y-m-d H:i:s'),
         ];
