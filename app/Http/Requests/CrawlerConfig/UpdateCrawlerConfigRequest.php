@@ -24,4 +24,24 @@ class UpdateCrawlerConfigRequest extends FormRequest
             'to'             => ['nullable', 'date', 'after:from'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'name.string'           => '名稱必須是字串格式',
+            'name.max'              => '名稱不能超過 :max 個字元',
+            'sources.array'         => '來源必須是陣列格式',
+            'sources.min'           => '至少需要 :min 個來源',
+            'sources.*.required'    => '每個來源不能為空',
+            'sources.*.string'      => '每個來源必須是字串格式',
+            'lexicon_id.uuid'       => '詞庫 ID 必須是有效的 UUID 格式',
+            'lexicon_id.exists'     => '詞庫 ID 不存在',
+            'description.string'    => '描述必須是字串格式',
+            'frequency_code.in'     => '頻率代碼必須是以下其中之一：每日、每週、每月',
+            'status.in'             => '狀態必須是以下其中之一：啟用、停用',
+            'from.date'             => '起始日期必須是有效的日期格式',
+            'to.date'               => '結束日期必須是有效的日期格式',
+            'to.after'              => '結束日期必須在起始日期之後',
+        ];
+    }
 }

@@ -55,4 +55,20 @@ class AiPredictResultIndexRequest extends FormRequest
             'sort_order'         => ['nullable', 'in:asc,desc'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'search.string'             => '搜尋欄位必須是字串格式',
+            'review_status.in'          => '審核狀態必須是以下其中之一：待審核、已批准、已拒絕',
+            'ai_analysis_result.in'     => 'AI 分析結果必須是以下其中之一：正常、異常',
+            'range.in'                  => '範圍必須是以下其中之一：一週、一個月、一年',
+            'from_date.date'            => '起始日期必須是有效的日期格式',
+            'to_date.date'              => '結束日期必須是有效的日期格式',
+            'page.integer'              => '頁碼必須是整數',
+            'per_page.integer'          => '每頁筆數必須是整數',
+            'sort_by.string'            => '排序欄位必須是字串格式',
+            'sort_order.in'             => '排序方式必須是以下其中之一：升冪（asc）、降冪（desc）',
+        ];
+    }
 }

@@ -36,6 +36,28 @@ class UpdateLexiconRequest extends FormRequest
         ];
     }
 
+    public function messages(): array
+    {
+        return [
+            'name.string'                  => '名稱必須是字串格式',
+            'name.max'                     => '名稱不能超過 :max 個字元',
+            'remark.string'                => '備註必須是字串格式',
+            'remark.max'                   => '備註不能超過 :max 個字元',
+            'status.in'                    => '狀態必須是以下其中之一：啟用、停用',
+            'keywords.required'            => '關鍵字不能為空',
+            'keywords.array'               => '關鍵字必須是陣列格式',
+            'keywords.*.id.string'         => '關鍵字 ID 必須是字串格式',
+            'keywords.*.keywords.required' => '關鍵字群組不能為空',
+            'keywords.*.keywords.array'    => '關鍵字群組必須是陣列格式',
+            'keywords.*.keywords.min'      => '關鍵字群組至少需要 :min 個關鍵字',
+            'keywords.*.keywords.*.string' => '每個關鍵字必須是字串格式',
+            'keywords.*.keywords.*.min'    => '每個關鍵字至少需要 :min 個字元',
+            'keywords.*.keywords.*.max'    => '每個關鍵字不能超過 :max 個字元',
+            'keywords.*.status.required'   => '關鍵字狀態不能為空',
+            'keywords.*.status.in'         => '關鍵字狀態必須是以下其中之一：啟用、停用',
+        ];
+    }
+
     /**
      * Configure the validator instance.
      */

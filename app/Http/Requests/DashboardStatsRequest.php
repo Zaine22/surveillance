@@ -28,6 +28,20 @@ class DashboardStatsRequest extends FormRequest
             'offset'    => 'nullable|integer|min:0',
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'range.in'        => '範圍必須是以下其中之一：今天、一週、一個月、本週、本月、一年',
+            'from_date.date'  => '起始日期必須是有效的日期格式',
+            'to_date.date'    => '結束日期必須是有效的日期格式',
+            'limit.integer'   => '限制數量必須是整數',
+            'limit.min'       => '限制數量最少為 :min',
+            'limit.max'       => '限制數量最多為 :max',
+            'offset.integer'  => '偏移量必須是整數',
+            'offset.min'      => '偏移量最小值為 :min',
+        ];
+    }
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {

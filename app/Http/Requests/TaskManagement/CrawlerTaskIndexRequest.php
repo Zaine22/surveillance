@@ -45,6 +45,26 @@ class CrawlerTaskIndexRequest extends FormRequest
         ];
     }
 
+    public function messages(): array
+    {
+        return [
+            'search.string'          => '搜尋欄位必須是字串格式',
+            'search.max'             => '搜尋欄位不能超過 :max 個字元',
+            'status.in'              => '狀態必須是以下其中之一：待處理、執行中、已完成、失敗、已暫停',
+            'range.in'               => '範圍必須是以下其中之一：一週、一個月、一年',
+            'from_date.date_format'  => '起始日期格式必須為 Y-m-d',
+            'to_date.date_format'    => '結束日期格式必須為 Y-m-d',
+            'to_date.after_or_equal' => '結束日期必須在起始日期之後或相同',
+            'page.integer'           => '頁碼必須是整數',
+            'page.min'               => '頁碼最小值為 :min',
+            'per_page.integer'       => '每頁筆數必須是整數',
+            'per_page.min'           => '每頁筆數最少為 :min 筆',
+            'per_page.max'           => '每頁筆數最多為 :max 筆',
+            'sort_by.in'             => '排序欄位必須是以下其中之一：建立時間、更新時間、狀態',
+            'sort_order.in'          => '排序方式必須是以下其中之一：升冪（asc）、降冪（desc）',
+        ];
+    }
+
     public function validated($key = null, $default = null): array
     {
         $data = parent::validated();

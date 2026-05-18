@@ -28,8 +28,8 @@ class UpdateCrawlerTaskStatusRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'action.required' => 'Action is required.',
-            'action.in'       => 'Action must be pause, resume, or delete.',
+            'action.required' => '操作不能為空',
+            'action.in'       => '操作必須是以下其中之一：暫停、繼續、刪除',
         ];
     }
 }

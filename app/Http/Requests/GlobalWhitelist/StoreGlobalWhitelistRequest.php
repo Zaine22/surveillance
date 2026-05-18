@@ -26,4 +26,16 @@ class StoreGlobalWhitelistRequest extends FormRequest
             'url.*' => ['required', 'string', 'max:500'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'url.required'   => 'URL 不能為空',
+            'url.array'      => 'URL 必須是陣列格式',
+            'url.min'        => '至少需要 :min 個 URL',
+            'url.*.required' => '每個 URL 不能為空',
+            'url.*.string'   => '每個 URL 必須是字串格式',
+            'url.*.max'      => '每個 URL 不能超過 :max 個字元',
+        ];
+    }
 }

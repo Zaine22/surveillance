@@ -26,4 +26,12 @@ class GetUsersRequest extends FormRequest
             'role' => 'nullable|string',
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'search.string' => '搜尋欄位必須是字串格式',
+            'role.string'   => '角色必須是字串格式',
+        ];
+    }
 }

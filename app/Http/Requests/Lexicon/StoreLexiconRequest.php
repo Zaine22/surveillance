@@ -33,6 +33,27 @@ class StoreLexiconRequest extends FormRequest
         ];
     }
 
+    public function messages(): array
+    {
+        return [
+            'name.required'            => '名稱不能為空',
+            'name.string'              => '名稱必須是字串格式',
+            'name.max'                 => '名稱不能超過 :max 個字元',
+            'remark.string'            => '備註必須是字串格式',
+            'remark.max'               => '備註不能超過 :max 個字元',
+            'status.in'                => '狀態必須是以下其中之一：啟用、停用',
+            'keywords.required'        => '關鍵字不能為空',
+            'keywords.array'           => '關鍵字必須是陣列格式',
+            'keywords.*.required'      => '每個關鍵字群組不能為空',
+            'keywords.*.array'         => '每個關鍵字群組必須是陣列格式',
+            'keywords.*.*.required'    => '每個關鍵字不能為空',
+            'keywords.*.*.string'      => '每個關鍵字必須是字串格式',
+            'keywords.*.*.min'         => '每個關鍵字至少需要 :min 個字元',
+            'keywords.*.*.max'         => '每個關鍵字不能超過 :max 個字元',
+            'case_management_id.exists' => '案件管理 ID 不存在',
+        ];
+    }
+
     /**
      * Configure the validator instance.
      */

@@ -42,4 +42,20 @@ class CrawlerTaskItemsRequest extends FormRequest
             ],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'search.string'    => '搜尋欄位必須是字串格式',
+            'search.max'       => '搜尋欄位不能超過 :max 個字元',
+            'status.in'        => '狀態必須是以下其中之一：待處理、爬取中、同步中、已同步、錯誤',
+            'page.integer'     => '頁碼必須是整數',
+            'page.min'         => '頁碼最小值為 :min',
+            'per_page.integer' => '每頁筆數必須是整數',
+            'per_page.min'     => '每頁筆數最少為 :min 筆',
+            'per_page.max'     => '每頁筆數最多為 :max 筆',
+            'sort_by.in'       => '排序欄位必須是以下其中之一：建立時間、更新時間、狀態',
+            'sort_order.in'    => '排序方式必須是以下其中之一：升冪（asc）、降冪（desc）',
+        ];
+    }
 }
