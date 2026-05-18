@@ -281,7 +281,7 @@ class CrawlerConfigService extends BaseFilterService
             $this->crawlerTaskService->createFromConfig($config, $lexicon);
         }
 
-        if ($data['status'] === 'pending' && $to) {
+        if ($data['status'] === 'pending' && $to && isset($data['frequency_code'])) {
             CrawlerScheduledJob::dispatch($config->id, $data['frequency_code'], $to)
                 ->delay($from);
         }
