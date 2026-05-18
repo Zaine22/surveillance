@@ -46,6 +46,22 @@ class UpdateAiPredictResultRequest extends FormRequest
         ];
     }
 
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'items.*.id.required' => '項目 ID 為必填欄位。',
+            'items.*.id.uuid' => '項目 ID 必須是有效的 UUID 格式。',
+            'items.*.id.exists' => '找不到此項目 ID。',
+            'items.*.decision.required' => '審核決定為必填欄位。',
+            'items.*.decision.in' => '審核決定必須是「有效」或「無效」。',
+        ];
+    }
+
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
