@@ -32,18 +32,18 @@ class AiHealthService
             $gpuUsage = null;
             $latency  = data_get($data, 'latency');
 
-            // ✅ detect GPU
+
             if (isset($data['gpu'][0]['gpu_usage_percent'])) {
                 $gpuUsage = $data['gpu'][0]['gpu_usage_percent'];
             }
 
-            // ✅ detect GPU error
+
             $gpuError = data_get($data, 'gpu.error');
 
-            // ✅ determine status FIRST
+
             $status = $this->mapHealth($cpu, $ram, $gpuUsage, $gpuError);
 
-            // ✅ build message AFTER status
+
             if ($gpuError) {
                 $message = "GPU 異常（無法取得顯示卡資訊）";
             } else {
@@ -53,14 +53,14 @@ class AiHealthService
                     . ($gpuUsage !== null ? "、GPU {$gpuUsage}%" : "");
             }
 
-            // ✅ update model
+
             $model->update([
                 'health_checked_at' => now(),
                 'health_status'     => $status,
                 'content'           => $data,
             ]);
 
-            // ✅ log
+
             AiHealthLog::create([
                 'id'            => (string) Str::uuid(),
                 'ai_model_id'   => $model->id,
@@ -194,5 +194,5 @@ class AiHealthService
             })
             ->toArray();
     }
-   
+
 }

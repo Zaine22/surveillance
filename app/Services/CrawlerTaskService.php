@@ -227,7 +227,7 @@ class CrawlerTaskService extends BaseFilterService
                 return '任務已成功暫停。';
 
             case 'resume':
-                if ($task->status !== 'paused') {
+                if (! in_array($task->status, ['paused', 'error'], true)) {
                     // throw new \Exception('Only paused tasks can be resumed.');
                     throw new \Exception('只有已暫停的任務才能恢復執行。');
                 }
@@ -255,7 +255,31 @@ class CrawlerTaskService extends BaseFilterService
     {
         return $task->items()
             ->where('status', 'error')
-            ->get();
+            ->get()
+            ->sortBy(function ($item) {
+                // Get the first keyword from the array
+                $keyword = is_array($item->keywords) && ! empty($item->keywords)
+                    ? $item->keywords[0]
+                    : '';
+
+                // Convert to string for sorting
+                $keyword = (string) $keyword;
+
+                // Detect the type of character
+                if (preg_match('/^[0-9]/', $keyword)) {
+                    // Numbers: prefix with '1' for sorting first
+                    return '1' . str_pad($keyword, 100, '0', STR_PAD_LEFT);
+                } elseif (preg_match('/^[a-zA-Z]/', $keyword)) {
+                    // English: prefix with '3' for sorting last, convert to lowercase
+                    return '3' . strtolower($keyword);
+                } else {
+                    // Chinese and other characters: prefix with '2' for sorting in middle
+                    // Use stroke-based sorting by converting to GB2312 encoding
+                    $gb2312 = mb_convert_encoding($keyword, 'GB2312', 'UTF-8');
+                    return '2' . $gb2312;
+                }
+            })
+            ->values(); // Reset array keys
     }
 
     public function start($task): array
@@ -318,7 +342,7 @@ class CrawlerTaskService extends BaseFilterService
         return [
             'success' => true,
             // 'message' => 'Task paused successfully',
-             'message' => '任務已成功暫停。',
+            'message' => '任務已成功暫停。',
             'status'  => 'paused',
         ];
     }
