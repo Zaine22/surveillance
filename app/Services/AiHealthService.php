@@ -179,9 +179,6 @@ class AiHealthService
     }
     public function getAiHealth(): array
     {
-
-        $model = AiModel::first();
-        $this->check($model);
         return AiHealthLog::orderBy('checked_at', 'desc')
             ->limit(20)
             ->get()
