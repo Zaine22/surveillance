@@ -42,7 +42,7 @@ class CrawlerTaskService extends BaseFilterService
             $query->where('status', $filters['status']);
         }
 
-        return $query->paginate(10);
+        return $query->latest('updated_at')->paginate(10);
     }
 
     public function createFromConfig(CrawlerConfig $config, Lexicon $lexicon): CrawlerTask
