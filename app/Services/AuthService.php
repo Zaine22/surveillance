@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\ValidationException;
 
 class AuthService
@@ -41,18 +42,65 @@ class AuthService
     {
         $user = User::where('email', $email)->first();
 
-        // if (! $user) {
-        //     throw ValidationException::withMessages([
-        //         'email' => ['This username does not exist'],
-        //     ]);
-        // }
-        if (! $user || ! Hash::check($password, $user->password)) {
+        if ($user) {
+            if ($user->locked_at !== null) {
+                $lockedUntil = $user->locked_at->addMinutes(15);
+
+                if (now()->gte($lockedUntil)) {
+                    $user->update([
+                        'login_attempts' => 0,
+                        'locked_at' => null,
+                    ]);
+                } else {
+                    $remainingSeconds = now()->diffInSeconds($lockedUntil, false);
+                    $minutes = (int) ceil($remainingSeconds / 60);
+
+                    throw new HttpResponseException(response()->json([
+                        'message' => "帳號已鎖定，請於 {$minutes} 分鐘後再試。",
+                        'errors' => [
+                            'email' => ["帳號已鎖定，請於 {$minutes} 分鐘後再試。"]
+                        ],
+                        'remaining_seconds' => $remainingSeconds,
+                        'locked_until' => $lockedUntil,
+                    ], 422));
+                }
+            }
+        }
+
+        if (! $user) {
             throw ValidationException::withMessages([
                 'email' => ['請輸入正確的帳號/密碼。'],
             ]);
         }
 
-        // User status check
+        if (! Hash::check($password, $user->password)) {
+            $user->increment('login_attempts');
+
+            if ($user->login_attempts >= 5) {
+                $user->update([
+                    'locked_at' => now(),
+                ]);
+
+                throw new HttpResponseException(response()->json([
+                    'message' => '帳號已鎖定，請於 15 分鐘後再試。',
+                    'errors' => [
+                        'email' => ['帳號已鎖定，請於 15 分鐘後再試。']
+                    ],
+                    'remaining_seconds' => 900,
+                    'locked_until' => $user->locked_at->addMinutes(15),
+                ], 422));
+            }
+
+            throw ValidationException::withMessages([
+                'email' => ['請輸入正確的帳號/密碼。'],
+            ]);
+        }
+
+        $user->update([
+            'login_attempts' => 0,
+            'locked_at' => null,
+        ]);
+
         if ($user->status !== 'enabled') {
             return ['error' => '使用者帳號尚未驗證！'];
         }
@@ -69,12 +117,6 @@ class AuthService
 
         if ($user->status !== 'enabled') {
             return ['error' => '使用者帳號尚未驗證！'];
-        }
-
-        if (! Hash::check($password, $user->password)) {
-            throw ValidationException::withMessages([
-                'password' => ['請輸入正確帳號/密碼'],
-            ]);
         }
 
         // OTP checks
@@ -110,7 +152,19 @@ class AuthService
 
         $token = $user->createToken('api_token')->plainTextToken;
 
-        return compact('user', 'token');
+        $password_expired = false;
+
+        if ($user->password_last_changed === null) {
+            $password_expired = true;
+        } else {
+            $daysSinceChange = now()->diffInDays($user->password_last_changed);
+
+            if ($daysSinceChange >= 180) {
+                $password_expired = true;
+            }
+        }
+
+        return compact('user', 'token', 'password_expired');
     }
 
     public function changePassword(User $user, string $currentPassword, string $newPassword): array

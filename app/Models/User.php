@@ -32,6 +32,8 @@ class User extends Authenticatable
         'last_login',
         'otp',
         'otp_created_at',
+        'login_attempts',
+        'locked_at',
     ];
 
     /**
@@ -51,6 +53,7 @@ class User extends Authenticatable
     protected $casts = [
         'password_last_changed' => 'datetime',
         'last_login' => 'datetime',
+        'locked_at' => 'datetime',
     ];
 
     public function operationLogs()

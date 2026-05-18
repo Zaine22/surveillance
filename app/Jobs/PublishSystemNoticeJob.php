@@ -21,7 +21,7 @@ class PublishSystemNoticeJob implements ShouldQueue
         if (
             ! $notice ||
             $notice->status !== 'pending' ||
-            $notice->publish_date->isFuture()
+            $notice->publish_date->gt(now())
         ) {
             return;
         }
