@@ -18,7 +18,7 @@ class DepartmentController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:departments,name',
+            'name' => 'required|string|max:20|unique:departments,name',
         ]);
 
         $department = Department::create([
@@ -44,7 +44,7 @@ class DepartmentController extends Controller
         $department = Department::findOrFail($id);
 
         $request->validate([
-            'name' => 'required|string|max:255|unique:departments,name,' . $id,
+            'name' => 'required|string|max:20|unique:departments,name,' . $id,
         ]);
 
         $department->update([
