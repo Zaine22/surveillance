@@ -250,12 +250,19 @@ class DataSyncOrchestratorService
                 'Keyword'
             );
 
-            $crawlLocation = $sanitizeFileNamePart(
-                $item->crawl_location ?? 'Location',
-                'Location'
+            // $crawlLocation = $sanitizeFileNamePart(
+            //     $item->crawl_location ?? 'Location',
+            //     'Location'
+            // );
+
+            // $fileName = "{$crawlerConfigName}_{$firstKeyword}_{$crawlLocation}.zip";
+            // $fullPath = '/mnt/task/' . $fileName;
+            $crawlLocationName = $this->getNameFromCrawlLocation(
+                $item->crawl_location ?? 'Location'
             );
 
-            $fileName = "{$crawlerConfigName}_{$firstKeyword}_{$crawlLocation}.zip";
+            $fileName = "{$crawlerConfigName}_{$firstKeyword}_{$crawlLocationName}.zip";
+
             $fullPath = '/mnt/task/' . $fileName;
 
             Log::info('Saving to path', [
@@ -410,5 +417,39 @@ class DataSyncOrchestratorService
 
             throw $e;
         }
+    }
+
+    private function getNameFromCrawlLocation(?string $value): string
+    {
+        $value = trim((string) $value);
+
+        if ($value === '') {
+            return 'Location';
+        }
+
+        // If URL has no scheme, add temporary scheme for parse_url
+        $parseValue = str_contains($value, '://')
+            ? $value
+            : 'https://' . $value;
+
+        $host = parse_url($parseValue, PHP_URL_HOST);
+
+        if (! $host) {
+            $host = $value;
+        }
+
+        // Remove www.
+        $host = preg_replace('/^www\./', '', $host);
+
+        // Example:
+        // https://51cg1.com => 51cg1
+        // https://520cc.com => 520cc
+        $name = explode('.', $host)[0] ?? 'Location';
+
+        // Sanitize filename part
+        $name = preg_replace('/[\\\\\/:*?"<>|]/', '_', $name);
+        $name = preg_replace('/\s+/', '_', $name);
+
+        return $name ?: 'Location';
     }
 }

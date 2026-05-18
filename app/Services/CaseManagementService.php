@@ -104,13 +104,36 @@ class CaseManagementService extends BaseFilterService
             }
         }
 
-        return $this->applyFilters(
-            $query,
-            $filters,
-            [],
-            true,
-            'created_at'
-        );
+        // Apply custom sorting: first by due_date (from case_management_items), then by updated_at
+        $sortBy = $filters['sort_by'] ?? null;
+        $sortOrder = strtolower($filters['sort_order'] ?? 'desc');
+
+        if (!in_array($sortOrder, ['asc', 'desc'])) {
+            $sortOrder = 'desc';
+        }
+
+        // If no specific sort is requested, apply default multi-column sort
+        if (!$sortBy) {
+            // Sort by screenshot_deadline (due_date) first, with NULL values last
+            // Then by updated_at for cases with same due_date or no due_date
+            // DESC order means latest/furthest dates first, NULL last
+            if ($sortOrder === 'asc') {
+                $query->orderByRaw("CASE WHEN screenshot_deadline IS NULL THEN 1 ELSE 0 END, screenshot_deadline ASC, case_management.updated_at ASC");
+            } else {
+                $query->orderByRaw("CASE WHEN screenshot_deadline IS NULL THEN 1 ELSE 0 END, screenshot_deadline DESC, case_management.updated_at DESC");
+            }
+        } else {
+            // If a specific sort column is requested, use the base filter service
+            if (!in_array($sortBy, $this->getAllowedSortColumns())) {
+                $sortBy = 'created_at';
+            }
+            $query->orderBy($sortBy, $sortOrder);
+        }
+
+        $page = $filters['page'] ?? 1;
+        $perPage = $filters['per_page'] ?? 15;
+
+        return $query->paginate($perPage, ['*'], 'page', $page);
     }
 
     protected function getAllowedSortColumns(): array
