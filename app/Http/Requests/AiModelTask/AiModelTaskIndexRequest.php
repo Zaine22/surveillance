@@ -14,6 +14,19 @@ class AiModelTaskIndexRequest extends FormRequest
     }
 
     /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        // Convert comma-separated string to array if status is a string
+        if ($this->has('status') && is_string($this->status)) {
+            $this->merge([
+                'status' => array_map('trim', explode(',', $this->status))
+            ]);
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
