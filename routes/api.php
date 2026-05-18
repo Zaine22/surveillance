@@ -38,6 +38,12 @@ Route::middleware([
     Route::get('/case-managements/get-external-case/{case_id}', [CaseManagementController::class, 'showExternalCase']);
 });
 
+Route::middleware([
+    'allow.ip',
+])->group(function () {
+    Route::get('/case-managements/get-external-case/{case_id}', [CaseManagementController::class, 'showExternalCase']);
+});
+
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/send-otp', [AuthController::class, 'sendOtp']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
@@ -46,7 +52,7 @@ Route::post('/forget-password', [AuthController::class, 'forgetPassword']);
 
 Route::middleware([
     'auth:sanctum',
-    'operation.log'
+    'operation.log',
 ])->group(function () {
     Route::get('/ai-test', [AiHealthLogController::class, 'aiTest']);
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
@@ -131,12 +137,12 @@ Route::middleware([
     Route::post('/updateExternalKeywords', [CaseManagementController::class, 'updateExternalKeywords']);
 
     Route::prefix('feature-codes')->group(function () {
-    Route::get('/', [FeatureCodeController::class, 'index']);
-    Route::post('/', [FeatureCodeController::class, 'store']);
-    Route::get('/{id}', [FeatureCodeController::class, 'show']);
-    Route::post('/{id}', [FeatureCodeController::class, 'update']);
-    Route::delete('/{id}', [FeatureCodeController::class, 'destroy']);
-});
+        Route::get('/', [FeatureCodeController::class, 'index']);
+        Route::post('/', [FeatureCodeController::class, 'store']);
+        Route::get('/{id}', [FeatureCodeController::class, 'show']);
+        Route::patch('/{id}', [FeatureCodeController::class, 'update']);
+        Route::delete('/{id}', [FeatureCodeController::class, 'destroy']);
+    });
 });
 
 Route::middleware('apikey')->group(function () {
@@ -166,7 +172,6 @@ Route::post('/crawler/task-items/urls', [CrawlerTaskItemController::class, 'stor
 Route::post('/crawler/task-items/upload', [CrawlerTaskItemController::class, 'upload']);
 Route::post('/crawler/trigger', [CrawlerTaskItemController::class, 'trigger']);
 Route::get('/crawler/task-items', [CrawlerTaskItemController::class, 'results']);
-
 
 // Route::get('/ai-test', function (AiTaskManagerService $service) {
 
