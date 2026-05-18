@@ -100,6 +100,7 @@ Route::middleware([
     });
     Route::apiResource('ai-predict-result-items', AiPredictResultItemController::class);
     Route::apiResource('audit-ratios', AuditRatioController::class);
+    Route::get('audit-ratios/status/check', [AuditRatioController::class, 'getAuditStatus']);
     Route::apiResource('bot-machines', BotMachineController::class);
 
     Route::apiResource('case-management-items', CaseManagementItemController::class);
