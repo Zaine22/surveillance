@@ -22,7 +22,8 @@ class AiModelTaskIndexRequest extends FormRequest
     {
         return [
             'search'          => 'nullable|string',
-            'status'          => 'nullable|string|in:pending,processing,completed',
+            'status'          => 'nullable|array',
+            'status.*'        => 'string|in:pending,processing,completed',
             'analysis_result' => 'nullable|string',
             'range'           => 'nullable|string',
             'from_date'       => 'nullable|date',

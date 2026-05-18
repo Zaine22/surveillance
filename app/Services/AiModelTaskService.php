@@ -24,7 +24,11 @@ class AiModelTaskService extends BaseFilterService
         }
 
         if (! empty($filters['status'])) {
-            $query->where('status', $filters['status']);
+            if (is_array($filters['status'])) {
+                $query->whereIn('status', $filters['status']);
+            } else {
+                $query->where('status', $filters['status']);
+            }
         }
 
         return $this->applyFilters(
