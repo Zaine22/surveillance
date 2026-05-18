@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Lexicon;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class UpdateLexiconRequest extends FormRequest
 {
@@ -33,5 +34,35 @@ class UpdateLexiconRequest extends FormRequest
             'keywords.*.keywords.*' => ['string', 'min:1', 'max:100'],
             'keywords.*.status' => ['required', 'in:enabled,disabled'],
         ];
+    }
+
+    /**
+     * Configure the validator instance.
+     */
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function ($validator) {
+            $keywordGroups = $this->input('keywords', []);
+            $allKeywords = [];
+
+            // Flatten all keywords from all groups
+            foreach ($keywordGroups as $groupIndex => $group) {
+                if (isset($group['keywords']) && is_array($group['keywords'])) {
+                    foreach ($group['keywords'] as $keyword) {
+                        $normalizedKeyword = strtolower(trim($keyword));
+
+                        if (in_array($normalizedKeyword, $allKeywords)) {
+                            $validator->errors()->add(
+                                "keywords.{$groupIndex}.keywords",
+                                "關鍵字 '{$keyword}' 在此詞庫中重複。"
+                            );
+                            return;
+                        }
+
+                        $allKeywords[] = $normalizedKeyword;
+                    }
+                }
+            }
+        });
     }
 }

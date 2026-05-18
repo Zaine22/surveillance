@@ -95,7 +95,8 @@ class CrawlerTaskController extends Controller
         if (! $task) {
             return response()->json([
                 'success' => false,
-                'message' => 'Task not found.',
+                // 'message' => 'Task not found.',
+                'message' => '找不到任務。'
             ], 404);
         }
         $result = $this->crawlerTaskService->start($task);
@@ -112,7 +113,8 @@ class CrawlerTaskController extends Controller
         if (! $task) {
             return response()->json([
                 'success' => false,
-                'message' => 'Task not found.',
+                // 'message' => 'Task not found.',
+                'message' => '找不到任務。'
             ], 404);
         }
         $result = $this->crawlerTaskService->pause($task);
@@ -129,7 +131,8 @@ class CrawlerTaskController extends Controller
         if (! $task) {
             return response()->json([
                 'success' => false,
-                'message' => 'Task not found.',
+                // 'message' => 'Task not found.',
+                'message' => '找不到任務。'
             ], 404);
         }
         $result = $this->crawlerTaskService->resume($task);
@@ -146,7 +149,8 @@ class CrawlerTaskController extends Controller
         if (! $task) {
             return response()->json([
                 'success' => false,
-                'message' => 'Task not found.',
+                // 'message' => 'Task not found.',
+                'message' => '找不到任務。'
             ], 404);
         }
         $result = $this->crawlerTaskService->destroy($task);

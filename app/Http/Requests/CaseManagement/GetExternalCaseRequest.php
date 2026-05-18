@@ -37,7 +37,8 @@ class GetExternalCaseRequest extends FormRequest
     protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
     {
         throw new \Illuminate\Validation\ValidationException($validator, response()->json([
-            'message' => 'The given data was invalid.',
+            // 'message' => 'The given data was invalid.',
+            'message' => '提供的資料無效。',
             'errors' => $validator->errors(),
         ], 422));
     }

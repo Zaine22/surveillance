@@ -36,7 +36,8 @@ class LexiconController extends Controller
         $lexicon = $this->lexiconService->getLexiconById($id);
 
         if (! $lexicon) {
-            return response()->json(['message' => 'Lexicon not found'], 404);
+            // return response()->json(['message' => 'Lexicon not found'], 404);
+            return response()->json(['message' => '找不到詞典'], 404);
         }
 
         return new LexiconResource($lexicon);
@@ -47,7 +48,8 @@ class LexiconController extends Controller
         $lexicon = $this->lexiconService->getLexiconById($id);
 
         if (! $lexicon) {
-            return response()->json(['message' => 'Lexicon not found'], 404);
+            // return response()->json(['message' => 'Lexicon not found'], 404);
+            return response()->json(['message' => '找不到詞典'], 404);
         }
 
         $this->lexiconService->updateLexicon($lexicon, $request->validated());
@@ -60,11 +62,13 @@ class LexiconController extends Controller
         $lexicon = $this->lexiconService->getLexiconById($id);
 
         if (! $lexicon) {
-            return response()->json(['message' => 'Lexicon not found'], 404);
+            // return response()->json(['message' => 'Lexicon not found'], 404);
+            return response()->json(['message' => '找不到詞典'], 404);
         }
 
         $this->lexiconService->deleteLexicon($lexicon);
 
-        return response()->json(['message' => 'Lexicon deleted successfully'], 200);
+        // return response()->json(['message' => 'Lexicon deleted successfully'], 200);
+        return response()->json(['message' => '詞典已成功刪除'], 200);
     }
 }

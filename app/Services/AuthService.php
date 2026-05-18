@@ -266,7 +266,7 @@ class AuthService
             'send_to'       => $user->email,
             'validate_type' => 'login',
             'validate_code' => $otp,
-            'expired_at'    => now()->addMinutes(5),
+            'expired_at'    => now()->addMinutes(15),
         ]);
 
         return $validation_record;

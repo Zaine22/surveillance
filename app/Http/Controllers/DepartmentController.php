@@ -26,7 +26,8 @@ class DepartmentController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Created successfully',
+            // 'message' => 'Created successfully',
+            'message' => '建立成功',
             'data'    => $department,
         ], 201);
     }
@@ -51,7 +52,8 @@ class DepartmentController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Updated successfully',
+            // 'message' => 'Updated successfully',
+            'message' => '更新成功',
             'data'    => $department,
         ]);
     }
@@ -62,7 +64,8 @@ class DepartmentController extends Controller
         $department->delete();
 
         return response()->json([
-            'message' => 'Deleted successfully',
+            // 'message' => 'Deleted successfully',
+            'message' => '刪除成功',
         ]);
     }
 }

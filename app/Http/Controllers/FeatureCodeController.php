@@ -37,7 +37,8 @@ class FeatureCodeController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'error' => 'Failed to retrieve feature code',
+                // 'error' => 'Failed to retrieve feature code',
+                'error' => '無法取得功能代碼'
             ], 404);
         }
     }
@@ -55,7 +56,8 @@ class FeatureCodeController extends Controller
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
-                'error' => 'Failed to create feature code',
+                // 'error' => 'Failed to create feature code',
+                'error' => '建立功能代碼失敗'
             ], 500);
         }
     }
@@ -69,7 +71,8 @@ class FeatureCodeController extends Controller
 
             if (! $result) {
                 return response()->json([
-                    'error' => 'Feature code not found',
+                    // 'error' => 'Feature code not found',
+                    'error' => '找不到功能代碼'
                 ], 404);
             }
 
@@ -79,7 +82,8 @@ class FeatureCodeController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'error' => 'Failed to update feature code',
+                // 'error' => 'Failed to update feature code',
+                'error' => '更新功能代碼失敗'
             ], 500);
         }
     }
@@ -91,7 +95,8 @@ class FeatureCodeController extends Controller
 
             if (! $result) {
                 return response()->json([
-                    'error' => 'Feature code not found',
+                    // 'error' => 'Feature code not found',
+                     'error' => '找不到功能代碼'
                 ], 404);
             }
 
@@ -100,7 +105,8 @@ class FeatureCodeController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'error' => 'Failed to delete feature code',
+                // 'error' => 'Failed to delete feature code',
+                'error' => '刪除功能代碼失敗'
             ], 500);
         }
     }

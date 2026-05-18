@@ -66,7 +66,8 @@ class AllowedIpController extends Controller
         }
 
         return response()->json([
-            'message'  => 'Whitelist processed',
+            // 'message'  => 'Whitelist processed',
+            'message' => '白名單已處理',
             'inserted' => $inserted,
             'skipped'  => $skipped,
         ]);

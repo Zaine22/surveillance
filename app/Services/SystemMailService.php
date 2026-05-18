@@ -15,7 +15,7 @@ class SystemMailService
                 data: [
                     'otp'       => $otp,
                     'createdAt' => now()->format('Y-m-d H:i:s'),
-                    'expiresIn' => 5,
+                    'expiresIn' => 15,
                 ]
             )
         );

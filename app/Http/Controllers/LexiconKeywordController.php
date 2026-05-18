@@ -109,7 +109,8 @@ class LexiconKeywordController extends Controller
         );
 
         if (! $translation) {
-            return response()->json(['message' => 'Parent keyword not found'], 404);
+            // return response()->json(['message' => 'Parent keyword not found'], 404);
+            return response()->json(['message' => '找不到上層關鍵字'], 404);
         }
 
         $parent = $this->lexiconKeywordService->getTranslations($parentId);

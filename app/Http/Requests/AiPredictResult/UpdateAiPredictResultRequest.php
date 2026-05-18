@@ -55,9 +55,13 @@ class UpdateAiPredictResultRequest extends FormRequest
                 if ($item['decision'] === 'invalid') {
 
                     if (empty($item['reason'])) {
+                        // $validator->errors()->add(
+                        //     "items.$index.reason",
+                        //     'Review comment is required when decision is invalid.'
+                        // );
                         $validator->errors()->add(
                             "items.$index.reason",
-                            'Review comment is required when decision is invalid.'
+                            '當審核決定為「無效」時，必須填寫審核備註。'
                         );
                     }
 
@@ -65,9 +69,13 @@ class UpdateAiPredictResultRequest extends FormRequest
                         ($item['reason'] ?? null) === 'Other'
                         && empty($item['other_reason'])
                     ) {
+                        // $validator->errors()->add(
+                        //     "items.$index.other_reason",
+                        //     'Other reason is required.'
+                        // );
                         $validator->errors()->add(
                             "items.$index.other_reason",
-                            'Other reason is required.'
+                            '必須填寫其他原因。'
                         );
                     }
                 }

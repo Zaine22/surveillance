@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Requests\CrawlerConfig;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -14,13 +13,15 @@ class UpdateCrawlerConfigRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['sometimes', 'string', 'max:100'],
-            'sources' => 'required|array|min:1',
-            'sources.*' => 'required|string',
-            'lexicon_id' => ['sometimes', 'uuid', 'exists:lexicons,id'],
-            'description' => ['nullable', 'string'],
+            'name'           => ['sometimes', 'string', 'max:100'],
+            'sources'        => 'sometimes|array|min:1',
+            'sources.*'      => 'required|string',
+            'lexicon_id'     => ['sometimes', 'uuid', 'exists:lexicons,id'],
+            'description'    => ['nullable', 'string'],
             'frequency_code' => ['sometimes', 'in:daily,weekly,monthly'],
-            'status' => ['sometimes', 'in:enabled,disabled'],
+            'status'         => ['sometimes', 'in:enabled,disabled'],
+            'from'           => ['nullable', 'date'],
+            'to'             => ['nullable', 'date', 'after:from'],
         ];
     }
 }

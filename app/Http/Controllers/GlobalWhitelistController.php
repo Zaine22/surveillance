@@ -35,11 +35,13 @@ class GlobalWhitelistController extends Controller
         $whitelist = $this->globalWhitelistService->getGlobalWhitelistById($id);
 
         if (! $whitelist) {
-            return response()->json(['message' => 'Whitelist not found'], 404);
+            // return response()->json(['message' => 'Whitelist not found'], 404);
+            return response()->json(['message' => '找不到白名單'], 404);
         }
 
         $this->globalWhitelistService->delete($whitelist);
 
-        return response()->json(['message' => 'Whitelist deleted successfully'], 200);
+        // return response()->json(['message' => 'Whitelist deleted successfully'], 200);
+        return response()->json(['message' => '白名單已成功刪除'], 200);
     }
 }

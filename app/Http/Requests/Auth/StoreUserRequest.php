@@ -42,7 +42,8 @@ class StoreUserRequest extends FormRequest
 
         if (! $user || $user->roles !== '管理員') {
             throw new AuthorizationException(
-                'You are not allowed to perform this action.'
+                // 'You are not allowed to perform this action.'
+                '您沒有權限執行此操作。'
             );
         }
     }

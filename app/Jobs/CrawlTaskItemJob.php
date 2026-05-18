@@ -15,13 +15,13 @@ class CrawlTaskItemJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    // ✅ retry only once
+
     public $tries = 10;
 
-    // ✅ job-level timeout (must be < worker timeout)
+
     public $timeout = 420; // 7 minutes
 
-    // ✅ progressive backoff
+
     public $backoff = [120, 300]; // 2 min, then 5 min
 
     public function __construct(public string $taskItemId) {}

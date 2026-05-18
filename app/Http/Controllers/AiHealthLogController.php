@@ -14,7 +14,7 @@ class AiHealthLogController extends Controller
         if (! $crawlerItem) {
             return response()->json([
                 'success' => false,
-                'message' => 'Crawler task item not found',
+                'message' => '找不到爬蟲任務項目。',
             ], 404);
         }
 
@@ -22,7 +22,7 @@ class AiHealthLogController extends Controller
 
         return response()->json([
             'success'         => true,
-            'message'         => 'AI task created from crawler item',
+            'message'         => '從爬蟲項目建立的 AI 任務',
             'crawler_item_id' => $crawlerItem->id,
             'result'          => $result,
         ]);

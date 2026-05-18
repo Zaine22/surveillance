@@ -36,7 +36,8 @@ class CrawlerConfigController extends Controller
         $config = $this->crawlerConfigService->getConfigById($id);
 
         if (! $config) {
-            return response()->json(['message' => 'Crawler config not found'], 404);
+            // return response()->json(['message' => 'Crawler config not found'], 404);
+            return response()->json(['message' => '找不到爬蟲設定'], 404);
         }
 
         return new CrawlerConfigResource($config);
@@ -49,7 +50,8 @@ class CrawlerConfigController extends Controller
         $config = $this->crawlerConfigService->getConfigById($id);
 
         if (! $config) {
-            return response()->json(['message' => 'Crawler config not found'], 404);
+            // return response()->json(['message' => 'Crawler config not found'], 404);
+            return response()->json(['message' => '找不到爬蟲設定'], 404);
         }
 
         $this->crawlerConfigService->updateConfig($config, $request->validated());
@@ -62,11 +64,13 @@ class CrawlerConfigController extends Controller
         $config = $this->crawlerConfigService->getConfigById($id);
 
         if (! $config) {
-            return response()->json(['message' => 'Crawler config not found'], 404);
+            // return response()->json(['message' => 'Crawler config not found'], 404);
+            return response()->json(['message' => '找不到爬蟲設定'], 404);
         }
 
         $this->crawlerConfigService->deleteConfig($config);
 
-        return response()->json(['message' => 'Crawler config deleted successfully'], 200);
+        // return response()->json(['message' => 'Crawler config deleted successfully'], 200);
+        return response()->json(['message' => '爬蟲設定已成功刪除'], 200);
     }
 }

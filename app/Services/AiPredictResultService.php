@@ -96,7 +96,8 @@ class AiPredictResultService extends BaseFilterService
             $status = strtolower((string) ($payload['status'] ?? ''));
 
             if (in_array($status, ['pending', 'running'])) {
-                throw new \RuntimeException("AI not finished: {$status}");
+                // throw new \RuntimeException("AI not finished: {$status}");
+                throw new \RuntimeException("AI 未完成：{$status}");
             }
 
             if ($status === 'failed') {
@@ -104,7 +105,8 @@ class AiPredictResultService extends BaseFilterService
             }
 
             if ($status !== 'finished') {
-                throw new \RuntimeException("Unsupported status: {$status}");
+                // throw new \RuntimeException("Unsupported status: {$status}");
+                throw new \RuntimeException("不支援的狀態：{$status}");
             }
 
             $parsed = $this->parseAiResult($payload);

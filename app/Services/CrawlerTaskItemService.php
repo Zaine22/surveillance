@@ -64,7 +64,8 @@ class CrawlerTaskItemService
         if ($item->status !== 'pending') {
             return [
                 'success' => false,
-                'message' => 'Only pending items can be started.',
+                // 'message' => 'Only pending items can be started.',
+                'message' => '只有待處理的項目才能開始。',
             ];
         }
 
@@ -76,7 +77,8 @@ class CrawlerTaskItemService
 
         return [
             'success'      => true,
-            'message'      => 'Task item started successfully.',
+            // 'message'      => 'Task item started successfully.',
+            'message'      => '任務項目已成功開始。',
             'task_item_id' => $item->id,
             'status'       => $item->status,
         ];
@@ -87,7 +89,8 @@ class CrawlerTaskItemService
         if (! in_array($item->status, ['crawling', 'syncing'])) {
             return [
                 'success' => false,
-                'message' => 'Only crawling or syncing items can be paused.',
+                // 'message' => 'Only crawling or syncing items can be paused.',
+                'message' => '只有正在爬取或同步的項目才能暫停。',
             ];
         }
 
@@ -110,7 +113,8 @@ class CrawlerTaskItemService
         if ($item->status !== 'error') {
             return [
                 'success' => false,
-                'message' => 'Only failed items can be retried.',
+                // 'message' => 'Only failed items can be retried.',
+                'message' => '只有失敗的項目才能重試。',
             ];
         }
 
@@ -124,7 +128,8 @@ class CrawlerTaskItemService
 
         return [
             'success'      => true,
-            'message'      => 'Task item retried successfully.',
+            // 'message'      => 'Task item retried successfully.',
+            'message'      => '任務項目已成功重試。',
             'task_item_id' => $item->id,
             'status'       => $item->status,
         ];
@@ -156,7 +161,8 @@ class CrawlerTaskItemService
 
             return [
                 'success'      => true,
-                'message'      => 'Task item deleted successfully.',
+                // 'message'      => 'Task item deleted successfully.',
+                'message'      => '任務項目已成功刪除。',
                 'task_item_id' => $id,
             ];
 

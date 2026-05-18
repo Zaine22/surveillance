@@ -33,15 +33,18 @@ class DashboardStatsRequest extends FormRequest
         $validator->after(function ($validator) {
 
             if ($this->filled('range') && ($this->filled('from_date') || $this->filled('to_date'))) {
-                $validator->errors()->add('range', 'Do not provide range together with from_date/to_date.');
+                // $validator->errors()->add('range', 'Do not provide range together with from_date/to_date.');
+                 $validator->errors()->add('range', '請勿同時提供範圍與起始日期／結束日期。');
             }
 
             if ($this->filled('from_date') && ! $this->filled('to_date')) {
-                $validator->errors()->add('to_date', 'to_date is required when from_date is provided.');
+                // $validator->errors()->add('to_date', 'to_date is required when from_date is provided.');
+                $validator->errors()->add('to_date', '若提供起始日期，則必須提供結束日期。');
             }
 
             if (! $this->filled('from_date') && $this->filled('to_date')) {
-                $validator->errors()->add('from_date', 'from_date is required when to_date is provided.');
+                // $validator->errors()->add('from_date', 'from_date is required when to_date is provided.');
+                 $validator->errors()->add('from_date', '若提供結束日期，則必須提供起始日期。');
             }
         });
     }

@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Lexicon;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class StoreLexiconRequest extends FormRequest
 {
@@ -30,5 +31,35 @@ class StoreLexiconRequest extends FormRequest
             'keywords.*.*' => ['required', 'string', 'min:1', 'max:100'],
             'case_management_id'  => ['nullable', 'exists:case_management,id'],
         ];
+    }
+
+    /**
+     * Configure the validator instance.
+     */
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function ($validator) {
+            $keywords = $this->input('keywords', []);
+            $allKeywords = [];
+
+            // Flatten all keywords from all groups
+            foreach ($keywords as $groupIndex => $group) {
+                if (is_array($group)) {
+                    foreach ($group as $keyword) {
+                        $normalizedKeyword = strtolower(trim($keyword));
+
+                        if (in_array($normalizedKeyword, $allKeywords)) {
+                            $validator->errors()->add(
+                                "keywords.{$groupIndex}",
+                                "關鍵字 '{$keyword}' 在此詞庫中重複。"
+                            );
+                            return;
+                        }
+
+                        $allKeywords[] = $normalizedKeyword;
+                    }
+                }
+            }
+        });
     }
 }

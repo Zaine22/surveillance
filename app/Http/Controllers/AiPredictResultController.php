@@ -43,7 +43,8 @@ class AiPredictResultController extends Controller
 
         if (! $result) {
             return response()->json([
-                'message' => 'Predict result not found',
+                // 'message' => 'Predict result not found',
+                'messsage' => '預測結果未找到。'
             ], 404);
         }
 
@@ -65,7 +66,8 @@ class AiPredictResultController extends Controller
         );
 
         return response()->json([
-            'message' => 'Evidence review completed.',
+            // 'message' => 'Evidence review completed.',
+            'message' => '證據審查已完成。',
         ]);
     }
 
@@ -97,14 +99,16 @@ class AiPredictResultController extends Controller
         if ($results->isEmpty()) {
             return response()->json([
                 'type'    => $type,
-                'message' => 'No data found',
+                // 'message' => 'No data found',
+                'message' => '未找到任何資料',
                 'results' => [],
             ], 200);
         }
 
         return response()->json([
             'type'    => $type,
-            'message' => 'Data retrieved successfully',
+            // 'message' => 'Data retrieved successfully',
+            'message' => '資料擷取成功',
             'results' => $results,
         ], 200);
     }

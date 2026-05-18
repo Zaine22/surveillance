@@ -210,34 +210,41 @@ class CrawlerTaskService extends BaseFilterService
     public function updateExecutionStatus(CrawlerTask $task, string $action): string
     {
         if ($task->status === 'completed' && $action !== 'delete') {
-            throw new \Exception('Completed task cannot be modified.');
+            // throw new \Exception('Completed task cannot be modified.');
+            throw new \Exception('已完成的任務無法修改。');
         }
 
         switch ($action) {
 
             case 'pause':
                 if ($task->status !== 'processing') {
-                    throw new \Exception('Only processing tasks can be paused.');
+                    // throw new \Exception('Only processing tasks can be paused.');
+                    throw new \Exception('只有進行中的任務才能暫停。');
                 }
 
                 $task->update(['status' => 'paused']);
-                return 'Task paused successfully';
+                // return 'Task paused successfully';
+                return '任務已成功暫停。';
 
             case 'resume':
                 if ($task->status !== 'paused') {
-                    throw new \Exception('Only paused tasks can be resumed.');
+                    // throw new \Exception('Only paused tasks can be resumed.');
+                    throw new \Exception('只有已暫停的任務才能恢復執行。');
                 }
 
                 $task->update(['status' => 'processing']);
-                return 'Task resumed successfully';
+                // return 'Task resumed successfully';
+                return '任務已成功恢復執行。';
 
             case 'delete':
                 if ($task->status === 'processing') {
-                    throw new \Exception('Cannot delete a running task.');
+                    // throw new \Exception('Cannot delete a running task.');
+                    throw new \Exception('無法刪除執行中的任務。');
                 }
 
                 $task->update(['status' => 'deleted']);
-                return 'Task deleted successfully';
+                // return 'Task deleted successfully';
+                return '任務已成功刪除';
 
             default:
                 throw new \Exception('Invalid action.');
@@ -256,7 +263,8 @@ class CrawlerTaskService extends BaseFilterService
         if (! in_array($task->status, ['pending', 'paused'])) {
             return [
                 'success' => false,
-                'message' => 'Task cannot be started.',
+                // 'message' => 'Task cannot be started.',
+                'message' => '任務無法開始。',
                 'status'  => $task->status,
             ];
         }
@@ -277,7 +285,8 @@ class CrawlerTaskService extends BaseFilterService
 
         return [
             'success' => true,
-            'message' => 'Task started successfully',
+            // 'message' => 'Task started successfully',
+            'message' => '任務已成功開始。',
             'status'  => 'processing',
         ];
     }
@@ -286,7 +295,8 @@ class CrawlerTaskService extends BaseFilterService
         if ($task->status !== 'processing') {
             return [
                 'success' => false,
-                'message' => 'Only processing tasks can be paused.',
+                // 'message' => 'Only processing tasks can be paused.',
+                'message' => '只有處理中的任務才能暫停。',
                 'status'  => $task->status,
             ];
         }
@@ -307,7 +317,8 @@ class CrawlerTaskService extends BaseFilterService
 
         return [
             'success' => true,
-            'message' => 'Task paused successfully',
+            // 'message' => 'Task paused successfully',
+             'message' => '任務已成功暫停。',
             'status'  => 'paused',
         ];
     }
@@ -316,7 +327,8 @@ class CrawlerTaskService extends BaseFilterService
         if ($task->status !== 'paused') {
             return [
                 'success' => false,
-                'message' => 'Only paused tasks can be resumed.',
+                // 'message' => 'Only paused tasks can be resumed.',
+                'message' => '只有已暫停的任務才能繼續執行。',
                 'status'  => $task->status,
             ];
         }
@@ -337,7 +349,8 @@ class CrawlerTaskService extends BaseFilterService
 
         return [
             'success' => true,
-            'message' => 'Task resumed successfully',
+            // 'message' => 'Task resumed successfully',
+            'message' => '任務已成功恢復執行',
             'status'  => 'processing',
         ];
     }
@@ -347,7 +360,7 @@ class CrawlerTaskService extends BaseFilterService
         DB::transaction(function () use ($task) {
 
             foreach ($task->items as $item) {
-                $this->dispatchService->dispatchPauseItems($item);  
+                $this->dispatchService->dispatchPauseItems($item);
             }
 
             $task->forceDelete();
@@ -355,7 +368,7 @@ class CrawlerTaskService extends BaseFilterService
 
         return [
             'success' => true,
-            'message' => 'Task destroyed successfully',
+            'message' => '任務已成功刪除。',
             'status'  => 'deleted',
         ];
     }

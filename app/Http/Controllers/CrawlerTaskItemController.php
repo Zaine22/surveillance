@@ -40,7 +40,8 @@ class CrawlerTaskItemController extends Controller
         if (! $item) {
             return response()->json([
                 'success' => false,
-                'message' => 'Task item not found.',
+                // 'message' => 'Task item not found.',
+                'message' => '找不到任務項目。'
             ], 404);
         }
 

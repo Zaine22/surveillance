@@ -26,7 +26,8 @@ class AuthController extends Controller
         $result = $this->authService->register($data);
 
         return response()->json([
-            'message' => 'User registered successfully',
+            // 'message' => 'User registered successfully',
+            'message' => '用戶註冊成功',
             'user'    => $result['user'],
             'token'   => $result['token'],
         ], 201);
@@ -98,7 +99,8 @@ class AuthController extends Controller
         }
 
         return response()->json([
-            'message' => 'Password changed successfully. Please login again.',
+            // 'message' => 'Password changed successfully. Please login again.',
+            'message' => '密碼變更成功，請重新登入。',
         ]);
     }
 
@@ -113,25 +115,27 @@ class AuthController extends Controller
 
     public function sendOtp(SendOtpRequest $request)
     {
-        // 1️⃣ Validate input
+
         $validate = $request->validated();
 
-        // 2️⃣ Call service
+
         $result = $this->authService->sendOtp($validate['email']);
 
-        // 3️⃣ Handle error response
+
         if (isset($result['error'])) {
             return response()->json([
-                'message' => $result['error'] ?? 'Failed to send OTP. Please try again later.',
+                // 'message' => $result['error'] ?? 'Failed to send OTP. Please try again later.',
+                'message' => $result['error'] ?? '發送驗證碼失敗，請稍後再試。'
             ], 400);
         }
 
-        // 4️⃣ Prepare response
+
         $response = [
-            'message' => $result['message'] ?? 'OTP sent successfully.',
+            // 'message' => $result['message'] ?? 'OTP sent successfully.',
+            'message' => $result['message'] ?? '驗證碼已成功發送。'
         ];
 
-        // ✅ Optional: include OTP only in local/dev environment
+
         if (app()->environment('local') && isset($result['otp'])) {
             $response['otp'] = $result['otp'];
         }
@@ -155,7 +159,8 @@ class AuthController extends Controller
         }
 
         return response()->json([
-            'message' => 'OTP verified successfully',
+            // 'message' => 'OTP verified successfully',
+            'message' => '驗證碼驗證成功'
         ]);
     }
 
@@ -175,7 +180,8 @@ class AuthController extends Controller
         $updatedUser = $this->authService->updateUser($id, $data);
 
         return response()->json([
-            'message' => 'User updated successfully',
+            // 'message' => 'User updated successfully',
+            'message' => '用戶更新成功',
             'user'    => $updatedUser,
         ]);
     }
@@ -200,14 +206,15 @@ class AuthController extends Controller
         $user = $this->authService->createUserByAdmin($data);
 
         return response()->json([
-            'message' => 'User created successfully',
+            // 'message' => 'User created successfully',
+            'message' => '用戶建立成功',
             'user'    => $user,
         ], 201);
     }
 
     public function forgetPassword(Request $request)
     {
-    $data = $request->validate([
+        $data = $request->validate([
             'email' => ['required', 'email', 'exists:users,email'],
         ], [
             'email.required' => '請輸入電子郵件',

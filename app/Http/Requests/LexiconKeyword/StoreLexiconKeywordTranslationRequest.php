@@ -31,12 +31,18 @@ class StoreLexiconKeywordTranslationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'keywords.required'   => 'Keywords are required.',
-            'keywords.array'      => 'Keywords must be an array.',
-            'keywords.min'        => 'At least one keyword is required.',
-            'keywords.*.required' => 'Each keyword cannot be empty.',
-            'keywords.*.string'   => 'Each keyword must be a string.',
-            'keywords.*.max'      => 'Each keyword must not exceed 255 characters.',
+            // 'keywords.required'   => 'Keywords are required.',
+            // 'keywords.array'      => 'Keywords must be an array.',
+            // 'keywords.min'        => 'At least one keyword is required.',
+            // 'keywords.*.required' => 'Each keyword cannot be empty.',
+            // 'keywords.*.string'   => 'Each keyword must be a string.',
+            // 'keywords.*.max'      => 'Each keyword must not exceed 255 characters.',
+            'keywords.required'   => '關鍵字為必填項。',
+            'keywords.array'      => '關鍵字必須是陣列。',
+            'keywords.min'        => '至少需要一個關鍵字。',
+            'keywords.*.required' => '每個關鍵字不能為空。',
+            'keywords.*.string'   => '每個關鍵字必須是字串。',
+            'keywords.*.max'      => '每個關鍵字不得超過 255 個字元。',
         ];
     }
 }

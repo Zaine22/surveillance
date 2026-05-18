@@ -1,5 +1,13 @@
-<h2>Your OTP Code</h2>
-<h1>{{ $otp }}</h1>
+<h2>登入驗證通知信</h2>
 
-<p>Created at: {{ $createdAt }}</p>
-<p>Expires in {{ $expiresIn }} minutes.</p>
+<p>您好，</p>
+
+<p>您正在進行系統登入驗證。</p>
+
+<p>您的驗證碼為：<strong>{{ $otp }}</strong></p>
+<p>請於 15 分鐘內輸入此驗證碼完成登入。</p>
+
+<p>若非您本人操作，請忽略此郵件。</p>
+
+<br>
+<p style="color: #666; font-size: 12px;">（本郵件由系統自動發送，請勿直接回覆。如有任何問題，請另行聯繫系統管理員。）</p>

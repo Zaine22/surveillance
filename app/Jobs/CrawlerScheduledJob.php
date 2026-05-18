@@ -51,10 +51,10 @@ class CrawlerScheduledJob implements ShouldQueue
             return; // Stop scheduling if lexicon is not found
         }
 
-        // 🔥 Run your crawler logic here
+
         app(CrawlerTaskService::class)->createFromConfig($config, $lexicon);
 
-        // 📅 Schedule next run
+
         $nextRun = match ($this->frequency) {
             'daily'  => $now->addDay(),
             'weekly' => $now->addWeek(),

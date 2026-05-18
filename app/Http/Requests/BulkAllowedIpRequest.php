@@ -28,8 +28,10 @@ class BulkAllowedIpRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'records.required' => 'IP records are required.',
-            'records.string'   => 'Records must be text.',
+            // 'records.required' => 'IP records are required.',
+            'records.required' => '需要 IP 記錄。',
+            // 'records.string'   => 'Records must be text.',
+            'records.string'   => '記錄必須為文字格式。',
         ];
     }
 }
