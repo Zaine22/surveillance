@@ -131,16 +131,16 @@ class CrawlerTaskItem extends Model
             }
 
             //  2. completed
-            if ($total > 0 && $synced === $total) {
+            if ($total > 0 && $processing === 0) {
                 $task->update(['status' => 'completed']);
                 return;
             }
 
             //  3. no pending left and there are errors → error
-            if ($error > 0 && $pending === 0) {
-                $task->update(['status' => 'error']);
-                return;
-            }
+            // if ($error > 0 && $pending === 0) {
+            //     $task->update(['status' => 'error']);
+            //     return;
+            // }
 
             //  4. otherwise → paused
             $task->update(['status' => 'paused']);
