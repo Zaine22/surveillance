@@ -146,7 +146,7 @@ class AuthService
 
         $isValidate = true;
 
-        if ($user->password_last_changed === null && $user->last_login === null) {
+        if ($user->password_last_changed === null || $user->last_login === null) {
             $isValidate = false;
         }
 
