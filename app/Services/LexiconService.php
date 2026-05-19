@@ -47,29 +47,29 @@ class LexiconService extends BaseFilterService
             ], 'case_count');
 
         // Apply custom sorting for name field by default
-        $sortBy = $filters['sort_by'] ?? 'name';
-        if ($sortBy === 'name') {
-            $sortOrder = strtolower($filters['sort_order'] ?? 'asc');
-            $direction = $sortOrder === 'desc' ? 'DESC' : 'ASC';
+        // $sortBy = $filters['sort_by'] ?? 'name';
+        // if ($sortBy === 'name') {
+        //     $sortOrder = strtolower($filters['sort_order'] ?? 'asc');
+        //     $direction = $sortOrder === 'desc' ? 'DESC' : 'ASC';
 
-            // Custom sorting: Chinese by stroke count, numbers (small to large), then English a-z
-            $query->orderByRaw("
-                CASE
-                    WHEN name REGEXP '^[0-9]' THEN 2
-                    WHEN name REGEXP '^[a-zA-Z]' THEN 3
-                    ELSE 1
-                END {$direction},
-                CASE
-                    WHEN name REGEXP '^[0-9]' THEN CAST(name AS UNSIGNED)
-                    ELSE 0
-                END {$direction},
-                LOWER(name) {$direction}
-            ");
+        //     // Custom sorting: Chinese by stroke count, numbers (small to large), then English a-z
+        //     $query->orderByRaw("
+        //         CASE
+        //             WHEN name REGEXP '^[0-9]' THEN 2
+        //             WHEN name REGEXP '^[a-zA-Z]' THEN 3
+        //             ELSE 1
+        //         END {$direction},
+        //         CASE
+        //             WHEN name REGEXP '^[0-9]' THEN CAST(name AS UNSIGNED)
+        //             ELSE 0
+        //         END {$direction},
+        //         LOWER(name) {$direction}
+        //     ");
 
-            // Remove sort_by from filters to prevent duplicate sorting in applyFilters
-            unset($filters['sort_by']);
-            unset($filters['sort_order']);
-        }
+        //     // Remove sort_by from filters to prevent duplicate sorting in applyFilters
+        //     unset($filters['sort_by']);
+        //     unset($filters['sort_order']);
+        // }
 
         return $this->applyFilters(
             $query,
