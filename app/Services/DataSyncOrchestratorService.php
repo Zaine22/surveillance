@@ -250,15 +250,9 @@ class DataSyncOrchestratorService
                 'Keyword'
             );
 
-            // $crawlLocation = $sanitizeFileNamePart(
-            //     $item->crawl_location ?? 'Location',
-            //     'Location'
-            // );
-
-            // $fileName = "{$crawlerConfigName}_{$firstKeyword}_{$crawlLocation}.zip";
-            // $fullPath = '/mnt/task/' . $fileName;
-            $crawlLocationName = $this->getNameFromCrawlLocation(
-                $item->crawl_location ?? 'Location'
+            $crawlLocationName = $sanitizeFileNamePart(
+                $this->getNameFromCrawlLocation($item->crawl_location ?? 'Location'),
+                'Location'
             );
 
             $fileName = "{$crawlerConfigName}_{$firstKeyword}_{$crawlLocationName}.zip";
