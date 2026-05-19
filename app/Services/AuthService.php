@@ -172,7 +172,7 @@ class AuthService
             }
         }
 
-        if ($password_expired && $user->last_login !== null) {
+        if ($password_expired && $user->last_login !== null && $isValidate) {
             $randomPassword = Str::random(10);
             $hashedPassword = Hash::make($randomPassword);
 
