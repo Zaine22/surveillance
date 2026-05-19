@@ -12,8 +12,7 @@ class AllowedIpController extends Controller
         $records = AllowedIp::where('status', true)
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(fn($item) => "{$item->description}, {$item->ip_address}")
-            ->implode("\n");
+            ->map(fn($item) => "{$item->description}, {$item->ip_address}");
 
         return response()->json([
             'records' => $records,
