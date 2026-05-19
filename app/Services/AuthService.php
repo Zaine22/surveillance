@@ -144,6 +144,12 @@ class AuthService
             ]);
         }
 
+        $isValidate = true;
+
+        if ($user->password_last_changed === null && $user->last_login === null) {
+            $isValidate = false;
+        }
+
         if ($validated_record) {
             $validated_record->update([
                 'expired_at' => now(),
@@ -170,7 +176,7 @@ class AuthService
             }
         }
 
-        if ($password_expired) {
+        if ($password_expired && $user->last_login !== null) {
             $randomPassword = Str::random(10);
             $hashedPassword = Hash::make($randomPassword);
 
@@ -186,7 +192,7 @@ class AuthService
             $this->mailService->sendForgetPassword($user->email, $randomPassword);
         }
 
-        return compact('user', 'token', 'password_expired');
+        return compact('user', 'token', 'password_expired', 'isValidate');
     }
 
     public function changePassword(User $user, string $currentPassword, string $newPassword): array
