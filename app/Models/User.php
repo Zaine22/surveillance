@@ -34,6 +34,7 @@ class User extends Authenticatable
         'otp_created_at',
         'login_attempts',
         'locked_at',
+        'is_validate',
     ];
 
     /**
@@ -54,6 +55,7 @@ class User extends Authenticatable
         'password_last_changed' => 'datetime',
         'last_login' => 'datetime',
         'locked_at' => 'datetime',
+        'is_validate' => 'boolean',
     ];
 
     public function operationLogs()

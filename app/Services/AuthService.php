@@ -144,11 +144,7 @@ class AuthService
             ]);
         }
 
-        $isValidate = true;
-
-        if ($user->password_last_changed === null || $user->last_login === null) {
-            $isValidate = false;
-        }
+        $isValidate = (bool) $user->is_validate;
 
         if ($validated_record) {
             $validated_record->update([
@@ -218,6 +214,7 @@ class AuthService
             $checkUser->update([
                 'password'              => Hash::make($newPassword),
                 'password_last_changed' => now(),
+                'is_validate'           => true,
             ]);
 
             $checkUser->passwordHistories()->create([
@@ -414,6 +411,7 @@ class AuthService
             'roles'                 => $data['roles'] ?? 'user',
             'status'                => $data['status'] ?? 'enabled',
             'phone'                 => $data['phone'] ?? null,
+            'is_validate'           => false,
         ]);
 
         $user->passwordHistories()->create([
@@ -448,6 +446,7 @@ class AuthService
             $user->update([
                 'password'              => $hashedPassword,
                 'password_last_changed' => null,
+                'is_validate'           => false,
             ]);
 
             $user->passwordHistories()->create([
