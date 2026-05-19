@@ -26,7 +26,7 @@ class ExpireSystemNoticeJob implements ShouldQueue
         }
 
         $notice->update([
-            'status' => 'expired',
+            'status' => 'removed',
         ]);
 
         broadcast(new SystemNoticeEvent($notice));
