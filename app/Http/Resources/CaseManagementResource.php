@@ -21,10 +21,14 @@ class CaseManagementResource extends JsonResource
             'status'           => $this->status,
             'comment'          => $this->comment,
             'created_at'       => $this->created_at,
-            'lexicon_id'       => $this->aiPredictResult?->lexicon_id,
+            'lexicon_id'       => $this->aiPredictResult?->lexicon_id ?? $this->external_lexicon_id,
             'items'            => CaseManagementItemResource::collection(
                 $this->whenLoaded('items')
             ),
+            'lexicon'          => $this->whenLoaded('lexicon', fn () => $this->lexicon ? [
+                'id'   => $this->lexicon->id,
+                'name' => $this->lexicon->name,
+            ] : null),
         ];
     }
 }
