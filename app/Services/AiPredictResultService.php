@@ -250,7 +250,7 @@ class AiPredictResultService extends BaseFilterService
             'keywords'           => $this->extractKeywords($keywords),
             'ai_score'           => 0.00,
             'analysis_result'    => json_encode($payload, JSON_UNESCAPED_UNICODE),
-            'ai_analysis_result' => 'normal',
+            'ai_analysis_result' => 'abnormal',
             'ai_analysis_detail' => $payload,
             'review_status'      => 'pending',
             'audit_status'       => 'pending',

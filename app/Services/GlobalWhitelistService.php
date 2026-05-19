@@ -52,13 +52,20 @@ class GlobalWhitelistService
     {
         return DB::transaction(function () use ($urls) {
 
-            $uniqueUrls = collect($urls)->unique()->values();
+            // Normalize URLs to extract only the domain
+            $normalizedUrls = collect($urls)
+                ->map(function ($url) {
+                    return $this->extractDomain($url);
+                })
+                ->filter() // Remove null values
+                ->unique()
+                ->values();
 
-            $existingUrls = GlobalWhitelist::whereIn('url', $uniqueUrls)
+            $existingUrls = GlobalWhitelist::whereIn('url', $normalizedUrls)
                 ->pluck('url')
                 ->all();
 
-            $insertData = $uniqueUrls
+            $insertData = $normalizedUrls
                 ->diff($existingUrls)
                 ->map(fn($url) => [
                     'id'         => (string) Str::uuid(),
@@ -74,8 +81,35 @@ class GlobalWhitelistService
             }
 
             // Return all matching URLs (existing + new)
-            return GlobalWhitelist::whereIn('url', $uniqueUrls)->get();
+            return GlobalWhitelist::whereIn('url', $normalizedUrls)->get();
         });
+    }
+
+    /**
+     * Extract domain from URL
+     * Example: https://www.youtube.com/ -> youtube.com
+     */
+    private function extractDomain(string $url): ?string
+    {
+        // Add scheme if not present
+        if (!preg_match('~^https?://~i', $url)) {
+            $url = 'http://' . $url;
+        }
+
+        $parsedUrl = parse_url($url);
+
+        if (!isset($parsedUrl['host'])) {
+            return null;
+        }
+
+        $host = strtolower($parsedUrl['host']);
+
+        // Remove 'www.' prefix if present
+        if (str_starts_with($host, 'www.')) {
+            $host = substr($host, 4);
+        }
+
+        return $host;
     }
 
     public function getGlobalWhitelistById(string $id): ?GlobalWhitelist
