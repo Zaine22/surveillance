@@ -170,6 +170,22 @@ class AuthService
             }
         }
 
+        if ($password_expired) {
+            $randomPassword = Str::random(10);
+            $hashedPassword = Hash::make($randomPassword);
+
+            $user->update([
+                'password'              => $hashedPassword,
+                'password_last_changed' => null,
+            ]);
+
+            $user->passwordHistories()->create([
+                'password' => $hashedPassword,
+            ]);
+
+            $this->mailService->sendForgetPassword($user->email, $randomPassword);
+        }
+
         return compact('user', 'token', 'password_expired');
     }
 
