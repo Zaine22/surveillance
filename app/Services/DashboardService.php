@@ -279,7 +279,7 @@ class DashboardService
     private function completedTasks($from, $to): int
     {
         return DB::table('crawler_task_items')
-            ->where('status', 'completed')
+            ->where('status', 'synced')
             ->whereBetween('created_at', [$from, $to])
             ->count();
     }
