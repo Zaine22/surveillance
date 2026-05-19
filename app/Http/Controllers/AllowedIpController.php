@@ -12,7 +12,8 @@ class AllowedIpController extends Controller
         $records = AllowedIp::where('status', true)
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(fn($item) => "{$item->description}, {$item->ip_address}");
+            ->map(fn($item) => "{$item->description}, {$item->ip_address}")
+            ->implode("\n");
 
         return response()->json([
             'records' => $records,
@@ -25,10 +26,16 @@ class AllowedIpController extends Controller
         $lines = preg_split('/\r\n|\r|\n/', $records);
 
         $inserted = [];
+        $updated = [];
+        $deleted = [];
         $skipped  = [];
 
-        foreach ($lines as $line) {
+        // Collect all IPs and descriptions from the input
+        $inputIps = [];
+        $inputDescriptions = [];
+        $validLines = [];
 
+        foreach ($lines as $line) {
             $line = trim($line);
 
             if (! $line) {
@@ -45,30 +52,71 @@ class AllowedIpController extends Controller
             $description = trim($parts[0]);
             $ip          = trim($parts[1]);
 
-            if (! filter_var($ip, FILTER_VALIDATE_IP)) {
+            // Allow entries without IP addresses (e.g., just names)
+            if ($ip && ! filter_var($ip, FILTER_VALIDATE_IP)) {
                 $skipped[] = $line;
                 continue;
             }
 
-            if (AllowedIp::where('ip_address', $ip)->exists()) {
-                $skipped[] = $ip;
-                continue;
+            $validLines[] = ['description' => $description, 'ip' => $ip];
+            if ($ip) {
+                $inputIps[] = $ip;
+            }
+            $inputDescriptions[] = $description;
+        }
+
+        // Delete records that are not in the input list
+        $recordsToDelete = AllowedIp::where('status', true)
+            ->where(function($query) use ($inputIps, $inputDescriptions) {
+                $query->whereNotIn('ip_address', $inputIps)
+                      ->orWhereNotIn('description', $inputDescriptions);
+            })
+            ->get();
+
+        foreach ($recordsToDelete as $record) {
+            $deleted[] = "{$record->description}, {$record->ip_address}";
+            $record->delete();
+        }
+
+        // Insert or update records from the input
+        foreach ($validLines as $line) {
+            $description = $line['description'];
+            $ip = $line['ip'];
+
+            // Check if record exists by IP or description
+            $existing = null;
+            if ($ip) {
+                $existing = AllowedIp::where('ip_address', $ip)->first();
+            }
+            if (!$existing) {
+                $existing = AllowedIp::where('description', $description)->first();
             }
 
-            AllowedIp::create([
-                'id'          => Str::uuid(),
-                'ip_address'  => $ip,
-                'description' => $description,
-                'status'      => true,
-            ]);
-
-            $inserted[] = $ip;
+            if ($existing) {
+                // Update existing record
+                $existing->update([
+                    'ip_address' => $ip ?: null,
+                    'description' => $description,
+                    'status' => true,
+                ]);
+                $updated[] = $description;
+            } else {
+                // Create new record
+                AllowedIp::create([
+                    'id'          => Str::uuid(),
+                    'ip_address'  => $ip ?: null,
+                    'description' => $description,
+                    'status'      => true,
+                ]);
+                $inserted[] = $description;
+            }
         }
 
         return response()->json([
-            // 'message'  => 'Whitelist processed',
             'message' => '白名單已處理',
             'inserted' => $inserted,
+            'updated' => $updated,
+            'deleted' => $deleted,
             'skipped'  => $skipped,
         ]);
     }

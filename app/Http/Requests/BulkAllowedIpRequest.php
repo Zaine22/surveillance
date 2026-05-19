@@ -43,7 +43,8 @@ class BulkAllowedIpRequest extends FormRequest
 
                         $ip = trim($parts[1]);
 
-                        if (! filter_var($ip, FILTER_VALIDATE_IP)) {
+                        // Allow entries without IP validation (e.g., just names)
+                        if ($ip && ! filter_var($ip, FILTER_VALIDATE_IP)) {
                             $fail("「{$ip}」不是一個有效的 IP 位址。");
                             return;
                         }
