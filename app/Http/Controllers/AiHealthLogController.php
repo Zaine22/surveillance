@@ -9,7 +9,7 @@ class AiHealthLogController extends Controller
 {
     public function aiTest(AiTaskManagerService $service)
     {
-        $crawlerItem = CrawlerTaskItem::find('019dbe90-c9b4-71ba-9333-09b3c1071bda');
+        $crawlerItem = CrawlerTaskItem::find('019df6e4-59e8-7256-a11f-cf09114f893c');
 
         if (! $crawlerItem) {
             return response()->json([
