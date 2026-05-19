@@ -26,6 +26,10 @@ use App\Http\Controllers\OperationLogController;
 use App\Http\Controllers\SystemDataController;
 use App\Http\Controllers\SystemNoticeController;
 use App\Http\Controllers\ValidationRecordController;
+use App\Models\CrawlerTaskItem;
+use App\Services\AiTaskManagerService;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware([
@@ -174,57 +178,57 @@ Route::post('/crawler/task-items/upload', [CrawlerTaskItemController::class, 'up
 Route::post('/crawler/trigger', [CrawlerTaskItemController::class, 'trigger']);
 Route::get('/crawler/task-items', [CrawlerTaskItemController::class, 'results']);
 
-// Route::get('/ai-test', function (AiTaskManagerService $service) {
+Route::get('/ai-test', function (AiTaskManagerService $service) {
 
-//     try {
-//         Log::info('AI TEST START');
+    try {
+        Log::info('AI TEST START');
 
-//         $redisPing = Redis::connection('ai')->ping();
+        $redisPing = Redis::connection('ai')->ping();
 
-//         Log::info('AI REDIS PING OK', [
-//             'ping' => $redisPing,
-//         ]);
+        Log::info('AI REDIS PING OK', [
+            'ping' => $redisPing,
+        ]);
 
-//         $crawlerItem = CrawlerTaskItem::find('019dbe06-65be-7209-8d67-5d058b9eb44a');
+        $crawlerItem = CrawlerTaskItem::find('019df6e4-59e8-7256-a11f-cf09114f893c');
 
-//         if (! $crawlerItem) {
-//             return response()->json([
-//                 'success' => false,
-//                 'message' => 'Crawler task item not found',
-//             ], 404);
-//         }
+        if (! $crawlerItem) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Crawler task item not found',
+            ], 404);
+        }
 
-//         Log::info('CRAWLER ITEM FOUND', [
-//             'id' => $crawlerItem->id,
-//             'result_file' => $crawlerItem->result_file,
-//         ]);
+        Log::info('CRAWLER ITEM FOUND', [
+            'id' => $crawlerItem->id,
+            'result_file' => $crawlerItem->result_file,
+        ]);
 
-//         $result = $service->createFromCrawlerItem($crawlerItem);
+        $result = $service->createFromCrawlerItem($crawlerItem);
 
-//         Log::info('AI TEST DONE', [
-//             'task_id' => $result->id ?? null,
-//         ]);
+        Log::info('AI TEST DONE', [
+            'task_id' => $result->id ?? null,
+        ]);
 
-//         return response()->json([
-//             'success' => true,
-//             'redis_ping' => $redisPing,
-//             'message' => 'AI task created from crawler item',
-//             'crawler_item_id' => $crawlerItem->id,
-//             'result' => $result,
-//         ]);
+        return response()->json([
+            'success' => true,
+            'redis_ping' => $redisPing,
+            'message' => 'AI task created from crawler item',
+            'crawler_item_id' => $crawlerItem->id,
+            'result' => $result,
+        ]);
 
-//     } catch (\Throwable $e) {
-//         Log::error('AI TEST ERROR', [
-//             'error' => $e->getMessage(),
-//             'file' => $e->getFile(),
-//             'line' => $e->getLine(),
-//         ]);
+    } catch (\Throwable $e) {
+        Log::error('AI TEST ERROR', [
+            'error' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+        ]);
 
-//         return response()->json([
-//             'success' => false,
-//             'error' => $e->getMessage(),
-//             'file' => $e->getFile(),
-//             'line' => $e->getLine(),
-//         ], 500);
-//     }
-// });
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+        ], 500);
+    }
+});
