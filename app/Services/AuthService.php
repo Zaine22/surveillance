@@ -162,14 +162,11 @@ class AuthService
 
         $password_expired = false;
 
-        if ($user->password_last_changed === null) {
-            $password_expired = true;
-        } else {
-            $daysSinceChange = $user->password_last_changed->diffInDays(now());
+        
+        $daysSinceChange = $user->password_last_changed->diffInDays(now());
 
-            if ($daysSinceChange >= 180) {
-                $password_expired = true;
-            }
+        if ($daysSinceChange >= 180) {
+            $password_expired = true;
         }
 
         if ($password_expired && $user->last_login !== null && $isValidate) {
@@ -178,11 +175,11 @@ class AuthService
 
             $user->update([
                 'password'              => $hashedPassword,
-                'password_last_changed' => null,
             ]);
 
             $user->passwordHistories()->create([
-                'password' => $hashedPassword,
+                'password'  => $hashedPassword,
+                'is_random' => true,
             ]);
 
             $this->mailService->sendForgetPassword($user->email, $randomPassword);
@@ -202,7 +199,11 @@ class AuthService
             }
 
             // Check against password history
-            $histories = $checkUser->passwordHistories()->latest()->take(3)->get();
+            $histories = $checkUser->passwordHistories()
+                ->where('is_random', false)
+                ->latest()
+                ->take(3)
+                ->get();
             foreach ($histories as $history) {
                 if (Hash::check($newPassword, $history->password)) {
                     throw ValidationException::withMessages([
@@ -218,7 +219,8 @@ class AuthService
             ]);
 
             $checkUser->passwordHistories()->create([
-                'password' => $checkUser->password,
+                'password'  => $checkUser->password,
+                'is_random' => false,
             ]);
 
 
@@ -415,7 +417,8 @@ class AuthService
         ]);
 
         $user->passwordHistories()->create([
-            'password' => $user->password,
+            'password'  => $user->password,
+            'is_random' => true,
         ]);
 
         $this->mailService->sendAccountCreated($data['email'], $plainPassword);
@@ -445,12 +448,12 @@ class AuthService
 
             $user->update([
                 'password'              => $hashedPassword,
-                'password_last_changed' => null,
                 'is_validate'           => false,
             ]);
 
             $user->passwordHistories()->create([
-                'password' => $hashedPassword,
+                'password'  => $hashedPassword,
+                'is_random' => true,
             ]);
 
             $user->tokens()->delete();
