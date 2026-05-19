@@ -145,10 +145,10 @@ class CrawlerConfigService extends BaseFilterService
                 $data['status'] = 'enabled';
             }
 
-            // Handle scheduled job if status is pending
-            if ($data['status'] === 'pending' && $to && isset($data['frequency_code'])) {
-                CrawlerScheduledJob::dispatch($config->id, $data['frequency_code'], $to)
-                    ->delay($from);
+            // Schedule jobs based on frequency if rescheduling is needed
+            if ($shouldRescheduleJobs && $to && isset($data['frequency_code'])) {
+                $frequencyCode = $data['frequency_code'];
+                $this->scheduleJobs($config->id, $frequencyCode, $from, $to, $data['status']);
             }
 
             // Create task if status is enabled and lexicon_id is provided or exists
@@ -277,16 +277,59 @@ class CrawlerConfigService extends BaseFilterService
 
         $lexicon = Lexicon::findOrFail($data['lexicon_id']);
 
+        // Create initial task if status is enabled
         if ($data['status'] === 'enabled') {
             $this->crawlerTaskService->createFromConfig($config, $lexicon);
         }
 
-        if ($data['status'] === 'pending' && $to && isset($data['frequency_code'])) {
-            CrawlerScheduledJob::dispatch($config->id, $data['frequency_code'], $to)
-                ->delay($from);
+        // Schedule jobs based on frequency
+        if ($to && isset($data['frequency_code'])) {
+            $this->scheduleJobs($config->id, $data['frequency_code'], $from, $to, $data['status']);
         }
 
         return $config;
+    }
+
+    /**
+     * Schedule multiple jobs based on frequency from start to end date
+     */
+    private function scheduleJobs(string $configId, string $frequency, Carbon $from, Carbon $to, string $status): void
+    {
+        $current = $from->copy();
+        $isFirstIteration = true;
+
+        while ($current->lessThanOrEqualTo($to)) {
+            // Skip the first iteration for enabled status since we already created the initial task
+            if ($status === 'enabled' && $isFirstIteration) {
+                $isFirstIteration = false;
+                // Move to next period
+                $current = match ($frequency) {
+                    'daily'   => $current->addDay(),
+                    'weekly'  => $current->addWeek(),
+                    'monthly' => $current->addMonth(),
+                    default   => $current->addDay(),
+                };
+                continue;
+            }
+
+            if ($status === 'pending' && $current->startOfDay()->gt(now()->startOfDay())) {
+                // Schedule job for future date
+                CrawlerScheduledJob::dispatch($configId, $frequency, $to)
+                    ->delay($current);
+            } elseif ($status === 'enabled') {
+                // For enabled status, schedule all remaining jobs
+                CrawlerScheduledJob::dispatch($configId, $frequency, $to)
+                    ->delay($current);
+            }
+
+            // Move to next period
+            $current = match ($frequency) {
+                'daily'   => $current->addDay(),
+                'weekly'  => $current->addWeek(),
+                'monthly' => $current->addMonth(),
+                default   => $current->addDay(),
+            };
+        }
     }
 
     // public function update(CrawlerConfig $config, array $data): bool
@@ -356,10 +399,6 @@ class CrawlerConfigService extends BaseFilterService
     //     }
     // }
 
-    public function delete(CrawlerConfig $config): ?bool
-    {
-        return $config->delete();
-    }
 
     private function extractDomain(string $url): ?string
     {

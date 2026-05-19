@@ -57,9 +57,10 @@ class CrawlerScheduledJob implements ShouldQueue
 
 
         $nextRun = match ($this->frequency) {
-            'daily'  => $now->addDay(),
-            'weekly' => $now->addWeek(),
-            default  => null,
+            'daily'   => $now->addDay(),
+            'weekly'  => $now->addWeek(),
+            'monthly' => $now->addMonth(),
+            default   => null,
         };
 
         if ($nextRun && $nextRun->lessThanOrEqualTo($this->endDate)) {
