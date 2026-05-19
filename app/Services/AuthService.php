@@ -144,6 +144,12 @@ class AuthService
             ]);
         }
 
+        if ($validated_record) {
+            $validated_record->update([
+                'expired_at' => now(),
+            ]);
+        }
+
         $user->update([
             'last_login' => now(),
         ]);
@@ -157,7 +163,7 @@ class AuthService
         if ($user->password_last_changed === null) {
             $password_expired = true;
         } else {
-            $daysSinceChange = now()->diffInDays($user->password_last_changed);
+            $daysSinceChange = $user->password_last_changed->diffInDays(now());
 
             if ($daysSinceChange >= 180) {
                 $password_expired = true;
@@ -196,7 +202,6 @@ class AuthService
                 'password' => $checkUser->password,
             ]);
 
-            $checkUser->tokens()->delete();
 
             return [
                 'message' => '密碼已成功更改，請重新登入',
@@ -216,6 +221,12 @@ class AuthService
     public function logout(User $user): void
     {
         $user->tokens()->delete();
+
+        ValidationRecord::where('send_to', $user->email)
+            ->where('validate_type', 'login')
+            ->update([
+                'expired_at' => now(),
+            ]);
     }
 
     public function sendOtp(string $email): array
