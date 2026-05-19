@@ -10,7 +10,7 @@ class SystemMailService
     {
         Mail::to($email)->send(
             new SystemMail(
-                subjectText: '您的 OTP 驗證碼',
+                subjectText: 'Surveillance 使用者登入驗證通知',
                 viewname: 'emails.otp',
                 data: [
                     'otp'       => $otp,
