@@ -21,6 +21,14 @@ class PasswordHistory extends Model
         'user_id',
         'password',
         'created_at',
+        'is_random',
+    ];
+
+    /**
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'is_random' => 'boolean',
     ];
 
     public function user(): BelongsTo
