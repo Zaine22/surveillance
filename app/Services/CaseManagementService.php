@@ -152,6 +152,8 @@ class CaseManagementService extends BaseFilterService
         return CaseManagement::query()
             ->with([
                 'items',
+                'aiPredictResult.aiModelTask',
+                'lexicon',
             ])
             ->findOrFail($id);
     }
@@ -161,6 +163,8 @@ class CaseManagementService extends BaseFilterService
         return CaseManagement::query()
             ->with([
                 'items',
+                'aiPredictResult.aiModelTask',
+                'lexicon',
             ])
             ->where('external_case_no', $externalCaseId)
             ->firstOrFail();
