@@ -53,7 +53,7 @@ class CrawlerScheduledJob implements ShouldQueue
         }
 
 
-        app(CrawlerTaskService::class)->createFromConfig($config, $lexicon);
+        app(CrawlerTaskService::class)->addItemsToExistingTask($config, $lexicon);
 
 
         $nextRun = match ($this->frequency) {

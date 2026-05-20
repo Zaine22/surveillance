@@ -64,6 +64,32 @@ class CrawlerTaskService extends BaseFilterService
         });
     }
 
+    public function addItemsToExistingTask(CrawlerConfig $config, Lexicon $lexicon): ?CrawlerTask
+    {
+        return DB::transaction(function () use ($config, $lexicon) {
+            // Find the most recent task for this config
+            $task = CrawlerTask::where('crawler_config_id', $config->id)
+                ->where('lexicon_id', $lexicon->id)
+                ->latest('created_at')
+                ->first();
+
+            if (!$task) {
+                // If no existing task found, create a new one
+                return $this->createFromConfig($config, $lexicon);
+            }
+
+            // Add new items to the existing task
+            $this->itemService->createFromTask($task, $config, $lexicon);
+
+            // Update task status to processing if it's not already
+            if ($task->status !== 'processing') {
+                $task->update(['status' => 'processing']);
+            }
+
+            return $task;
+        });
+    }
+
     public function refreshStatus(CrawlerTask $task): void
     {
         if ($task->items()->where('status', 'error')->exists()) {

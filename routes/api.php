@@ -177,3 +177,6 @@ Route::post('/crawler/task-items/urls', [CrawlerTaskItemController::class, 'stor
 Route::post('/crawler/task-items/upload', [CrawlerTaskItemController::class, 'upload']);
 Route::post('/crawler/trigger', [CrawlerTaskItemController::class, 'trigger']);
 Route::get('/crawler/task-items', [CrawlerTaskItemController::class, 'results']);
+Route::get('/test-500', function () {
+    throw new \Exception('Testing 500 server error');
+});
