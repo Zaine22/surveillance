@@ -96,6 +96,17 @@ class DashboardService
 
             $host = parse_url($url, PHP_URL_HOST) ?? 'unknown';
 
+            // Remove 'www.' prefix
+            $host = preg_replace('/^www\./', '', $host);
+
+            // Extract just the domain name (e.g., 'google' from 'google.com')
+            $domainParts = explode('.', $host);
+            if (count($domainParts) > 1) {
+                // Get the domain name (second-to-last part for most domains)
+                // For 'google.com' -> 'google', for 'example.co.uk' -> 'example'
+                $host = $domainParts[count($domainParts) - 2];
+            }
+
             if (! isset($sourceCounts[$host])) {
                 $sourceCounts[$host] = 0;
             }
@@ -200,10 +211,18 @@ class DashboardService
 
             $parsed = parse_url($url);
 
+
             if (empty($parsed['host'])) {
                 $host = 'unknown';
             } else {
                 $host = preg_replace('/^www\./', '', $parsed['host']);
+
+                // Extract just the domain name (e.g., 'google' from 'google.com')
+                $domainParts = explode('.', $host);
+                if (count($domainParts) > 1) {
+                    // Get the domain name (second-to-last part for most domains)
+                    $host = $domainParts[count($domainParts) - 2];
+                }
             }
 
             if (! isset($sourceCounts[$host])) {
