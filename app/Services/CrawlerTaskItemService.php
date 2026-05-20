@@ -110,7 +110,7 @@ class CrawlerTaskItemService
 
     public function retry(CrawlerTaskItem $item): array
     {
-        if ($item->status !== 'error') {
+        if (! in_array($item->status, ['error', 'failed'])) {
             return [
                 'success' => false,
                 // 'message' => 'Only failed items can be retried.',
