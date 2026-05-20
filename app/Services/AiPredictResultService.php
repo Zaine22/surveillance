@@ -462,6 +462,12 @@ class AiPredictResultService extends BaseFilterService
 
             $case = $result->caseManagement;
 
+            // If no case exists, create one
+            if (!$case) {
+                $case = $this->service->createFromPredictResult($result);
+                $result->refresh();
+            }
+
             $validCount   = 0;
             $invalidCount = 0;
 
