@@ -79,7 +79,6 @@ class LexiconKeywordService
         LexiconKeyword $lexiconKeyword,
         array $data
     ): bool {
-                dd($data);
         // If keywords are being updated, check for duplicates
         if (isset($data['keywords'])) {
             // Get existing keywords for this lexicon (excluding current keyword group)
@@ -214,9 +213,37 @@ class LexiconKeywordService
             return null;
         }
 
+        // Get all existing keywords in this lexicon (including parent and other translations)
+        $existingKeywords = LexiconKeyword::where('lexicon_id', $parent->lexicon_id)
+            ->where(function($query) use ($parent, $language) {
+                // Exclude the current translation being updated
+                $query->where('parent_id', '!=', $parent->id)
+                      ->orWhere(function($q) use ($parent, $language) {
+                          $q->where('parent_id', $parent->id)
+                            ->where('language', '!=', $language);
+                      })
+                      ->orWhereNull('parent_id');
+            })
+            ->get()
+            ->pluck('keywords')
+            ->flatten()
+            ->map(fn($k) => strtolower(trim($k)))
+            ->toArray();
+
         // Normalize and deduplicate keywords
         $normalizedKeywords = array_map(fn($k) => trim($k), $keywords);
         $uniqueKeywords = array_values(array_unique($normalizedKeywords, SORT_STRING));
+
+        // Filter out keywords that already exist in the lexicon
+        $filteredKeywords = array_filter($uniqueKeywords, function($keyword) use ($existingKeywords) {
+            $lowerKeyword = strtolower($keyword);
+            return !in_array($lowerKeyword, $existingKeywords);
+        });
+
+        // If no keywords remain after filtering, return null or handle appropriately
+        if (empty($filteredKeywords)) {
+            return null;
+        }
 
         return LexiconKeyword::updateOrCreate(
             [
@@ -225,7 +252,7 @@ class LexiconKeywordService
             ],
             [
                 'lexicon_id'      => $parent->lexicon_id,
-                'keywords'        => $uniqueKeywords,
+                'keywords'        => array_values($filteredKeywords),
                 'crawl_hit_count' => 0,
                 'case_count'      => 0,
                 'status'          => 'enabled',
