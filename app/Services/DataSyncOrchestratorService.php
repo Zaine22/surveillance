@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
+use ZipArchive;
 
 class DataSyncOrchestratorService
 {
@@ -286,6 +287,11 @@ class DataSyncOrchestratorService
                 'size' => filesize($fullPath),
             ]);
 
+            // Unzip the file if it's a ZIP archive
+            if (pathinfo($fullPath, PATHINFO_EXTENSION) === 'zip') {
+                $this->unzipFile($fullPath);
+            }
+
             $item->update([
                 'status'      => 'synced',
                 'result_file' => $fullPath,
@@ -410,6 +416,65 @@ class DataSyncOrchestratorService
             ]);
 
             throw $e;
+        }
+    }
+
+    /**
+     * Unzip a file to the same directory
+     *
+     * @param string $zipPath Full path to the ZIP file
+     * @return void
+     * @throws \RuntimeException
+     */
+    private function unzipFile(string $zipPath): void
+    {
+        $zip = new ZipArchive();
+        $extractPath = dirname($zipPath);
+
+        Log::info('Starting unzip process', [
+            'zip_file' => $zipPath,
+            'extract_to' => $extractPath,
+        ]);
+
+        $result = $zip->open($zipPath);
+
+        if ($result !== true) {
+            $errorMessage = match ($result) {
+                ZipArchive::ER_NOZIP => 'Not a valid ZIP archive',
+                ZipArchive::ER_INCONS => 'Inconsistent ZIP archive',
+                ZipArchive::ER_CRC => 'CRC error',
+                ZipArchive::ER_OPEN => 'Cannot open file',
+                ZipArchive::ER_READ => 'Read error',
+                ZipArchive::ER_SEEK => 'Seek error',
+                default => "Unknown error (code: {$result})",
+            };
+
+            throw new \RuntimeException("Failed to open ZIP file: {$errorMessage}");
+        }
+
+        try {
+            if (!$zip->extractTo($extractPath)) {
+                throw new \RuntimeException("Failed to extract ZIP file to: {$extractPath}");
+            }
+
+            $fileCount = $zip->numFiles;
+            $zip->close();
+
+            Log::info('Unzip completed successfully', [
+                'zip_file' => $zipPath,
+                'extracted_files' => $fileCount,
+                'extract_path' => $extractPath,
+            ]);
+
+        } catch (Throwable $e) {
+            $zip->close();
+
+            Log::error('Unzip failed', [
+                'zip_file' => $zipPath,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw new \RuntimeException("Failed to unzip file: {$e->getMessage()}", 0, $e);
         }
     }
 
