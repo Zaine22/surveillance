@@ -61,7 +61,7 @@ class CrawlerTaskItemService
     }
     public function start(CrawlerTaskItem $item): array
     {
-        if ($item->status !== 'pending') {
+        if (!in_array($item->status, ['pending', 'error', 'failed'])) {
             return [
                 'success' => false,
                 // 'message' => 'Only pending items can be started.',
@@ -71,6 +71,7 @@ class CrawlerTaskItemService
 
         $item->update([
             'status' => 'crawling',
+            'error_message' => null,
         ]);
 
         $this->dispatchService->dispatch($item);
