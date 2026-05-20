@@ -48,7 +48,6 @@ class LexiconKeywordController extends Controller
 
     public function update(UpdateLexiconKeywordRequest $request, string $id): LexiconKeywordResource|JsonResponse
     {
-        dd($request->validated());
         $keyword = $this->lexiconKeywordService
             ->getLexiconKeywordById($id);
 
@@ -58,6 +57,10 @@ class LexiconKeywordController extends Controller
 
         $this->lexiconKeywordService
             ->updateLexiconKeyword($keyword, $request->validated());
+
+        // Refresh the keyword with translations to return updated data
+        $keyword->refresh();
+        $keyword->load('translations');
 
         return new LexiconKeywordResource($keyword);
     }

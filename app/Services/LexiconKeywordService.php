@@ -79,31 +79,55 @@ class LexiconKeywordService
         LexiconKeyword $lexiconKeyword,
         array $data
     ): bool {
-        // If keywords are being updated, check for duplicates
-        if (isset($data['keywords'])) {
-            // Get existing keywords for this lexicon (excluding current keyword group)
-            $existingKeywords = LexiconKeyword::where('lexicon_id', $lexiconKeyword->lexicon_id)
-                ->where('id', '!=', $lexiconKeyword->id)
-                ->get()
-                ->pluck('keywords')
-                ->flatten()
-                ->map(fn($k) => strtolower(trim($k)))
-                ->toArray();
+        DB::beginTransaction();
 
-            // Normalize and deduplicate keywords
-            $normalizedKeywords = array_map(fn($k) => trim($k), $data['keywords']);
-            $uniqueKeywords = array_values(array_unique($normalizedKeywords, SORT_STRING));
+        try {
+            // If keywords are being updated, check for duplicates
+            if (isset($data['keywords'])) {
+                // Get existing keywords for this lexicon (excluding current keyword group)
+                $existingKeywords = LexiconKeyword::where('lexicon_id', $lexiconKeyword->lexicon_id)
+                    ->where('id', '!=', $lexiconKeyword->id)
+                    ->get()
+                    ->pluck('keywords')
+                    ->flatten()
+                    ->map(fn($k) => strtolower(trim($k)))
+                    ->toArray();
 
-            // Filter out keywords that already exist in other groups
-            $filteredKeywords = array_filter($uniqueKeywords, function($keyword) use ($existingKeywords) {
-                $lowerKeyword = strtolower($keyword);
-                return !in_array($lowerKeyword, $existingKeywords);
-            });
+                // Normalize and deduplicate keywords
+                $normalizedKeywords = array_map(fn($k) => trim($k), $data['keywords']);
+                $uniqueKeywords = array_values(array_unique($normalizedKeywords, SORT_STRING));
 
-            $data['keywords'] = array_values($filteredKeywords);
+                // Filter out keywords that already exist in other groups
+                $filteredKeywords = array_filter($uniqueKeywords, function($keyword) use ($existingKeywords) {
+                    $lowerKeyword = strtolower($keyword);
+                    return !in_array($lowerKeyword, $existingKeywords);
+                });
+
+                $data['keywords'] = array_values($filteredKeywords);
+            }
+
+            // Update the main keyword
+            $result = $lexiconKeyword->update($data);
+
+            // Handle translations if provided
+            if (isset($data['translations']) && is_array($data['translations'])) {
+                foreach ($data['translations'] as $language => $keywords) {
+                    if (!empty($keywords) && is_array($keywords)) {
+                        $this->upsertTranslation(
+                            $lexiconKeyword->id,
+                            $language,
+                            $keywords
+                        );
+                    }
+                }
+            }
+
+            DB::commit();
+            return $result;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
         }
-
-        return $lexiconKeyword->update($data);
     }
 
     public function deleteLexiconKeyword(LexiconKeyword $lexiconKeyword): ?bool

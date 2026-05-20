@@ -1,0 +1,195 @@
+{
+  "examples": [
+    {
+      "description": "Update main keyword only (without translations)",
+      "method": "PUT",
+      "endpoint": "/api/lexicon-keywords/{id}",
+      "request": {
+        "keywords": ["terrorism", "terrorist attack", "extremism"],
+        "status": "enabled",
+        "crawl_hit_count": 10,
+        "case_count": 5
+      }
+    },
+    {
+      "description": "Update main keyword with all translations",
+      "method": "PUT",
+      "endpoint": "/api/lexicon-keywords/{id}",
+      "request": {
+        "keywords": ["terrorism", "terrorist attack", "extremism"],
+        "status": "enabled",
+        "crawl_hit_count": 10,
+        "case_count": 5,
+        "translations": {
+          "zh": ["恐怖主義", "恐怖襲擊", "極端主義"],
+          "en": ["terrorism", "terrorist attack", "extremism"],
+          "ja": ["テロリズム", "テロ攻撃", "過激主義"]
+        }
+      }
+    },
+    {
+      "description": "Update only Chinese translation (keep main keyword unchanged)",
+      "method": "PUT",
+      "endpoint": "/api/lexicon-keywords/{id}",
+      "request": {
+        "translations": {
+          "zh": ["恐怖主義", "恐怖襲擊", "極端主義", "恐怖分子"]
+        }
+      }
+    },
+    {
+      "description": "Update multiple translations (without main keyword)",
+      "method": "PUT",
+      "endpoint": "/api/lexicon-keywords/{id}",
+      "request": {
+        "translations": {
+          "zh": ["恐怖主義", "恐怖襲擊"],
+          "ja": ["テロリズム", "テロ攻撃"]
+        }
+      }
+    },
+    {
+      "description": "Update status only",
+      "method": "PUT",
+      "endpoint": "/api/lexicon-keywords/{id}",
+      "request": {
+        "status": "disabled"
+      }
+    },
+    {
+      "description": "Update main keyword and add new English translation",
+      "method": "PUT",
+      "endpoint": "/api/lexicon-keywords/{id}",
+      "request": {
+        "keywords": ["terrorism", "terrorist attack", "extremism", "radicalization"],
+        "translations": {
+          "en": ["terrorism", "terrorist attack", "extremism", "radicalization"]
+        }
+      }
+    },
+    {
+      "description": "Update all fields including counts",
+      "method": "PUT",
+      "endpoint": "/api/lexicon-keywords/{id}",
+      "request": {
+        "keywords": ["drug trafficking", "narcotics", "illegal drugs"],
+        "status": "enabled",
+        "crawl_hit_count": 25,
+        "case_count": 12,
+        "translations": {
+          "zh": ["毒品走私", "麻醉品", "非法藥物"],
+          "en": ["drug trafficking", "narcotics", "illegal drugs"],
+          "ja": ["麻薬密売", "麻薬", "違法薬物"]
+        }
+      }
+    }
+  ],
+  "field_descriptions": {
+    "keywords": {
+      "type": "array of strings",
+      "required": false,
+      "description": "Main keywords for the lexicon entry. Each keyword must be a string with max 255 characters.",
+      "example": ["keyword1", "keyword2", "keyword3"]
+    },
+    "status": {
+      "type": "string",
+      "required": false,
+      "allowed_values": ["enabled", "disabled"],
+      "description": "Status of the keyword entry",
+      "example": "enabled"
+    },
+    "crawl_hit_count": {
+      "type": "integer",
+      "required": false,
+      "min": 0,
+      "description": "Number of times this keyword was hit during crawling",
+      "example": 10
+    },
+    "case_count": {
+      "type": "integer",
+      "required": false,
+      "min": 0,
+      "description": "Number of cases associated with this keyword",
+      "example": 5
+    },
+    "translations": {
+      "type": "object",
+      "required": false,
+      "description": "Object containing translations for different languages",
+      "properties": {
+        "zh": {
+          "type": "array of strings",
+          "required": false,
+          "description": "Chinese translation keywords",
+          "example": ["中文關鍵字1", "中文關鍵字2"]
+        },
+        "en": {
+          "type": "array of strings",
+          "required": false,
+          "description": "English translation keywords",
+          "example": ["english keyword1", "english keyword2"]
+        },
+        "ja": {
+          "type": "array of strings",
+          "required": false,
+          "description": "Japanese translation keywords",
+          "example": ["日本語キーワード1", "日本語キーワード2"]
+        }
+      }
+    }
+  },
+  "response_format": {
+    "success": {
+      "status": 200,
+      "body": {
+        "id": "uuid-string",
+        "lexicon_id": "uuid-string",
+        "keywords": ["keyword1", "keyword2"],
+        "status": "enabled",
+        "crawl_hit_count": 10,
+        "case_count": 5,
+        "created_at": "2026-05-20T10:00:00.000000Z",
+        "updated_at": "2026-05-20T10:30:00.000000Z",
+        "translations": [
+          {
+            "id": "uuid-string",
+            "parent_id": "uuid-string",
+            "language": "zh",
+            "keywords": ["中文關鍵字1", "中文關鍵字2"]
+          },
+          {
+            "id": "uuid-string",
+            "parent_id": "uuid-string",
+            "language": "en",
+            "keywords": ["english keyword1", "english keyword2"]
+          }
+        ]
+      }
+    },
+    "validation_error": {
+      "status": 422,
+      "body": {
+        "message": "The given data was invalid.",
+        "errors": {
+          "keywords": ["關鍵字不能為空"],
+          "translations.zh.0": ["每個中文翻譯關鍵字不能為空"]
+        }
+      }
+    },
+    "not_found": {
+      "status": 404,
+      "body": {
+        "message": "Lexicon keyword not found"
+      }
+    }
+  },
+  "notes": [
+    "All fields are optional - you can update only the fields you want to change",
+    "If translations are provided, they will be created or updated (upsert operation)",
+    "Empty translation arrays are ignored",
+    "Duplicate keywords are automatically filtered out",
+    "All updates are wrapped in a database transaction for data integrity",
+    "Keywords are case-insensitive for duplicate checking",
+    "Each keyword string has a maximum length of 255 characters"
+  ]
+}
