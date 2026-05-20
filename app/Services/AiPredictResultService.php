@@ -6,6 +6,7 @@ use App\Models\AiPredictResult;
 use App\Models\AiPredictResultAudit;
 use App\Models\AiPredictResultItem;
 use App\Models\CaseManagementItem;
+use App\Models\LexiconKeyword;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -545,11 +546,76 @@ class AiPredictResultService extends BaseFilterService
                     : 'case_not_established',
             ]);
 
+            // Increment lexicon keyword case_count if case is established (rejected/invalid items exist)
+            if ($invalidCount > 0 && $result->lexicon_id) {
+                $this->incrementLexiconCaseCount($result);
+            }
+
             return $result->fresh([
                 'items',
                 'caseManagement.items',
                 'audits.auditor',
             ]);
         });
+    }
+
+    /**
+     * Increment case_count for lexicon keywords that match the AI result keywords
+     */
+    protected function incrementLexiconCaseCount(AiPredictResult $result): void
+    {
+        try {
+            // Get the keywords from the result
+            $resultKeywords = $this->normalizeKeywordsForJson($result->keywords);
+
+            if (empty($resultKeywords)) {
+                Log::info('No keywords found in AI result to increment case count', [
+                    'result_id' => $result->id,
+                ]);
+                return;
+            }
+
+            // Find all lexicon keywords that match
+            $lexiconKeywords = LexiconKeyword::where('lexicon_id', $result->lexicon_id)
+                ->where('status', 'enabled')
+                ->get();
+
+            $incrementedCount = 0;
+            foreach ($lexiconKeywords as $lexiconKeyword) {
+                $lexiconKeywordArray = is_array($lexiconKeyword->keywords)
+                    ? $lexiconKeyword->keywords
+                    : json_decode($lexiconKeyword->keywords, true);
+
+                if (!is_array($lexiconKeywordArray)) {
+                    continue;
+                }
+
+                // Check if any result keyword matches this lexicon keyword
+                $hasMatch = !empty(array_intersect($resultKeywords, $lexiconKeywordArray));
+
+                if ($hasMatch) {
+                    $lexiconKeyword->increment('case_count');
+                    $incrementedCount++;
+
+                    Log::info('Incremented case_count for lexicon keyword', [
+                        'lexicon_keyword_id' => $lexiconKeyword->id,
+                        'new_case_count' => $lexiconKeyword->case_count + 1,
+                        'matched_keywords' => array_intersect($resultKeywords, $lexiconKeywordArray),
+                    ]);
+                }
+            }
+
+            Log::info('Lexicon case count increment completed', [
+                'result_id' => $result->id,
+                'lexicon_id' => $result->lexicon_id,
+                'incremented_keywords' => $incrementedCount,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to increment lexicon case count', [
+                'result_id' => $result->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }
