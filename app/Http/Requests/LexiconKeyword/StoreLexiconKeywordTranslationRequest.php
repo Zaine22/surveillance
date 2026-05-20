@@ -2,6 +2,7 @@
 namespace App\Http\Requests\LexiconKeyword;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class StoreLexiconKeywordTranslationRequest extends FormRequest
 {
@@ -31,18 +32,35 @@ class StoreLexiconKeywordTranslationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            // 'keywords.required'   => 'Keywords are required.',
-            // 'keywords.array'      => 'Keywords must be an array.',
-            // 'keywords.min'        => 'At least one keyword is required.',
-            // 'keywords.*.required' => 'Each keyword cannot be empty.',
-            // 'keywords.*.string'   => 'Each keyword must be a string.',
-            // 'keywords.*.max'      => 'Each keyword must not exceed 255 characters.',
             'keywords.required'   => '關鍵字為必填項。',
             'keywords.array'      => '關鍵字必須是陣列。',
             'keywords.min'        => '至少需要一個關鍵字。',
             'keywords.*.required' => '每個關鍵字不能為空。',
             'keywords.*.string'   => '每個關鍵字必須是字串。',
             'keywords.*.max'      => '每個關鍵字不得超過 255 個字元。',
+            'lang.required'       => '語言為必填項。',
+            'lang.in'             => '語言必須是以下其中之一：zh, en, ja。',
         ];
+    }
+
+    /**
+     * Configure the validator instance.
+     */
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function ($validator) {
+            $keywords = $this->input('keywords', []);
+
+            // Check for duplicates within the submitted keywords
+            $normalizedKeywords = array_map(fn($k) => strtolower(trim($k)), $keywords);
+            $uniqueKeywords = array_unique($normalizedKeywords);
+
+            if (count($normalizedKeywords) !== count($uniqueKeywords)) {
+                $validator->errors()->add(
+                    'keywords',
+                    '翻譯關鍵字中存在重複項。'
+                );
+            }
+        });
     }
 }

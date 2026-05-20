@@ -34,14 +34,41 @@ class LexiconKeywordService
         $createdKeywords = [];
 
         DB::transaction(function () use ($data, $keywords, &$createdKeywords) {
+            // Get existing keywords for this lexicon to check for duplicates
+            $existingKeywords = LexiconKeyword::where('lexicon_id', $data['lexicon_id'])
+                ->get()
+                ->pluck('keywords')
+                ->flatten()
+                ->map(fn($k) => strtolower(trim($k)))
+                ->toArray();
+
             foreach ($keywords as $keywordItem) {
-                $createdKeywords[] = LexiconKeyword::create([
-                    'lexicon_id'      => $data['lexicon_id'],
-                    'keywords'        => (array) $keywordItem,
-                    'status'          => $data['status'] ?? 'enabled',
-                    'crawl_hit_count' => $data['crawl_hit_count'] ?? 0,
-                    'case_count'      => $data['case_count'] ?? 0,
-                ]);
+                $keywordArray = (array) $keywordItem;
+
+                // Normalize and deduplicate keywords
+                $normalizedKeywords = array_map(fn($k) => trim($k), $keywordArray);
+                $uniqueKeywords = array_values(array_unique($normalizedKeywords, SORT_STRING));
+
+                // Filter out keywords that already exist in the lexicon
+                $filteredKeywords = array_filter($uniqueKeywords, function($keyword) use (&$existingKeywords) {
+                    $lowerKeyword = strtolower($keyword);
+                    if (in_array($lowerKeyword, $existingKeywords)) {
+                        return false;
+                    }
+                    $existingKeywords[] = $lowerKeyword;
+                    return true;
+                });
+
+                // Only create if there are keywords remaining after filtering
+                if (!empty($filteredKeywords)) {
+                    $createdKeywords[] = LexiconKeyword::create([
+                        'lexicon_id'      => $data['lexicon_id'],
+                        'keywords'        => array_values($filteredKeywords),
+                        'status'          => $data['status'] ?? 'enabled',
+                        'crawl_hit_count' => $data['crawl_hit_count'] ?? 0,
+                        'case_count'      => $data['case_count'] ?? 0,
+                    ]);
+                }
             }
         });
 
@@ -52,6 +79,31 @@ class LexiconKeywordService
         LexiconKeyword $lexiconKeyword,
         array $data
     ): bool {
+                dd($data);
+        // If keywords are being updated, check for duplicates
+        if (isset($data['keywords'])) {
+            // Get existing keywords for this lexicon (excluding current keyword group)
+            $existingKeywords = LexiconKeyword::where('lexicon_id', $lexiconKeyword->lexicon_id)
+                ->where('id', '!=', $lexiconKeyword->id)
+                ->get()
+                ->pluck('keywords')
+                ->flatten()
+                ->map(fn($k) => strtolower(trim($k)))
+                ->toArray();
+
+            // Normalize and deduplicate keywords
+            $normalizedKeywords = array_map(fn($k) => trim($k), $data['keywords']);
+            $uniqueKeywords = array_values(array_unique($normalizedKeywords, SORT_STRING));
+
+            // Filter out keywords that already exist in other groups
+            $filteredKeywords = array_filter($uniqueKeywords, function($keyword) use ($existingKeywords) {
+                $lowerKeyword = strtolower($keyword);
+                return !in_array($lowerKeyword, $existingKeywords);
+            });
+
+            $data['keywords'] = array_values($filteredKeywords);
+        }
+
         return $lexiconKeyword->update($data);
     }
 
@@ -162,6 +214,10 @@ class LexiconKeywordService
             return null;
         }
 
+        // Normalize and deduplicate keywords
+        $normalizedKeywords = array_map(fn($k) => trim($k), $keywords);
+        $uniqueKeywords = array_values(array_unique($normalizedKeywords, SORT_STRING));
+
         return LexiconKeyword::updateOrCreate(
             [
                 'parent_id' => $parent->id,
@@ -169,7 +225,7 @@ class LexiconKeywordService
             ],
             [
                 'lexicon_id'      => $parent->lexicon_id,
-                'keywords'        => array_values(array_unique($keywords)),
+                'keywords'        => $uniqueKeywords,
                 'crawl_hit_count' => 0,
                 'case_count'      => 0,
                 'status'          => 'enabled',

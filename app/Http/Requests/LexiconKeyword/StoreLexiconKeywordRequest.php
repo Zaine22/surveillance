@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\LexiconKeyword;
 
+use App\Models\LexiconKeyword;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class StoreLexiconKeywordRequest extends FormRequest
 {
@@ -47,5 +49,49 @@ class StoreLexiconKeywordRequest extends FormRequest
             'case_count.min'         => '案件數量最小值為 :min',
             'status.in'              => '狀態必須是以下其中之一：啟用、停用',
         ];
+    }
+
+    /**
+     * Configure the validator instance.
+     */
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function ($validator) {
+            $lexiconId = $this->input('lexicon_id');
+            $keywords = $this->input('keywords', []);
+
+            // Get existing keywords for this lexicon
+            $existingKeywords = LexiconKeyword::where('lexicon_id', $lexiconId)
+                ->get()
+                ->pluck('keywords')
+                ->flatten()
+                ->map(fn($k) => strtolower(trim($k)))
+                ->toArray();
+
+            // Check for duplicates
+            foreach ($keywords as $groupIndex => $group) {
+                if (is_array($group)) {
+                    foreach ($group as $keyword) {
+                        $normalizedKeyword = strtolower(trim($keyword));
+                        if (in_array($normalizedKeyword, $existingKeywords)) {
+                            $validator->errors()->add(
+                                "keywords.{$groupIndex}",
+                                "關鍵字 '{$keyword}' 在此詞庫中已存在。"
+                            );
+                            return;
+                        }
+                    }
+                } else {
+                    $normalizedKeyword = strtolower(trim($group));
+                    if (in_array($normalizedKeyword, $existingKeywords)) {
+                        $validator->errors()->add(
+                            "keywords.{$groupIndex}",
+                            "關鍵字 '{$group}' 在此詞庫中已存在。"
+                        );
+                        return;
+                    }
+                }
+            }
+        });
     }
 }

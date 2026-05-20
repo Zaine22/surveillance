@@ -112,20 +112,40 @@ class LexiconService extends BaseFilterService
             $caseManagementId = $data['case_management_id'] ?? null;
             $lexicon          = Lexicon::create($data);
 
+            // Track all keywords to prevent duplicates across groups
+            $allKeywords = [];
+
             foreach ($keywordGroups as $group) {
 
                 if (! is_array($group) || empty($group)) {
                     continue;
                 }
 
-                LexiconKeyword::create([
-                    'lexicon_id'      => $lexicon->id,
-                    'keywords'        => array_values(array_unique($group)),
-                    'language'        => 'zh',
-                    'crawl_hit_count' => 0,
-                    'case_count'      => 0,
-                    'status'          => 'enabled',
-                ]);
+                // Normalize and deduplicate keywords within the group
+                $normalizedGroup = array_map(fn($k) => trim($k), $group);
+                $uniqueGroup = array_values(array_unique($normalizedGroup, SORT_STRING));
+
+                // Filter out duplicates across all groups
+                $filteredGroup = [];
+                foreach ($uniqueGroup as $keyword) {
+                    $lowerKeyword = strtolower($keyword);
+                    if (!in_array($lowerKeyword, $allKeywords)) {
+                        $filteredGroup[] = $keyword;
+                        $allKeywords[] = $lowerKeyword;
+                    }
+                }
+
+                // Only create if there are keywords remaining after filtering
+                if (!empty($filteredGroup)) {
+                    LexiconKeyword::create([
+                        'lexicon_id'      => $lexicon->id,
+                        'keywords'        => $filteredGroup,
+                        'language'        => 'zh',
+                        'crawl_hit_count' => 0,
+                        'case_count'      => 0,
+                        'status'          => 'enabled',
+                    ]);
+                }
             }
 
             if ($caseManagementId) {
@@ -157,10 +177,32 @@ class LexiconService extends BaseFilterService
                     ->update(['status' => 'disabled']);
             }
 
+            // Track all keywords to prevent duplicates across groups
+            $allKeywords = [];
+
             foreach ($keywordPayloads as $row) {
 
+                // Normalize and deduplicate keywords within the group
+                $normalizedKeywords = array_map(fn($k) => trim($k), $row['keywords']);
+                $uniqueKeywords = array_values(array_unique($normalizedKeywords, SORT_STRING));
+
+                // Filter out duplicates across all groups
+                $filteredKeywords = [];
+                foreach ($uniqueKeywords as $keyword) {
+                    $lowerKeyword = strtolower($keyword);
+                    if (!in_array($lowerKeyword, $allKeywords)) {
+                        $filteredKeywords[] = $keyword;
+                        $allKeywords[] = $lowerKeyword;
+                    }
+                }
+
+                // Skip if no keywords remain after deduplication
+                if (empty($filteredKeywords)) {
+                    continue;
+                }
+
                 $payload = [
-                    'keywords' => array_values(array_unique($row['keywords'])),
+                    'keywords' => $filteredKeywords,
                     'status'   => $row['status'],
                 ];
 
