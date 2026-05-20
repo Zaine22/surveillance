@@ -21,7 +21,7 @@ class CrawlerTaskItemsIndexResource extends JsonResource
                 ? basename(parse_url($this->result_file, PHP_URL_PATH))
                 : null,
             'result_file_url' => $this->getResultFileUrl($this->result_file),
-            'status'          => $this->status,
+            'status'          => $this->mapStatus($this->status),
             'crawl_location'  => $this->crawl_location,
             'error_message'   => $this->error_message,
             'created_at'      => $this->created_at,
@@ -57,5 +57,14 @@ class CrawlerTaskItemsIndexResource extends JsonResource
         }
 
     return rtrim(config('services.task_files.base_url'), '/') . '/' . $fileName;
+    }
+
+    private function mapStatus(string $status): string
+    {
+        return match($status) {
+            'error' => 'failed',
+            'pending' => 'paused',
+            default => $status,
+        };
     }
 }

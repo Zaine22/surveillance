@@ -77,6 +77,7 @@ class UpdateLexiconKeywordRequest extends FormRequest
                 ->where('id', '!=', $keywordId)
                 ->get()
                 ->pluck('keywords')
+                ->filter(fn($k) => is_array($k)) // Filter out non-array values
                 ->flatten()
                 ->map(fn($k) => strtolower(trim($k)))
                 ->toArray();

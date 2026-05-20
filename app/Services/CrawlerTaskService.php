@@ -39,7 +39,25 @@ class CrawlerTaskService extends BaseFilterService
             });
 
         if (! empty($filters['status'])) {
-            $query->where('status', $filters['status']);
+            if (is_array($filters['status'])) {
+                // Map frontend status to database status
+                $statuses = array_map(function($status) {
+                    return match($status) {
+                        'pending' => 'paused',
+                        'error' => 'failed',
+                        default => $status,
+                    };
+                }, $filters['status']);
+                $query->whereIn('status', $statuses);
+            } else {
+                // Map frontend status to database status
+                $status = match($filters['status']) {
+                    'failed' => 'error',
+                    'paused' => 'pending',
+                    default => $filters['status'],
+                };
+                $query->where('status', $status);
+            }
         }
 
         return $query->latest('updated_at')->paginate(10);

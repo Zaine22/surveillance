@@ -18,7 +18,7 @@ class FailedCrawlerTaskItemResource extends JsonResource
             'task_id'         => $this->task_id,
             'keywords'        => $this->keywords,
             'crawl_location'  => $this->crawl_location,
-            'status'          => $this->status,
+            'status'          => $this->status === 'error' ? 'failed' : $this->status,
             'crawler_machine' => $this->crawler_machine,
             'error_message'   => $this->error_message,
             'last_updated'    => optional($this->updated_at)->format('Y-m-d H:i:s'),

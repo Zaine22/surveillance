@@ -29,19 +29,6 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(fn() => true);
-        $exceptions->render(function (Throwable $e, Request $request) {
-            $statusCode = $e instanceof HttpExceptionInterface
-                ? $e->getStatusCode()
-                : 500;
-
-            if ($statusCode >= 500) {
-                return response()->json([
-                    'message' => '伺服器錯誤，請稍後再試。',
-                ], 500);
-            }
-
-            return null;
-        });
     })
 
     ->withSchedule(function (Schedule $schedule) {

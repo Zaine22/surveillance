@@ -25,7 +25,7 @@ class CrawlerTaskItemsRequest extends FormRequest
 
             'status'     => [
                 'nullable',
-                'in:pending,crawling,syncing,synced,error',
+                'in:pending,running,completed,failed,paused',
             ],
 
             'page'       => ['nullable', 'integer', 'min:1'],
@@ -48,7 +48,7 @@ class CrawlerTaskItemsRequest extends FormRequest
         return [
             'search.string'    => '搜尋欄位必須是字串格式',
             'search.max'       => '搜尋欄位不能超過 :max 個字元',
-            'status.in'        => '狀態必須是以下其中之一：待處理、爬取中、同步中、已同步、錯誤',
+            'status.in'        => '狀態必須是以下其中之一：待處理、執行中、已完成、失敗、已暫停',
             'page.integer'     => '頁碼必須是整數',
             'page.min'         => '頁碼最小值為 :min',
             'per_page.integer' => '每頁筆數必須是整數',
@@ -57,5 +57,24 @@ class CrawlerTaskItemsRequest extends FormRequest
             'sort_by.in'       => '排序欄位必須是以下其中之一：建立時間、更新時間、狀態',
             'sort_order.in'    => '排序方式必須是以下其中之一：升冪（asc）、降冪（desc）',
         ];
+    }
+
+    public function validated($key = null, $default = null): array
+    {
+        $data = parent::validated();
+
+        // Map frontend status values to database status values
+        if (isset($data['status'])) {
+            $data['status'] = match ($data['status']) {
+                'running'   => ['crawling', 'syncing'],
+                'completed' => 'synced',
+                'failed'    => 'error',
+                'paused'    => 'pending',
+                'pending'   => 'what',
+                default     => $data['status'],
+            };
+        }
+
+        return $data;
     }
 }
