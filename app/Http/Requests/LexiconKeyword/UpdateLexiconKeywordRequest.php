@@ -24,11 +24,6 @@ class UpdateLexiconKeywordRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'keywords' => 'sometimes|required|array|min:1',
-            'keywords.*' => 'required|string|max:255',
-            'crawl_hit_count' => 'integer|min:0',
-            'case_count' => 'integer|min:0',
-            'status' => 'in:enabled,disabled',
             'translations' => 'sometimes|nullable|array',
             'translations.zh' => 'sometimes|nullable|array',
             'translations.zh.*' => 'string|max:255',
@@ -42,17 +37,6 @@ class UpdateLexiconKeywordRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'keywords.required'      => '關鍵字不能為空',
-            'keywords.array'         => '關鍵字必須是陣列格式',
-            'keywords.min'           => '至少需要 :min 個關鍵字',
-            'keywords.*.required'    => '每個關鍵字不能為空',
-            'keywords.*.string'      => '每個關鍵字必須是字串格式',
-            'keywords.*.max'         => '每個關鍵字不能超過 :max 個字元',
-            'crawl_hit_count.integer' => '爬蟲命中次數必須是整數',
-            'crawl_hit_count.min'    => '爬蟲命中次數最小值為 :min',
-            'case_count.integer'     => '案件數量必須是整數',
-            'case_count.min'         => '案件數量最小值為 :min',
-            'status.in'              => '狀態必須是以下其中之一：啟用、停用',
             'translations.array'     => '翻譯必須是陣列格式',
             'translations.zh.array'  => '中文翻譯必須是陣列格式',
             'translations.zh.*.string'   => '每個中文翻譯關鍵字必須是字串格式',
@@ -98,25 +82,6 @@ class UpdateLexiconKeywordRequest extends FormRequest
                 ->flatten()
                 ->map(fn($k) => strtolower(trim($k)))
                 ->toArray();
-
-            // Check for duplicates in main keywords
-            if ($this->has('keywords')) {
-                $keywords = $this->input('keywords', []);
-                if (is_array($keywords)) {
-                    foreach ($keywords as $keyword) {
-                        if (is_string($keyword)) {
-                            $normalizedKeyword = strtolower(trim($keyword));
-                            if (in_array($normalizedKeyword, $existingKeywords)) {
-                                $validator->errors()->add(
-                                    'keywords',
-                                    "關鍵字 '{$keyword}' 在此詞庫中已存在。"
-                                );
-                                return;
-                            }
-                        }
-                    }
-                }
-            }
 
             // Check for duplicates in translation keywords
             if ($this->has('translations')) {

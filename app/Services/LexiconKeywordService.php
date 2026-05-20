@@ -82,45 +82,29 @@ class LexiconKeywordService
         DB::beginTransaction();
 
         try {
-            // If keywords are being updated, check for duplicates
-            if (isset($data['keywords'])) {
-                // Get existing keywords for this lexicon (excluding current keyword group)
-                $existingKeywords = LexiconKeyword::where('lexicon_id', $lexiconKeyword->lexicon_id)
-                    ->where('id', '!=', $lexiconKeyword->id)
-                    ->get()
-                    ->pluck('keywords')
-                    ->flatten()
-                    ->map(fn($k) => strtolower(trim($k)))
-                    ->toArray();
-
-                // Normalize and deduplicate keywords
-                $normalizedKeywords = array_map(fn($k) => trim($k), $data['keywords']);
-                $uniqueKeywords = array_values(array_unique($normalizedKeywords, SORT_STRING));
-
-                // Filter out keywords that already exist in other groups
-                $filteredKeywords = array_filter($uniqueKeywords, function($keyword) use ($existingKeywords) {
-                    $lowerKeyword = strtolower($keyword);
-                    return !in_array($lowerKeyword, $existingKeywords);
-                });
-
-                $data['keywords'] = array_values($filteredKeywords);
-            }
-
-            // Update the main keyword
-            $result = $lexiconKeyword->update($data);
+            $updateData = [];
 
             // Handle translations if provided
             if (isset($data['translations']) && is_array($data['translations'])) {
-                foreach ($data['translations'] as $language => $keywords) {
-                    if (!empty($keywords) && is_array($keywords)) {
+                // Update zh (parent keyword's keywords field)
+                if (isset($data['translations']['zh']) && is_array($data['translations']['zh'])) {
+                    $updateData['keywords'] = $data['translations']['zh'];
+                }
+
+                // Update en and ja as translation records
+                foreach (['en', 'ja'] as $language) {
+                    if (isset($data['translations'][$language]) && is_array($data['translations'][$language])) {
                         $this->upsertTranslation(
                             $lexiconKeyword->id,
                             $language,
-                            $keywords
+                            $data['translations'][$language]
                         );
                     }
                 }
             }
+
+            // Update the main keyword record
+            $result = !empty($updateData) ? $lexiconKeyword->update($updateData) : true;
 
             DB::commit();
             return $result;
