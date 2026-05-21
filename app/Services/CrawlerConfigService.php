@@ -134,30 +134,36 @@ class CrawlerConfigService extends BaseFilterService
             $data['sources'] = $domains;
         }
 
-        // Handle status logic based on from/to dates
-        if (isset($data['from'])) {
-            $from = ! empty($data['from']) ? Carbon::parse($data['from']) : now();
-            $to   = isset($data['to']) && ! empty($data['to']) ? Carbon::parse($data['to']) : null;
+        // Determine status based on from date
+        $from = isset($data['from']) && ! empty($data['from'])
+            ? Carbon::parse($data['from'])
+            : ($config->from ? Carbon::parse($config->from) : now());
 
-            if ($from->startOfDay()->gt(now()->startOfDay())) {
-                $data['status'] = 'pending';
-            } elseif (! isset($data['status'])) {
-                $data['status'] = 'enabled';
-            }
+        $to = isset($data['to']) && ! empty($data['to'])
+            ? Carbon::parse($data['to'])
+            : ($config->to ? Carbon::parse($config->to) : null);
 
-            // Schedule jobs based on frequency if rescheduling is needed
-            if ($shouldRescheduleJobs && $to && isset($data['frequency_code'])) {
-                $frequencyCode = $data['frequency_code'];
+        // Set status based on from date
+        if ($from->copy()->startOfDay()->gt(now()->startOfDay())) {
+            $data['status'] = 'pending';
+        } else {
+            $data['status'] = 'enabled';
+        }
+
+        // Schedule jobs based on frequency if rescheduling is needed
+        if ($shouldRescheduleJobs && $to) {
+            $frequencyCode = $data['frequency_code'] ?? $config->frequency_code;
+            if ($frequencyCode) {
                 $this->scheduleJobs($config->id, $frequencyCode, $from, $to, $data['status']);
             }
+        }
 
-            // Create task if status is enabled and lexicon_id is provided or exists
-            if ($data['status'] === 'enabled') {
-                $lexiconId = $data['lexicon_id'] ?? $config->lexicon_id;
-                if ($lexiconId) {
-                    $lexicon = Lexicon::findOrFail($lexiconId);
-                    $this->crawlerTaskService->createFromConfig($config, $lexicon);
-                }
+        // Create task if status is enabled and lexicon_id is provided or exists
+        if ($data['status'] === 'enabled') {
+            $lexiconId = $data['lexicon_id'] ?? $config->lexicon_id;
+            if ($lexiconId) {
+                $lexicon = Lexicon::findOrFail($lexiconId);
+                $this->crawlerTaskService->createFromConfig($config, $lexicon);
             }
         }
 

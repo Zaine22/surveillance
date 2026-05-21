@@ -19,7 +19,6 @@ class UpdateCrawlerConfigRequest extends FormRequest
             'lexicon_id'     => ['sometimes', 'uuid', 'exists:lexicons,id'],
             'description'    => ['nullable', 'string'],
             'frequency_code' => ['sometimes', 'in:daily,weekly,monthly'],
-            'status'         => ['sometimes', 'in:enabled,disabled'],
             'from'           => ['nullable', 'date'],
             'to'             => ['nullable', 'date', 'after:from'],
         ];
@@ -38,7 +37,6 @@ class UpdateCrawlerConfigRequest extends FormRequest
             'lexicon_id.exists'     => '詞庫 ID 不存在',
             'description.string'    => '描述必須是字串格式',
             'frequency_code.in'     => '頻率代碼必須是以下其中之一：每日、每週、每月',
-            'status.in'             => '狀態必須是以下其中之一：啟用、停用',
             'from.date'             => '起始日期必須是有效的日期格式',
             'to.date'               => '結束日期必須是有效的日期格式',
             'to.after'              => '結束日期必須在起始日期之後',
