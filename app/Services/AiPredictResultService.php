@@ -424,8 +424,8 @@ class AiPredictResultService extends BaseFilterService
         $baseUrl = rtrim(config('app.ai_media_base_url', 'http://220.130.187.241:9680/mnt'), '/');
 
         // Handle absolute paths like /home/victor/MOHW/task/...
-        // Extract the path starting from 'task/' onwards
-        if (preg_match('#/task/(.+)$#', $path, $matches)) {
+        // Extract the path starting from 'task/' onwards (case-insensitive)
+        if (preg_match('#/task/(.+)$#i', $path, $matches)) {
             $path = 'task/' . $matches[1];
         } else {
             // Remove leading slash if present to avoid double slashes
