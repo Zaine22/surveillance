@@ -256,7 +256,9 @@ class DataSyncOrchestratorService
                 'Location'
             );
 
-            $fileName = "{$crawlerConfigName}_{$firstKeyword}_{$crawlLocationName}.zip";
+            // $fileName = "{$crawlerConfigName}_{$firstKeyword}_{$crawlLocationName}.zip";
+
+            $fileName = "{$crawlLocationName}.zip";
 
             $fullPath = '/mnt/task/' . $fileName;
 
