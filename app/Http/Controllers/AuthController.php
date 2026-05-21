@@ -219,7 +219,7 @@ class AuthController extends Controller
         ], [
             'email.required' => '請輸入電子郵件',
             'email.email'    => '電子郵件格式錯誤',
-            'email.exists'   => '請輸入正確的帳號',
+            'email.exists'   => '請輸入正確帳號/密碼',
         ]);
 
         $result = $this->authService->forgetPassword($data['email']);

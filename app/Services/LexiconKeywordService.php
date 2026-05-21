@@ -197,7 +197,7 @@ class LexiconKeywordService
 
         $lexiconName = preg_replace('/[\\\\\/:*?"<>|]/', '_', $lexicon->name);
 
-        $fileName = $lexiconName . '_Keyword_List.xlsx';
+        $fileName = $lexiconName . '_關鍵字列表.xlsx';
 
         return response()->streamDownload(
             function () use ($writer) {
