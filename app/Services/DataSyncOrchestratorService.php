@@ -258,7 +258,9 @@ class DataSyncOrchestratorService
 
             // $fileName = "{$crawlerConfigName}_{$firstKeyword}_{$crawlLocationName}.zip";
 
-            $fileName = "{$crawlLocationName}.zip";
+            $fileDate = now()->format('Y_m_d');
+
+            $fileName = "{$fileDate}_{$crawlLocationName}.zip";
 
             $fullPath = '/mnt/task/' . $fileName;
 
@@ -440,7 +442,7 @@ class DataSyncOrchestratorService
         $targetFolder = $extractPath . '/' . $zipFileName;
 
         Log::info('Starting unzip process', [
-            'zip_file' => $zipPath,
+            'zip_file'   => $zipPath,
             'extract_to' => $targetFolder,
         ]);
 
@@ -448,13 +450,13 @@ class DataSyncOrchestratorService
 
         if ($result !== true) {
             $errorMessage = match ($result) {
-                ZipArchive::ER_NOZIP => 'Not a valid ZIP archive',
+                ZipArchive::ER_NOZIP  => 'Not a valid ZIP archive',
                 ZipArchive::ER_INCONS => 'Inconsistent ZIP archive',
-                ZipArchive::ER_CRC => 'CRC error',
-                ZipArchive::ER_OPEN => 'Cannot open file',
-                ZipArchive::ER_READ => 'Read error',
-                ZipArchive::ER_SEEK => 'Seek error',
-                default => "Unknown error (code: {$result})",
+                ZipArchive::ER_CRC    => 'CRC error',
+                ZipArchive::ER_OPEN   => 'Cannot open file',
+                ZipArchive::ER_READ   => 'Read error',
+                ZipArchive::ER_SEEK   => 'Seek error',
+                default               => "Unknown error (code: {$result})",
             };
 
             throw new \RuntimeException("Failed to open ZIP file: {$errorMessage}");
@@ -462,11 +464,11 @@ class DataSyncOrchestratorService
 
         try {
             // Create the target folder if it doesn't exist
-            if (!is_dir($targetFolder)) {
+            if (! is_dir($targetFolder)) {
                 mkdir($targetFolder, 0755, true);
             }
 
-            if (!$zip->extractTo($targetFolder)) {
+            if (! $zip->extractTo($targetFolder)) {
                 throw new \RuntimeException("Failed to extract ZIP file to: {$targetFolder}");
             }
 
@@ -474,9 +476,9 @@ class DataSyncOrchestratorService
             $zip->close();
 
             Log::info('Unzip completed successfully', [
-                'zip_file' => $zipPath,
+                'zip_file'        => $zipPath,
                 'extracted_files' => $fileCount,
-                'extract_path' => $targetFolder,
+                'extract_path'    => $targetFolder,
             ]);
 
         } catch (Throwable $e) {
@@ -484,7 +486,7 @@ class DataSyncOrchestratorService
 
             Log::error('Unzip failed', [
                 'zip_file' => $zipPath,
-                'error' => $e->getMessage(),
+                'error'    => $e->getMessage(),
             ]);
 
             throw new \RuntimeException("Failed to unzip file: {$e->getMessage()}", 0, $e);
