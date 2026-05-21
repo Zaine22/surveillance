@@ -218,52 +218,25 @@ class DataSyncOrchestratorService
             throw new \RuntimeException("Invalid URL: {$url}");
         }
 
+        // Generate file name first for use in both record and download
+        $fileName = $this->generateFileName($item);
+        $fullPath = '/mnt/task/' . $fileName;
+
+        // 1. Create the sync record
+        $record = DB::transaction(function () use ($item, $fullPath) {
+            return DataSyncRecord::create([
+                'id'          => (string) Str::uuid(),
+                'source_path' => $item->result_file,
+                'target_path' => $fullPath,
+                'file_name'   => basename($fullPath),
+                'status'      => 'transferring',
+                'retry_count' => 0,
+                'max_retry'   => 3,
+                'started_at'  => now(),
+            ]);
+        });
+
         try {
-            $item->loadMissing('task.crawlerConfig');
-
-            $sanitizeFileNamePart = function (?string $value, string $fallback): string {
-                $value = trim((string) $value);
-
-                if ($value === '') {
-                    $value = $fallback;
-                }
-
-                // Remove invalid filename characters
-                $value = preg_replace('/[\\\\\/:*?"<>|]/', '_', $value);
-
-                // Replace multiple spaces with single underscore
-                $value = preg_replace('/\s+/', '_', $value);
-
-                return $value ?: $fallback;
-            };
-
-            $crawlerConfigName = $sanitizeFileNamePart(
-                $item->task?->crawlerConfig?->name ?? 'CrawlerConfig',
-                'CrawlerConfig'
-            );
-
-            $keywords = is_array($item->keywords)
-                ? $item->keywords
-                : json_decode($item->keywords ?? '[]', true);
-
-            $firstKeyword = $sanitizeFileNamePart(
-                $keywords[0] ?? 'Keyword',
-                'Keyword'
-            );
-
-            $crawlLocationName = $sanitizeFileNamePart(
-                $this->getNameFromCrawlLocation($item->crawl_location ?? 'Location'),
-                'Location'
-            );
-
-            // $fileName = "{$crawlerConfigName}_{$firstKeyword}_{$crawlLocationName}.zip";
-
-            $fileDate = now()->format('Y_m_d');
-
-            $fileName = "{$fileDate}_{$crawlLocationName}.zip";
-
-            $fullPath = '/mnt/task/' . $fileName;
-
             Log::info('Saving to path', [
                 'path'      => $fullPath,
                 'file_name' => $fileName,
@@ -296,6 +269,12 @@ class DataSyncOrchestratorService
                 $this->unzipFile($fullPath);
             }
 
+            // 3. Update sync record status
+            $record->update([
+                'status'      => 'completed',
+                'finished_at' => now(),
+            ]);
+
             $item->update([
                 'status'      => 'synced',
                 'result_file' => $fullPath,
@@ -316,6 +295,14 @@ class DataSyncOrchestratorService
                 'error'   => $e->getMessage(),
             ]);
 
+            // 5. Update sync record status on failure
+            $record->update([
+                'status'        => 'failed',
+                'retry_count'   => $record->retry_count + 1,
+                'error_message' => $e->getMessage(),
+                'finished_at'   => now(),
+            ]);
+
             $item->update([
                 'status'        => 'error',
                 'error_message' => $e->getMessage(),
@@ -323,6 +310,39 @@ class DataSyncOrchestratorService
 
             throw $e;
         }
+    }
+
+    /**
+     * Generate a sanitized file name for the crawler item
+     */
+    private function generateFileName(CrawlerTaskItem $item): string
+    {
+        $item->loadMissing('task.crawlerConfig');
+
+        $sanitizeFileNamePart = function (?string $value, string $fallback): string {
+            $value = trim((string) $value);
+
+            if ($value === '') {
+                $value = $fallback;
+            }
+
+            // Remove invalid filename characters
+            $value = preg_replace('/[\\\\\/:*?"<>|]/', '_', $value);
+
+            // Replace multiple spaces with single underscore
+            $value = preg_replace('/\s+/', '_', $value);
+
+            return $value ?: $fallback;
+        };
+
+        $crawlLocationName = $sanitizeFileNamePart(
+            $this->getNameFromCrawlLocation($item->crawl_location ?? 'Location'),
+            'Location'
+        );
+
+        $fileDate = now()->format('Y_m_d');
+
+        return "{$fileDate}_{$crawlLocationName}.zip";
     }
 
     public function syncCaseScreenshotToNas(\App\Models\CaseManagementItem $item): string
