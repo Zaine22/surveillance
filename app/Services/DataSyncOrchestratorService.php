@@ -429,11 +429,17 @@ class DataSyncOrchestratorService
     private function unzipFile(string $zipPath): void
     {
         $zip = new ZipArchive();
+
+        // Get the directory and filename without extension
         $extractPath = dirname($zipPath);
+        $zipFileName = basename($zipPath, '.zip');
+
+        // Create a folder with the same name as the zip file (without .zip extension)
+        $targetFolder = $extractPath . '/' . $zipFileName;
 
         Log::info('Starting unzip process', [
             'zip_file' => $zipPath,
-            'extract_to' => $extractPath,
+            'extract_to' => $targetFolder,
         ]);
 
         $result = $zip->open($zipPath);
@@ -453,8 +459,13 @@ class DataSyncOrchestratorService
         }
 
         try {
-            if (!$zip->extractTo($extractPath)) {
-                throw new \RuntimeException("Failed to extract ZIP file to: {$extractPath}");
+            // Create the target folder if it doesn't exist
+            if (!is_dir($targetFolder)) {
+                mkdir($targetFolder, 0755, true);
+            }
+
+            if (!$zip->extractTo($targetFolder)) {
+                throw new \RuntimeException("Failed to extract ZIP file to: {$targetFolder}");
             }
 
             $fileCount = $zip->numFiles;
@@ -463,7 +474,7 @@ class DataSyncOrchestratorService
             Log::info('Unzip completed successfully', [
                 'zip_file' => $zipPath,
                 'extracted_files' => $fileCount,
-                'extract_path' => $extractPath,
+                'extract_path' => $targetFolder,
             ]);
 
         } catch (Throwable $e) {
