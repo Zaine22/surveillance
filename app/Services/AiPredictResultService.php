@@ -560,8 +560,8 @@ class AiPredictResultService extends BaseFilterService
             }
 
             $finalDecision = $validCount > 0
-                ? 'rejected'
-                : 'approved';
+                ? 'approved'
+                : 'rejected';
 
             $result->update([
                 'review_status' => $finalDecision,
