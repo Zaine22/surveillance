@@ -64,7 +64,7 @@ class AiModelTaskController extends Controller
         // ]);
         return response()->json([
             'data' => [
-                'average_accuracy'      => $averageAccuracy ? round($averageAccuracy, 2) : 0,
+                'average_accuracy'      => $averageAccuracy ? round($averageAccuracy * 100, 2) : 0,
                 'health_status'         => $healthStatus,
                 'total_identified'      => $totalIdentified,
                 'total_completed_tasks' => $totalCompleted,
