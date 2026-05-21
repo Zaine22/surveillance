@@ -102,7 +102,17 @@ class AiPredictResultService extends BaseFilterService
             }
 
             if ($status === 'failed') {
-                return $this->createFailedResult($task, $payload);
+                $result = $this->createFailedResult($task, $payload);
+
+                // Update task status to completed after processing failed result
+                $task->update(['status' => 'completed']);
+
+                Log::info('AI task status updated to completed (failed result)', [
+                    'task_id' => $task->id,
+                    'result_id' => $result->id,
+                ]);
+
+                return $result;
             }
 
             if ($status !== 'finished') {
@@ -156,6 +166,15 @@ class AiPredictResultService extends BaseFilterService
             $this->createVictimItems($result, $task, $victims);
             $this->createAgeItems($result, $task, $ages);
             $this->createNsfwItems($result, $task, $nsfws);
+
+            // Update task status to completed after successfully processing result
+            $task->update(['status' => 'completed']);
+
+            Log::info('AI task status updated to completed', [
+                'task_id' => $task->id,
+                'result_id' => $result->id,
+                'ai_analysis_result' => $aiAnalysisResult,
+            ]);
 
             return $result;
         });
