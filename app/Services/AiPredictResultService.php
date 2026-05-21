@@ -310,7 +310,7 @@ class AiPredictResultService extends BaseFilterService
                 AiPredictResultItem::create([
                     'id'                   => (string) Str::uuid(),
                     'ai_predict_result_id' => $result->id,
-                    'media_url'            => $image,
+                    'media_url'            => $this->buildMediaUrl($image),
                     'crawler_page_url'     => $task->crawlerTaskItem?->crawl_location,
                     'ai_result'            => 'abnormal',
                     'status'               => 'valid',
@@ -356,7 +356,7 @@ class AiPredictResultService extends BaseFilterService
             AiPredictResultItem::create([
                 'id'                   => (string) Str::uuid(),
                 'ai_predict_result_id' => $result->id,
-                'media_url'            => $age['path'] ?? null,
+                'media_url'            => $this->buildMediaUrl($age['path'] ?? null),
                 'crawler_page_url'     => $task->crawlerTaskItem?->crawl_location,
                 'ai_result'            => $score >= 0.70 ? 'abnormal' : 'normal',
                 'status'               => 'valid',
@@ -402,7 +402,7 @@ class AiPredictResultService extends BaseFilterService
             AiPredictResultItem::create([
                 'id'                   => (string) Str::uuid(),
                 'ai_predict_result_id' => $result->id,
-                'media_url'            => $nsfw['image'] ?? null,
+                'media_url'            => $this->buildMediaUrl($nsfw['image'] ?? null),
                 'crawler_page_url'     => $task->crawlerTaskItem?->crawl_location,
                 'ai_result'            => $porn >= 0.60 ? 'abnormal' : 'normal',
                 'status'               => 'valid',
@@ -412,6 +412,27 @@ class AiPredictResultService extends BaseFilterService
                 'keywords'             => $result->keywords,
             ]);
         }
+    }
+
+    protected function buildMediaUrl(?string $path): ?string
+    {
+        if (empty($path)) {
+            return null;
+        }
+
+        // Get the base URL from environment
+        $baseUrl = rtrim(config('app.ai_media_base_url', 'http://220.130.187.241:9680/mnt'), '/');
+
+        // Handle absolute paths like /home/victor/MOHW/task/...
+        // Extract the path starting from 'task/' onwards
+        if (preg_match('#/task/(.+)$#', $path, $matches)) {
+            $path = 'task/' . $matches[1];
+        } else {
+            // Remove leading slash if present to avoid double slashes
+            $path = ltrim($path, '/');
+        }
+
+        return "{$baseUrl}/{$path}";
     }
 
     protected function extractKeywords(mixed $keywords): ?string

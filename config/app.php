@@ -54,6 +54,7 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
     'api_key' => env('API_KEY'),
+    'ai_media_base_url' => env('AI_MEDIA_BASE_URL', 'http://220.130.187.241:9680/mnt'),
 
     /*
     |--------------------------------------------------------------------------
