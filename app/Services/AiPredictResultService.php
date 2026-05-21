@@ -519,30 +519,28 @@ class AiPredictResultService extends BaseFilterService
 
                 if ($decision === 'valid') {
                     $validCount++;
-                }
-
-                if ($decision === 'invalid') {
-
-                    $invalidCount++;
 
                     CaseManagementItem::create([
                         'case_management_id' => $case->id,
                         'media_url'          => $item->media_url,
                         'crawler_page_url'   => $item->crawler_page_url,
                         'ai_result'          => $item->ai_result,
-                        'status'             => 'invalid',
-                        'reason'             => $data['reason'] ?? null,
-                        'other_reason'       => ($data['reason'] ?? null) === 'Other'
-                            ? ($data['other_reason'] ?? null)
-                            : null,
+                        'status'             => 'valid',
+                        'reason'             => null,
+                        'other_reason'       => null,
                         'ai_score'           => $item->ai_score,
                         'keywords'           => json_encode($item->keywords),
                         'issue_date'         => now(),
                     ]);
                 }
+
+                if ($decision === 'invalid') {
+
+                    $invalidCount++;
+                }
             }
 
-            $finalDecision = $invalidCount > 0
+            $finalDecision = $validCount > 0
                 ? 'rejected'
                 : 'approved';
 
@@ -562,13 +560,13 @@ class AiPredictResultService extends BaseFilterService
             ]);
 
             $case->update([
-                'status' => $invalidCount > 0
+                'status' => $validCount > 0
                     ? 'notified'
                     : 'case_not_established',
             ]);
 
-            // Increment lexicon keyword case_count if case is established (rejected/invalid items exist)
-            if ($invalidCount > 0 && $result->lexicon_id) {
+            // Increment lexicon keyword case_count if case is established (valid items exist)
+            if ($validCount > 0 && $result->lexicon_id) {
                 $this->incrementLexiconCaseCount($result);
             }
 
