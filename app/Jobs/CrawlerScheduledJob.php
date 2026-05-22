@@ -15,9 +15,9 @@ class CrawlerScheduledJob implements ShouldQueue
 {
     use Dispatchable, Queueable, SerializesModels, InteractsWithQueue;
 
-    protected string $configId;
-    protected string $frequency;
-    protected Carbon $endDate;
+    public string $configId;
+    public string $frequency;
+    public Carbon $endDate;
 
     public function __construct(string $configId, string $frequency, Carbon $endDate)
     {
