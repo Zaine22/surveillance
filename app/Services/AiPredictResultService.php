@@ -148,7 +148,7 @@ class AiPredictResultService extends BaseFilterService
             }
 
             $lexicon  = $task->crawlerTaskItem?->crawlerTask?->lexicon;
-            $keywords = $this->collectLexiconKeywords($lexicon);
+            $keywords = $task->crawlerTaskItem?->keywords ?? [];
 
             $result = AiPredictResult::create([
                 'id'                 => (string) Str::uuid(),
@@ -243,31 +243,13 @@ class AiPredictResultService extends BaseFilterService
     protected function createFailedResult(AiModelTask $task, array $payload): AiPredictResult
     {
         $lexicon  = $task->crawlerTaskItem?->crawlerTask?->lexicon;
-        $keywords = [];
-
-        if ($lexicon && $lexicon->keywords) {
-            foreach ($lexicon->keywords as $row) {
-
-                $value = $row->keywords;
-
-                if (is_array($value)) {
-                    $keywords = array_merge($keywords, $value);
-                } elseif (is_string($value)) {
-                    $decoded = json_decode($value, true);
-                    if (is_array($decoded)) {
-                        $keywords = array_merge($keywords, $decoded);
-                    }
-                }
-            }
-        }
-
-        $keywords = array_values(array_unique($keywords));
+        $keywords = $task->crawlerTaskItem?->keywords ?? [];
 
         return AiPredictResult::create([
             'id'                 => (string) Str::uuid(),
             'ai_model_task_id'   => $task->id,
             'lexicon_id'         => $lexicon?->id,
-            'keywords'           => $this->extractKeywords($keywords),
+            'keywords'           => $keywords,
             'ai_score'           => 0.00,
             'analysis_result'    => json_encode($payload, JSON_UNESCAPED_UNICODE),
             'ai_analysis_result' => 'abnormal',
@@ -317,6 +299,8 @@ class AiPredictResultService extends BaseFilterService
         AiModelTask $task,
         array $victims
     ): void {
+        $createdItems = [];
+
         foreach ($victims as $victim) {
             $image = $victim['image'] ?? null;
             $faces = $victim['victims'] ?? [];
@@ -326,18 +310,35 @@ class AiPredictResultService extends BaseFilterService
             }
 
             foreach ($faces as $face) {
+                $mediaUrl = $this->buildMediaUrl($image);
+                $aiScore = round((float) ($face['similarity'] ?? 1), 2);
+
+                // Create unique key to prevent duplicates
+                $uniqueKey = md5($result->id . '|' . $mediaUrl . '|' . $aiScore . '|victim_detected');
+
+                if (isset($createdItems[$uniqueKey])) {
+                    Log::info('Skipping duplicate victim item', [
+                        'result_id' => $result->id,
+                        'media_url' => $mediaUrl,
+                        'ai_score' => $aiScore,
+                    ]);
+                    continue;
+                }
+
                 AiPredictResultItem::create([
                     'id'                   => (string) Str::uuid(),
                     'ai_predict_result_id' => $result->id,
-                    'media_url'            => $this->buildMediaUrl($image),
+                    'media_url'            => $mediaUrl,
                     'crawler_page_url'     => $task->crawlerTaskItem?->crawl_location,
                     'ai_result'            => 'abnormal',
                     'status'               => 'valid',
                     'reason'               => 'victim_detected',
                     'other_reason'         => null,
-                    'ai_score'             => round((float) ($face['similarity'] ?? 1), 2),
+                    'ai_score'             => $aiScore,
                     'keywords'             => $result->keywords,
                 ]);
+
+                $createdItems[$uniqueKey] = true;
             }
         }
     }
@@ -369,21 +370,41 @@ class AiPredictResultService extends BaseFilterService
         AiModelTask $task,
         array $ages
     ): void {
+        $createdItems = [];
+
         foreach ($ages as $age) {
             $score = (float) ($age['underage_probability'] ?? 0);
+            $mediaUrl = $this->buildMediaUrl($age['path'] ?? null);
+            $aiResult = $score >= 0.70 ? 'abnormal' : 'normal';
+            $reason = $score >= 0.70 ? 'minor_probability' : null;
+            $aiScore = round($score, 2);
+
+            // Create unique key to prevent duplicates
+            $uniqueKey = md5($result->id . '|' . $mediaUrl . '|' . $aiScore . '|' . $reason);
+
+            if (isset($createdItems[$uniqueKey])) {
+                Log::info('Skipping duplicate age item', [
+                    'result_id' => $result->id,
+                    'media_url' => $mediaUrl,
+                    'ai_score' => $aiScore,
+                ]);
+                continue;
+            }
 
             AiPredictResultItem::create([
                 'id'                   => (string) Str::uuid(),
                 'ai_predict_result_id' => $result->id,
-                'media_url'            => $this->buildMediaUrl($age['path'] ?? null),
+                'media_url'            => $mediaUrl,
                 'crawler_page_url'     => $task->crawlerTaskItem?->crawl_location,
-                'ai_result'            => $score >= 0.70 ? 'abnormal' : 'normal',
+                'ai_result'            => $aiResult,
                 'status'               => 'valid',
-                'reason'               => $score >= 0.70 ? 'minor_probability' : null,
+                'reason'               => $reason,
                 'other_reason'         => null,
-                'ai_score'             => round($score, 2),
+                'ai_score'             => $aiScore,
                 'keywords'             => $result->keywords,
             ]);
+
+            $createdItems[$uniqueKey] = true;
         }
     }
 
@@ -415,21 +436,41 @@ class AiPredictResultService extends BaseFilterService
         AiModelTask $task,
         array $nsfws
     ): void {
+        $createdItems = [];
+
         foreach ($nsfws as $nsfw) {
             $porn = (float) ($nsfw['result']['porn'] ?? 0);
+            $mediaUrl = $this->buildMediaUrl($nsfw['image'] ?? null);
+            $aiResult = $porn >= 0.60 ? 'abnormal' : 'normal';
+            $reason = $porn >= 0.60 ? 'nsfw_porn' : null;
+            $aiScore = round($porn, 2);
+
+            // Create unique key to prevent duplicates
+            $uniqueKey = md5($result->id . '|' . $mediaUrl . '|' . $aiScore . '|' . $reason);
+
+            if (isset($createdItems[$uniqueKey])) {
+                Log::info('Skipping duplicate NSFW item', [
+                    'result_id' => $result->id,
+                    'media_url' => $mediaUrl,
+                    'ai_score' => $aiScore,
+                ]);
+                continue;
+            }
 
             AiPredictResultItem::create([
                 'id'                   => (string) Str::uuid(),
                 'ai_predict_result_id' => $result->id,
-                'media_url'            => $this->buildMediaUrl($nsfw['image'] ?? null),
+                'media_url'            => $mediaUrl,
                 'crawler_page_url'     => $task->crawlerTaskItem?->crawl_location,
-                'ai_result'            => $porn >= 0.60 ? 'abnormal' : 'normal',
+                'ai_result'            => $aiResult,
                 'status'               => 'valid',
-                'reason'               => $porn >= 0.60 ? 'nsfw_porn' : null,
+                'reason'               => $reason,
                 'other_reason'         => null,
-                'ai_score'             => round($porn, 2),
+                'ai_score'             => $aiScore,
                 'keywords'             => $result->keywords,
             ]);
+
+            $createdItems[$uniqueKey] = true;
         }
     }
 
