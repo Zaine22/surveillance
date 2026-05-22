@@ -64,6 +64,7 @@ class CrawlerTaskItemsIndexResource extends JsonResource
         return match($status) {
             'crawling', 'syncing' => 'running',
             'error' => 'failed',
+            'synced' => 'completed',
             'pending' => 'paused',
             default => $status,
         };
