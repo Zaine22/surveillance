@@ -9,6 +9,7 @@ use App\Services\GlobalWhitelistService;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 
 class CrawlerConfigService extends BaseFilterService
 {
@@ -172,6 +173,9 @@ class CrawlerConfigService extends BaseFilterService
 
     public function deleteConfig(CrawlerConfig $config): ?bool
     {
+        // Delete all scheduled Horizon jobs related to this config
+        $this->deleteScheduledJobs($config->id);
+
         return $config->delete();
     }
 
@@ -422,10 +426,47 @@ class CrawlerConfigService extends BaseFilterService
     }
 
     /**
-     * Delete all scheduled jobs for a specific crawler config
+     * Delete all scheduled jobs for a specific crawler config from Redis
      */
     private function deleteScheduledJobs(string $configId): void
     {
-        DB::table('jobs')->where('payload', 'like', '%"configId":"' . $configId . '"%')->delete();
+        // Get the Redis connection used by Horizon
+        $redis = Redis::connection(config('horizon.use', 'default'));
+
+        // Get the Horizon prefix
+        $prefix = config('horizon.prefix', config('app.name', 'laravel') . '_horizon:');
+
+        // Get all delayed jobs from Redis
+        $delayedKey = $prefix . 'delayed:default';
+        $delayedJobs = $redis->zrange($delayedKey, 0, -1);
+
+        // Remove jobs that match the configId
+        foreach ($delayedJobs as $job) {
+            $payload = json_decode($job, true);
+            if (isset($payload['data']['command'])) {
+                $command = unserialize($payload['data']['command']);
+                if ($command instanceof CrawlerScheduledJob &&
+                    property_exists($command, 'configId') &&
+                    $command->configId === $configId) {
+                    $redis->zrem($delayedKey, $job);
+                }
+            }
+        }
+
+        // Also check pending jobs
+        $pendingKey = $prefix . 'default';
+        $pendingJobs = $redis->lrange($pendingKey, 0, -1);
+
+        foreach ($pendingJobs as $job) {
+            $payload = json_decode($job, true);
+            if (isset($payload['data']['command'])) {
+                $command = unserialize($payload['data']['command']);
+                if ($command instanceof CrawlerScheduledJob &&
+                    property_exists($command, 'configId') &&
+                    $command->configId === $configId) {
+                    $redis->lrem($pendingKey, 0, $job);
+                }
+            }
+        }
     }
 }
