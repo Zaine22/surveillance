@@ -62,6 +62,7 @@ class CrawlerTaskItemsIndexResource extends JsonResource
     private function mapStatus(string $status): string
     {
         return match($status) {
+            'crawling', 'syncing' => 'running',
             'error' => 'error',
             'pending' => 'paused',
             default => $status,
