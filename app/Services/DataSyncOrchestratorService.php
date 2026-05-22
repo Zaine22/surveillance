@@ -340,7 +340,7 @@ class DataSyncOrchestratorService
             'Location'
         );
 
-        $fileDate = now()->format('Y_m_d');
+        $fileDate = now()->format('Y_m_d_His');
 
         return "{$fileDate}_{$crawlLocationName}.zip";
     }

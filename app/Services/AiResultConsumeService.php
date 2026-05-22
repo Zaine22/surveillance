@@ -273,6 +273,7 @@ class AiResultConsumeService
             return [];
         }
 
-        return $decoded;
+        // Ensure we always return an array, even if decoded is null
+        return is_array($decoded) ? $decoded : [];
     }
 }
