@@ -318,7 +318,7 @@ class CrawlerConfigService extends BaseFilterService
                 continue;
             }
 
-            if ($status === 'pending' && $current->startOfDay()->gt(now()->startOfDay())) {
+            if ($status === 'pending' && $current->copy()->startOfDay()->gt(now()->startOfDay())) {
                 // Schedule job for future date
                 CrawlerScheduledJob::dispatch($configId, $frequency, $to)
                     ->delay($current);
