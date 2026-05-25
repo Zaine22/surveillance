@@ -54,6 +54,7 @@ class TaskManagerService
             if ($task->status === 'deleted') {
                 return;
             }
+
             $item->update([
                 'status'          => 'syncing',
                 'result_file'     => $filePath,
@@ -72,8 +73,21 @@ class TaskManagerService
         ]);
         CrawlerTaskItem::where('id', $itemId)
             ->update([
-                'status'          => 'error',
+            'status'          => 'error',
                 'error_message'   => $error,
+                'crawler_machine' => $crawlerMachine,
+            ]);
+    }
+
+    public function crawlerGoogleNoResult(string $itemId, string $crawlerMachine): void
+    {
+        Log::info('Crawler Google no result', [
+            'item_id'         => $itemId,
+            'crawler_machine' => $crawlerMachine,
+        ]);
+        CrawlerTaskItem::where('id', $itemId)
+            ->update([
+                'status'          => 'synced',
                 'crawler_machine' => $crawlerMachine,
             ]);
     }

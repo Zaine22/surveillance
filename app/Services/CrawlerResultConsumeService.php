@@ -289,6 +289,13 @@ class CrawlerResultConsumeService
                         (string) ($payload['crawler_machine'] ?? '')
                     );
 
+                } elseif (! empty($payload['no_result'])) {
+
+                    $this->taskManagerService->crawlerGoogleNoResult(
+                        (string) $taskItemId,
+                        (string) ($payload['crawler_machine'] ?? '')
+                    );
+
                 } else {
 
                     $this->taskManagerService->crawlerCompleted(

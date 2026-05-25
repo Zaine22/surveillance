@@ -96,8 +96,8 @@ class CrawlerTaskItem extends Model
                 SyncCrawlerFileJob::dispatch($item);
             }
 
-            // synced → keyword processing
-            if ($item->status === 'synced' && ! empty($item->keywords)) {
+            // synced → keyword processing (only if result_file exists)
+            if ($item->status === 'synced' && ! empty($item->result_file) && ! empty($item->keywords)) {
                 try {
                     app(\App\Services\KeywordRankingService::class)
                         ->processHit($item->keywords);
