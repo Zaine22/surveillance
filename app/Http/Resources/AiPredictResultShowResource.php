@@ -39,14 +39,14 @@ class AiPredictResultShowResource extends JsonResource
             'ai_detected_items'  => $this->when($this->relationLoaded('items'), function () {
                 return AiPredictResultItemResource::collection(
                     $this->items->filter(function ($item) {
-                        return $item->ai_score > 0 || !is_null($item->ai_result);
+                        return $item->ai_score > 0 ;
                     })
                 );
             }),
             'other_items'        => $this->when($this->relationLoaded('items'), function () {
                 return AiPredictResultItemResource::collection(
                     $this->items->filter(function ($item) {
-                        return $item->ai_score == 0 && is_null($item->ai_result);
+                        return $item->ai_score == 0 ;
                     })
                 );
             }),
