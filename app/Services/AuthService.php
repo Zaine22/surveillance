@@ -154,6 +154,7 @@ class AuthService
 
         $user->update([
             'last_login' => now(),
+            'current_session_id' => session()->getId(),
         ]);
 
         $user->tokens()->delete();
@@ -162,7 +163,7 @@ class AuthService
 
         $password_expired = false;
 
-        
+
         $daysSinceChange = $user->password_last_changed->diffInDays(now());
 
         if ($daysSinceChange >= 180) {
@@ -241,6 +242,9 @@ class AuthService
 
     public function logout(User $user): void
     {
+        // Clear the current session ID
+        $user->update(['current_session_id' => null]);
+
         $user->tokens()->delete();
 
         ValidationRecord::where('send_to', $user->email)

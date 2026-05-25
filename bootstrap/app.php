@@ -21,9 +21,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->redirectGuestsTo(fn() => null);
         $middleware->alias([
-            'apikey'        => \App\Http\Middleware\ApiKeyMiddleware::class,
-            'allow.ip'      => CheckIpWhitelist::class,
-            'operation.log' => OperationLogger::class,
+            'apikey'         => \App\Http\Middleware\ApiKeyMiddleware::class,
+            'allow.ip'       => CheckIpWhitelist::class,
+            'operation.log'  => OperationLogger::class,
+            'single.session' => \App\Http\Middleware\SingleSessionMiddleware::class,
         ]);
         $middleware->append(\App\Http\Middleware\AllowAllOrigins::class);
     })
@@ -34,7 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 ? $e->getStatusCode()
                 : 500;
 
-            if ($statusCode >= 500) {
+            if ($statusCode >= 500 && !($e instanceof HttpExceptionInterface)) {
                 return response()->json([
                     'message' => '伺服器錯誤，請稍後再試。',
                 ], 500);

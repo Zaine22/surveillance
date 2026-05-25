@@ -56,6 +56,7 @@ Route::post('/forget-password', [AuthController::class, 'forgetPassword']);
 
 Route::middleware([
     'auth:sanctum',
+    'single.session',
     'operation.log',
 ])->group(function () {
     Route::get('/ai-test', [AiHealthLogController::class, 'aiTest']);

@@ -30,6 +30,7 @@ class User extends Authenticatable
         'roles',
         'status',
         'last_login',
+        'current_session_id',
         'otp',
         'otp_created_at',
         'login_attempts',
