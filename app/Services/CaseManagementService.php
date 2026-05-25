@@ -166,7 +166,10 @@ class CaseManagementService extends BaseFilterService
                 'aiPredictResult.aiModelTask',
                 'lexicon',
             ])
-            ->where('external_case_no', $externalCaseId)
+            ->where(function ($query) use ($externalCaseId) {
+                $query->where('external_case_no', $externalCaseId)
+                    ->orWhere('internal_case_no', $externalCaseId);
+            })
             ->firstOrFail();
     }
 
