@@ -691,63 +691,81 @@ class AiPredictResultService extends BaseFilterService
                 'detected_images' => $aiDetectedImages,
             ]);
 
-            // Scan folder for all image files
+            // Recursively scan folder for all image files
             $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
-            $allFiles = scandir($folderPath);
             $createdItems = [];
 
-            foreach ($allFiles as $filename) {
-                // Skip . and ..
-                if ($filename === '.' || $filename === '..') {
-                    continue;
-                }
+            // Recursive function to scan directories
+            $scanDirectory = function ($directory, $relativePath = '') use (&$scanDirectory, &$createdItems, $imageExtensions, $aiDetectedImages, $result, $task, $folderName) {
+                $files = scandir($directory);
 
-                $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+                foreach ($files as $filename) {
+                    // Skip . and ..
+                    if ($filename === '.' || $filename === '..') {
+                        continue;
+                    }
 
-                // Check if it's an image file
-                if (!in_array($extension, $imageExtensions)) {
-                    continue;
-                }
+                    $fullPath = $directory . '/' . $filename;
+                    $currentRelativePath = $relativePath ? $relativePath . '/' . $filename : $filename;
 
-                // Skip if this image was already detected by AI
-                if (in_array($filename, $aiDetectedImages)) {
-                    Log::info('Skipping AI-detected image', [
-                        'filename' => $filename,
+                    // If it's a directory, scan it recursively
+                    if (is_dir($fullPath)) {
+                        $scanDirectory($fullPath, $currentRelativePath);
+                        continue;
+                    }
+
+                    $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+                    // Check if it's an image file
+                    if (!in_array($extension, $imageExtensions)) {
+                        continue;
+                    }
+
+                    // Skip if this image was already detected by AI (compare basename only)
+                    if (in_array($filename, $aiDetectedImages)) {
+                        Log::info('Skipping AI-detected image', [
+                            'filename' => $filename,
+                            'relative_path' => $currentRelativePath,
+                        ]);
+                        continue;
+                    }
+
+                    // Build media URL for this image
+                    $mediaUrl = $this->buildMediaUrl("task/{$folderName}/{$currentRelativePath}");
+
+                    // Create unique key to prevent duplicates
+                    $uniqueKey = md5($result->id . '|' . $mediaUrl . '|0|other');
+
+                    if (isset($createdItems[$uniqueKey])) {
+                        continue;
+                    }
+
+                    // Create item with ai_score = 0 and ai_result = null
+                    AiPredictResultItem::create([
+                        'id'                   => (string) Str::uuid(),
+                        'ai_predict_result_id' => $result->id,
+                        'media_url'            => $mediaUrl,
+                        'crawler_page_url'     => $task->crawlerTaskItem?->crawl_location,
+                        'ai_result'            => null,
+                        'status'               => 'valid',
+                        'reason'               => null,
+                        'other_reason'         => null,
+                        'ai_score'             => 0,
+                        'keywords'             => $result->keywords,
                     ]);
-                    continue;
+
+                    $createdItems[$uniqueKey] = true;
+
+                    Log::info('Created other item for non-AI-detected image', [
+                        'filename' => $filename,
+                        'relative_path' => $currentRelativePath,
+                        'media_url' => $mediaUrl,
+                    ]);
                 }
+            };
 
-                // Build media URL for this image
-                $mediaUrl = $this->buildMediaUrl("task/{$folderName}/{$filename}");
-
-                // Create unique key to prevent duplicates
-                $uniqueKey = md5($result->id . '|' . $mediaUrl . '|0|other');
-
-                if (isset($createdItems[$uniqueKey])) {
-                    continue;
-                }
-
-                // Create item with ai_score = 0 and ai_result = null
-                AiPredictResultItem::create([
-                    'id'                   => (string) Str::uuid(),
-                    'ai_predict_result_id' => $result->id,
-                    'media_url'            => $mediaUrl,
-                    'crawler_page_url'     => $task->crawlerTaskItem?->crawl_location,
-                    'ai_result'            => null,
-                    'status'               => 'valid',
-                    'reason'               => null,
-                    'other_reason'         => null,
-                    'ai_score'             => 0,
-                    'keywords'             => $result->keywords,
-                ]);
-
-                $createdItems[$uniqueKey] = true;
-
-                Log::info('Created other item for non-AI-detected image', [
-                    'filename' => $filename,
-                    'media_url' => $mediaUrl,
-                ]);
-            }
+            // Start scanning from the root folder
+            $scanDirectory($folderPath);
 
             Log::info('Created other items for non-AI-detected images', [
                 'result_id' => $result->id,
