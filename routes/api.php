@@ -126,6 +126,7 @@ Route::middleware([
         Route::post('{item}/start', [CrawlerTaskItemController::class, 'start']);
         Route::post('{item}/pause', [CrawlerTaskItemController::class, 'pause']);
         Route::post('{item}/retry', [CrawlerTaskItemController::class, 'retry']);
+        Route::post('{item}/update-status-to-crawling', [CrawlerTaskItemController::class, 'updateStatusToCrawling']);
         Route::delete('{item}', [CrawlerTaskItemController::class, 'destroy']);
     });
 

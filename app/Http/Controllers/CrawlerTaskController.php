@@ -53,6 +53,7 @@ class CrawlerTaskController extends Controller
             'summary' => [
                 'total_tasks'    => (int) ($summary->total_tasks ?? 0),
                 'total_pending'  => (int) ($summary->total_pending ?? 0),
+                'total_paused'  => (int) ($summary->total_paused ?? 0),
                 'total_crawling' => (int) ($summary->total_crawling ?? 0),
                 'total_syncing'  => (int) ($summary->total_syncing ?? 0),
                 'total_synced'   => (int) ($summary->total_synced ?? 0),

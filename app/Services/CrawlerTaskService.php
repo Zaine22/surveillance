@@ -41,9 +41,8 @@ class CrawlerTaskService extends BaseFilterService
         if (! empty($filters['status'])) {
             if (is_array($filters['status'])) {
                 // Map frontend status to database status
-                $statuses = array_map(function($status) {
-                    return match($status) {
-                        'pending' => 'paused',
+                $statuses = array_map(function ($status) {
+                    return match ($status) {
                         'error' => 'failed',
                         default => $status,
                     };
@@ -51,10 +50,9 @@ class CrawlerTaskService extends BaseFilterService
                 $query->whereIn('status', $statuses);
             } else {
                 // Map frontend status to database status
-                $status = match($filters['status']) {
+                $status = match ($filters['status']) {
                     'failed' => 'error',
-                    'paused' => 'pending',
-                    default => $filters['status'],
+                    default  => $filters['status'],
                 };
                 $query->where('status', $status);
             }
@@ -91,7 +89,7 @@ class CrawlerTaskService extends BaseFilterService
                 ->latest('created_at')
                 ->first();
 
-            if (!$task) {
+            if (! $task) {
                 // If no existing task found, create a new one
                 return $this->createFromConfig($config, $lexicon);
             }
@@ -154,6 +152,7 @@ class CrawlerTaskService extends BaseFilterService
             ->selectRaw("
             COUNT(*) as total_tasks,
             SUM(status = 'pending')  as total_pending,
+            SUM(status = 'paused')  as total_paused,
             SUM(status = 'crawling') as total_crawling,
             SUM(status = 'syncing')  as total_syncing,
             SUM(status = 'synced')   as total_synced,

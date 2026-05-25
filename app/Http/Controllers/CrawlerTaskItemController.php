@@ -49,6 +49,13 @@ class CrawlerTaskItemController extends Controller
             $this->crawlerTaskItemService->delete($item)
         );
     }
+
+    public function updateStatusToCrawling(CrawlerTaskItem $item): JsonResponse
+    {
+        return response()->json(
+            $this->crawlerTaskItemService->updateStatusToCrawling($item)
+        );
+    }
     // public function store(Request $request)
     // {
 

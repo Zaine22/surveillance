@@ -69,8 +69,6 @@ class CrawlerTaskItemsRequest extends FormRequest
                 'running'   => ['crawling', 'syncing'],
                 'completed' => 'synced',
                 'failed'    => 'error',
-                'paused'    => 'pending',
-                'pending'   => 'what',
                 default     => $data['status'],
             };
         }

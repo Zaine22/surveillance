@@ -48,7 +48,7 @@ class CrawlerTaskItemService
                 $item = CrawlerTaskItem::create([
                     'task_id'        => (string) $task->id,
                     'keywords'       => $keywordGroup,
-                    'status'         => 'crawling',
+                    'status'         => 'pending',
                     'crawl_location' => $source,
                     'error_message'  => null,
                 ]);
@@ -61,16 +61,17 @@ class CrawlerTaskItemService
     }
     public function start(CrawlerTaskItem $item): array
     {
-        if (!in_array($item->status, ['pending', 'error', 'failed'])) {
+        if (!in_array($item->status, ['pending', 'error', 'failed','paused'])) {
             return [
                 'success' => false,
                 // 'message' => 'Only pending items can be started.',
-                'message' => '只有待處理的項目才能開始。',
+                // 'message' => '只有待處理的項目才能開始。',
+                'message' => '只有進行中與已暫停的項目才能啟動。',
             ];
         }
 
         $item->update([
-            'status' => 'crawling',
+            'status' => 'pending',
             'error_message' => null,
         ]);
 
@@ -98,7 +99,7 @@ class CrawlerTaskItemService
         $this->dispatchService->dispatchPauseItems($item);
 
         $item->update([
-            'status' => 'pending',
+            'status' => 'paused',
         ]);
 
         return [
@@ -120,7 +121,7 @@ class CrawlerTaskItemService
         }
 
         $item->update([
-            'status'        => 'crawling',
+            'status'        => 'pending',
             'error_message' => null,
             'result_file'   => null,
         ]);
@@ -173,5 +174,26 @@ class CrawlerTaskItemService
                 'message' => 'Delete failed: ' . $e->getMessage(),
             ];
         }
+    }
+
+    public function updateStatusToCrawling(CrawlerTaskItem $item): array
+    {
+        if ($item->status !== 'pending') {
+            return [
+                'success' => false,
+                'message' => '只有待處理的項目才能更新為爬取中。',
+            ];
+        }
+
+        $item->update([
+            'status' => 'crawling',
+        ]);
+
+        return [
+            'success'      => true,
+            'message'      => '任務項目狀態已成功更新為爬取中。',
+            'task_item_id' => $item->id,
+            'status'       => $item->status,
+        ];
     }
 }
