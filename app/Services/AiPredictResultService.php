@@ -166,6 +166,7 @@ class AiPredictResultService extends BaseFilterService
             $this->createVictimItems($result, $task, $victims);
             $this->createAgeItems($result, $task, $ages);
             $this->createNsfwItems($result, $task, $nsfws);
+            $this->createOtherItems($result, $task, $parsed);
 
             // Update task status to completed after successfully processing result
             $task->update(['status' => 'completed']);
@@ -636,6 +637,134 @@ class AiPredictResultService extends BaseFilterService
                 'audits.auditor',
             ]);
         });
+    }
+
+    protected function createOtherItems(
+        AiPredictResult $result,
+        AiModelTask $task,
+        array $parsed
+    ): void {
+        try {
+            // Get the folder name from task file_name (e.g., 2026_05_23_180812_91cg1.zip -> 2026_05_23_180812_91cg1)
+            $zipFilePath = $task->file_name;
+
+            if (empty($zipFilePath)) {
+                Log::info('No zip file path found in task', ['task_id' => $task->id]);
+                return;
+            }
+
+            // Extract folder name (remove .zip extension)
+            $folderName = pathinfo($zipFilePath, PATHINFO_FILENAME);
+            $folderPath = '/mnt/task/' . $folderName;
+
+            if (!is_dir($folderPath)) {
+                Log::warning('Folder not found', ['path' => $folderPath]);
+                return;
+            }
+
+            // Collect all images that AI detected (full paths for comparison)
+            $aiDetectedImages = [];
+
+            foreach ($parsed['victim'] ?? [] as $victim) {
+                if (!empty($victim['image'])) {
+                    $aiDetectedImages[] = basename($victim['image']);
+                }
+            }
+
+            foreach ($parsed['age'] ?? [] as $age) {
+                if (!empty($age['path'])) {
+                    $aiDetectedImages[] = basename($age['path']);
+                }
+            }
+
+            foreach ($parsed['nsfw'] ?? [] as $nsfw) {
+                if (!empty($nsfw['image'])) {
+                    $aiDetectedImages[] = basename($nsfw['image']);
+                }
+            }
+
+            // Remove duplicates
+            $aiDetectedImages = array_unique($aiDetectedImages);
+
+            Log::info('AI detected images', [
+                'task_id' => $task->id,
+                'detected_images' => $aiDetectedImages,
+            ]);
+
+            // Scan folder for all image files
+            $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+            $allFiles = scandir($folderPath);
+            $createdItems = [];
+
+            foreach ($allFiles as $filename) {
+                // Skip . and ..
+                if ($filename === '.' || $filename === '..') {
+                    continue;
+                }
+
+                $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+                // Check if it's an image file
+                if (!in_array($extension, $imageExtensions)) {
+                    continue;
+                }
+
+                // Skip if this image was already detected by AI
+                if (in_array($filename, $aiDetectedImages)) {
+                    Log::info('Skipping AI-detected image', [
+                        'filename' => $filename,
+                    ]);
+                    continue;
+                }
+
+                // Build media URL for this image
+                $mediaUrl = $this->buildMediaUrl("task/{$folderName}/{$filename}");
+
+                // Create unique key to prevent duplicates
+                $uniqueKey = md5($result->id . '|' . $mediaUrl . '|0|other');
+
+                if (isset($createdItems[$uniqueKey])) {
+                    continue;
+                }
+
+                // Create item with ai_score = 0 and ai_result = null
+                AiPredictResultItem::create([
+                    'id'                   => (string) Str::uuid(),
+                    'ai_predict_result_id' => $result->id,
+                    'media_url'            => $mediaUrl,
+                    'crawler_page_url'     => $task->crawlerTaskItem?->crawl_location,
+                    'ai_result'            => null,
+                    'status'               => 'valid',
+                    'reason'               => null,
+                    'other_reason'         => null,
+                    'ai_score'             => 0,
+                    'keywords'             => $result->keywords,
+                ]);
+
+                $createdItems[$uniqueKey] = true;
+
+                Log::info('Created other item for non-AI-detected image', [
+                    'filename' => $filename,
+                    'media_url' => $mediaUrl,
+                ]);
+            }
+
+            Log::info('Created other items for non-AI-detected images', [
+                'result_id' => $result->id,
+                'task_id' => $task->id,
+                'folder_path' => $folderPath,
+                'other_items_count' => count($createdItems),
+                'ai_detected_count' => count($aiDetectedImages),
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to create other items', [
+                'result_id' => $result->id,
+                'task_id' => $task->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
     }
 
     /**

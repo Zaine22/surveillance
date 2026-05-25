@@ -36,9 +36,20 @@ class AiPredictResultShowResource extends JsonResource
             },
             'ai_analysis_detail' => $this->ai_analysis_detail,
             'created_at'         => $this->created_at,
-            'items'              => AiPredictResultItemResource::collection(
-                $this->whenLoaded('items')
-            ),
+            'ai_detected_items'  => $this->when($this->relationLoaded('items'), function () {
+                return AiPredictResultItemResource::collection(
+                    $this->items->filter(function ($item) {
+                        return $item->ai_score > 0 || !is_null($item->ai_result);
+                    })
+                );
+            }),
+            'other_items'        => $this->when($this->relationLoaded('items'), function () {
+                return AiPredictResultItemResource::collection(
+                    $this->items->filter(function ($item) {
+                        return $item->ai_score == 0 && is_null($item->ai_result);
+                    })
+                );
+            }),
             'case_management'    => $this->whenLoaded('caseManagement', function () {
                 return new CaseManagementIndexResource($this->caseManagement);
             }),
