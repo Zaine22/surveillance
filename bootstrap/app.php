@@ -35,7 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 ? $e->getStatusCode()
                 : 500;
 
-            if ($statusCode >= 500 && ! ($e instanceof HttpExceptionInterface)) {
+            if ($statusCode == 500) {
                 return response()->json([
                     'message' => '伺服器錯誤，請稍後再試。',
                 ], 500);
