@@ -16,29 +16,39 @@ class SingleSessionMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $user = Auth::user();
+        // IMPORTANT:
+        // If this request has no session, skip this middleware.
+        // This prevents: "Session store not set on request"
+        if (! $request->hasSession()) {
+            return $next($request);
+        }
 
-        if ($user) {
-            $currentSessionId = session()->getId();
+        $user = Auth::guard('web')->user();
 
-            // Check if user has a stored session ID and if it's different from current
-            if ($user->current_session_id && $user->current_session_id !== $currentSessionId) {
-                // Another session exists, logout the user
-                Auth::guard('web')->logout();
+        if (! $user) {
+            return $next($request);
+        }
 
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
+        $currentSessionId = $request->session()->getId();
 
-                return response()->json([
-                    'message' => '您的帳號已在其他裝置登入，此裝置已被登出。',
-                    'error' => 'session_conflict'
-                ], 401);
-            }
+        // Check if user has a stored session ID and if it's different from current
+        if ($user->current_session_id && $user->current_session_id !== $currentSessionId) {
+            Auth::guard('web')->logout();
 
-            // Update the session ID if it's not set or different
-            if ($user->current_session_id !== $currentSessionId) {
-                $user->update(['current_session_id' => $currentSessionId]);
-            }
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return response()->json([
+                'message' => '您的帳號已在其他裝置登入，此裝置已被登出。',
+                'error' => 'session_conflict',
+            ], 401);
+        }
+
+        // Update the session ID if it's not set or different
+        if ($user->current_session_id !== $currentSessionId) {
+            $user->update([
+                'current_session_id' => $currentSessionId,
+            ]);
         }
 
         return $next($request);
