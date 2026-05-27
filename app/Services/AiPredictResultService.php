@@ -747,7 +747,7 @@ class AiPredictResultService extends BaseFilterService
                         'media_url'            => $mediaUrl,
                         'crawler_page_url'     => $task->crawlerTaskItem?->crawl_location,
                         'ai_result'            => null,
-                        'status'               => 'valid',
+                        'status'               => 'invalid',
                         'reason'               => null,
                         'other_reason'         => null,
                         'ai_score'             => 0,
