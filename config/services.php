@@ -54,4 +54,10 @@ return [
         'port'     => env('CRAWLER_SFTP_PORT', 22),
     ],
 
+    'clean_file_server' => [
+        'host'     => env('CLEAN_FILE_SERVER_HOST', '35.194.240.94'),
+        'username' => env('CLEAN_FILE_SERVER_USERNAME', 'user3'),
+        'port'     => env('CLEAN_FILE_SERVER_PORT', 22),
+    ],
+
 ];

@@ -3,6 +3,7 @@ namespace App\Services;
 
 use App\Models\CrawlerTaskItem;
 use App\Models\DataSyncRecord;
+use App\Services\RsyncService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -511,6 +512,132 @@ class DataSyncOrchestratorService
 
             throw new \RuntimeException("Failed to unzip file: {$e->getMessage()}", 0, $e);
         }
+    }
+
+    /**
+     * Sync crawler file to NAS using rsync with SSH key authentication
+     * This method uses rsync over SSH to transfer files from the clean file server
+     */
+    public function syncCrawlerFileToNasWithRsync(CrawlerTaskItem $item): string
+    {
+        $url = $item->result_file;
+
+        Log::info('Rsync download started', [
+            'item_id' => $item->id,
+            'url'     => $url,
+        ]);
+
+        if (! filter_var($url, FILTER_VALIDATE_URL)) {
+            throw new \RuntimeException("Invalid URL: {$url}");
+        }
+
+        // Generate file name first for use in both record and download
+        $fileName = $this->generateFileName($item);
+        $fullPath = '/mnt/task/' . $fileName;
+
+        // Extract the remote path from the URL
+        // Example: http://35.194.240.94/static/zips/file.zip -> /var/www/html/static/zips/file.zip
+        $remotePath = $this->convertUrlToRemotePath($url);
+
+        // 1. Create the sync record
+        $record = DB::transaction(function () use ($item, $fullPath) {
+            return DataSyncRecord::create([
+                'id'          => (string) Str::uuid(),
+                'source_path' => $item->result_file,
+                'target_path' => $fullPath,
+                'file_name'   => basename($fullPath),
+                'status'      => 'transferring',
+                'retry_count' => 0,
+                'max_retry'   => 3,
+                'started_at'  => now(),
+            ]);
+        });
+
+        try {
+            Log::info('Syncing via rsync', [
+                'remote_path' => $remotePath,
+                'local_path'  => $fullPath,
+                'file_name'   => $fileName,
+            ]);
+
+            // Use the RsyncService to sync from clean file server
+            $this->rsyncService->syncFromCleanFileServer($remotePath, $fullPath);
+
+            if (! file_exists($fullPath)) {
+                throw new \RuntimeException("File does not exist after rsync: {$fullPath}");
+            }
+
+            if (filesize($fullPath) === 0) {
+                throw new \RuntimeException("File is empty after rsync: {$fullPath}");
+            }
+
+            Log::info('Rsync download success', [
+                'path' => $fullPath,
+                'url'  => $url,
+                'size' => filesize($fullPath),
+            ]);
+
+            // Unzip the file if it's a ZIP archive
+            if (pathinfo($fullPath, PATHINFO_EXTENSION) === 'zip') {
+                $this->unzipFile($fullPath);
+            }
+
+            // 3. Update sync record status
+            $record->update([
+                'status'      => 'completed',
+                'finished_at' => now(),
+            ]);
+
+            $item->update([
+                'status'      => 'synced',
+                'result_file' => $fullPath,
+            ]);
+
+            $this->aiTaskManagerService->createFromCrawlerItem($item);
+
+            $item->task()->update([
+                'status' => 'completed',
+            ]);
+
+            return $fullPath;
+
+        } catch (Throwable $e) {
+            Log::error('Rsync download failed', [
+                'item_id' => $item->id,
+                'url'     => $url,
+                'error'   => $e->getMessage(),
+            ]);
+
+            // 5. Update sync record status on failure
+            $record->update([
+                'status'        => 'failed',
+                'retry_count'   => $record->retry_count + 1,
+                'error_message' => $e->getMessage(),
+                'finished_at'   => now(),
+            ]);
+
+            $item->update([
+                'status'        => 'error',
+                'error_message' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Convert a URL to a remote file system path
+     * Example: http://35.194.240.94/static/zips/file.zip -> /var/www/html/static/zips/file.zip
+     */
+    private function convertUrlToRemotePath(string $url): string
+    {
+        $path = parse_url($url, PHP_URL_PATH);
+
+        // Remove leading slash and prepend the web root path
+        // Adjust this path based on your server's actual web root
+        $webRoot = '/var/www/html';
+
+        return $webRoot . $path;
     }
 
     private function getNameFromCrawlLocation(?string $value): string
