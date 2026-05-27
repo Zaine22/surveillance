@@ -185,6 +185,7 @@ return [
 
         'crawler' => [
             'host'     => env('REDIS_CRAWLER_HOST'),
+            'username' => env('REDIS_CRAWLER_USERNAME', 'user3'),
             'password' => env('REDIS_CRAWLER_PASSWORD'),
             'port'     => env('REDIS_CRAWLER_PORT'),
             'database' => env('REDIS_CRAWLER_DB', 0),
