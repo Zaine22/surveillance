@@ -13,6 +13,9 @@ class CrawlerTaskItemsIndexResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // Check if result_file is null and status is synced
+        $isNoResult = empty($this->result_file) && $this->status === 'synced';
+
         return [
             'id'              => $this->id,
             'keywords'        => $this->keywords,
@@ -24,6 +27,7 @@ class CrawlerTaskItemsIndexResource extends JsonResource
             'status'          => $this->mapStatus($this->status),
             'crawl_location'  => $this->crawl_location,
             'error_message'   => $this->error_message,
+            'no_result_message' => $isNoResult ? '沒有關鍵字匹配和未找到網址' : null,
             'created_at'      => $this->created_at,
             'updated_at'      => $this->updated_at,
         ];

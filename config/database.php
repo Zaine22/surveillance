@@ -183,6 +183,13 @@ return [
             'database' => env('REDIS_AI_DB', 0),
         ],
 
+        'crawler' => [
+            'host'     => env('REDIS_CRAWLER_HOST'),
+            'password' => env('REDIS_CRAWLER_PASSWORD'),
+            'port'     => env('REDIS_CRAWLER_PORT'),
+            'database' => env('REDIS_CRAWLER_DB', 0),
+        ],
+
     ],
 
 ];

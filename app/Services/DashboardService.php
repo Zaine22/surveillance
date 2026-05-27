@@ -254,7 +254,6 @@ class DashboardService
     public function getSystemAnnouncements(int $limit = 5, int $offset = 0): array
     {
         return DB::table('system_notices')
-            ->where('status', 'published')
             ->orderByDesc('publish_date')
             ->offset($offset)
             ->limit($limit)
