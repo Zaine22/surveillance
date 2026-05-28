@@ -641,6 +641,139 @@ class DataSyncOrchestratorService
     }
 
     /**
+     * Complete sync flow: FileServer → CleanFileServer → MainWeb
+     * This method handles the complete two-hop transfer:
+     * 1. Transfer from unscanned file server (34.81.79.232) to clean file server (35.194.240.94)
+     * 2. Transfer from clean file server (35.194.240.94) to main web server (220.130.187.241)
+     */
+    public function syncUnscannedFileToMainWeb(CrawlerTaskItem $item): string
+    {
+        $url = $item->result_file;
+
+        Log::info('Complete file sync started (FileServer → CleanFileServer → MainWeb)', [
+            'item_id' => $item->id,
+            'url'     => $url,
+        ]);
+
+        if (! filter_var($url, FILTER_VALIDATE_URL)) {
+            throw new \RuntimeException("Invalid URL: {$url}");
+        }
+
+        // Generate file name
+        $fileName = $this->generateFileName($item);
+
+        // Extract the source path from the URL
+        // Example: http://34.81.79.232/home/rsyncbot/unscann-files/file.zip -> /home/rsyncbot/unscann-files/file.zip
+        $sourcePath = parse_url($url, PHP_URL_PATH);
+
+        // Target path on the clean file server
+        $cleanServerPath = '/home/rsyncbot/clean-files/' . basename($sourcePath);
+
+        // Final destination on main web server
+        $mainWebPath = '/mnt/task/' . $fileName;
+
+        // 1. Create the sync record
+        $record = DB::transaction(function () use ($item, $mainWebPath) {
+            return DataSyncRecord::create([
+                'id'          => (string) Str::uuid(),
+                'source_path' => $item->result_file,
+                'target_path' => $mainWebPath,
+                'file_name'   => basename($mainWebPath),
+                'status'      => 'transferring',
+                'retry_count' => 0,
+                'max_retry'   => 3,
+                'started_at'  => now(),
+            ]);
+        });
+
+        try {
+            // Step 1: Transfer from FileServer to CleanFileServer
+            Log::info('Step 1: Syncing from FileServer to CleanFileServer', [
+                'source_path' => $sourcePath,
+                'target_path' => $cleanServerPath,
+            ]);
+
+            $this->rsyncService->syncFromUnscannedToCleanFileServer($sourcePath, $cleanServerPath);
+
+            Log::info('Step 1 completed: File transferred to CleanFileServer', [
+                'clean_server_path' => $cleanServerPath,
+            ]);
+
+            // Step 2: Transfer from CleanFileServer to MainWeb
+            Log::info('Step 2: Syncing from CleanFileServer to MainWeb', [
+                'source_path' => $cleanServerPath,
+                'target_path' => $mainWebPath,
+            ]);
+
+            $this->rsyncService->syncFromCleanFileServer($cleanServerPath, $mainWebPath);
+
+            if (! file_exists($mainWebPath)) {
+                throw new \RuntimeException("File does not exist after rsync: {$mainWebPath}");
+            }
+
+            if (filesize($mainWebPath) === 0) {
+                throw new \RuntimeException("File is empty after rsync: {$mainWebPath}");
+            }
+
+            Log::info('Step 2 completed: File transferred to MainWeb', [
+                'main_web_path' => $mainWebPath,
+                'size' => filesize($mainWebPath),
+            ]);
+
+            // Unzip the file if it's a ZIP archive
+            if (pathinfo($mainWebPath, PATHINFO_EXTENSION) === 'zip') {
+                $this->unzipFile($mainWebPath);
+            }
+
+            // 3. Update sync record status
+            $record->update([
+                'status'      => 'completed',
+                'finished_at' => now(),
+            ]);
+
+            $item->update([
+                'status'      => 'synced',
+                'result_file' => $mainWebPath,
+            ]);
+
+            $this->aiTaskManagerService->createFromCrawlerItem($item);
+
+            $item->task()->update([
+                'status' => 'completed',
+            ]);
+
+            Log::info('Complete file sync successful', [
+                'item_id' => $item->id,
+                'final_path' => $mainWebPath,
+            ]);
+
+            return $mainWebPath;
+
+        } catch (Throwable $e) {
+            Log::error('Complete file sync failed', [
+                'item_id' => $item->id,
+                'url'     => $url,
+                'error'   => $e->getMessage(),
+            ]);
+
+            // 5. Update sync record status on failure
+            $record->update([
+                'status'        => 'failed',
+                'retry_count'   => $record->retry_count + 1,
+                'error_message' => $e->getMessage(),
+                'finished_at'   => now(),
+            ]);
+
+            $item->update([
+                'status'        => 'error',
+                'error_message' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
+    }
+
+    /**
      * Sync unscanned file from first server to clean file server using rsync.
      * This method handles files from the unscanned file server (34.81.79.232)
      * and transfers them to the clean file server (35.194.240.94) via private IP (192.168.0.10).
