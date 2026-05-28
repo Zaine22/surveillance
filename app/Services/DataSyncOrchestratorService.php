@@ -640,6 +640,109 @@ class DataSyncOrchestratorService
         return $webRoot . $path;
     }
 
+    /**
+     * Sync unscanned file from first server to clean file server using rsync.
+     * This method handles files from the unscanned file server (34.81.79.232)
+     * and transfers them to the clean file server (35.194.240.94) via private IP (192.168.0.10).
+     */
+    public function syncUnscannedFileToCleanServer(CrawlerTaskItem $item): string
+    {
+        $url = $item->result_file;
+
+        Log::info('Unscanned file sync started', [
+            'item_id' => $item->id,
+            'url'     => $url,
+        ]);
+
+        if (! filter_var($url, FILTER_VALIDATE_URL)) {
+            throw new \RuntimeException("Invalid URL: {$url}");
+        }
+
+        // Generate file name
+        $fileName = $this->generateFileName($item);
+
+        // Extract the source path from the URL
+        // Example: http://34.81.79.232/home/rsyncbot/unscann-files/file.zip -> /home/rsyncbot/unscann-files/file.zip
+        $sourcePath = parse_url($url, PHP_URL_PATH);
+
+        // Target path on the clean file server
+        $targetPath = '/home/rsyncbot/clean-files/' . basename($sourcePath);
+
+        // 1. Create the sync record
+        $record = DB::transaction(function () use ($item, $targetPath) {
+            return DataSyncRecord::create([
+                'id'          => (string) Str::uuid(),
+                'source_path' => $item->result_file,
+                'target_path' => $targetPath,
+                'file_name'   => basename($targetPath),
+                'status'      => 'transferring',
+                'retry_count' => 0,
+                'max_retry'   => 3,
+                'started_at'  => now(),
+            ]);
+        });
+
+        try {
+            Log::info('Syncing unscanned file via rsync', [
+                'source_path' => $sourcePath,
+                'target_path' => $targetPath,
+                'file_name'   => $fileName,
+            ]);
+
+            // Use the RsyncService to sync from unscanned server to clean server
+            $this->rsyncService->syncFromUnscannedToCleanFileServer($sourcePath, $targetPath);
+
+            Log::info('Unscanned file sync success', [
+                'source_path' => $sourcePath,
+                'target_path' => $targetPath,
+            ]);
+
+            // 3. Update sync record status
+            $record->update([
+                'status'      => 'completed',
+                'finished_at' => now(),
+            ]);
+
+            // Build the public URL for the clean file server
+            $publicUrl = 'http://35.194.240.94' . $targetPath;
+
+            $item->update([
+                'status'      => 'synced',
+                'result_file' => $publicUrl,
+            ]);
+
+            $this->aiTaskManagerService->createFromCrawlerItem($item);
+
+            $item->task()->update([
+                'status' => 'completed',
+            ]);
+
+            return $targetPath;
+
+        } catch (Throwable $e) {
+            Log::error('Unscanned file sync failed', [
+                'item_id' => $item->id,
+                'url'     => $url,
+                'error'   => $e->getMessage(),
+            ]);
+
+            // 5. Update sync record status on failure
+            $record->update([
+                'status'        => 'failed',
+                'retry_count'   => $record->retry_count + 1,
+                'error_message' => $e->getMessage(),
+                'finished_at'   => now(),
+            ]);
+
+            $item->update([
+                'status'        => 'error',
+                'error_message' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
+    }
+
     private function getNameFromCrawlLocation(?string $value): string
     {
         $value = trim((string) $value);

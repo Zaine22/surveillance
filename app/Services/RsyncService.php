@@ -149,6 +149,79 @@ class RsyncService
 
 
     /**
+     * Sync a file from the unscanned file server to the clean file server using rsync.
+     * This method connects to the first server (34.81.79.232) and uses rsync to transfer
+     * files to the second server (35.194.240.94) via its private IP (192.168.0.10).
+     */
+    public function syncFromUnscannedToCleanFileServer(string $sourceFilePath, string $targetFilePath): string
+    {
+        $config = config('services.unscanned_file_server');
+
+        Log::info('RsyncService: Starting rsync from unscanned to clean file server', [
+            'source_host' => $config['host'],
+            'source_user' => $config['username'],
+            'source_path' => $sourceFilePath,
+            'target_host' => $config['target_host'],
+            'target_user' => $config['target_user'],
+            'target_path' => $targetFilePath,
+        ]);
+
+        $command = $this->buildUnscannedToCleanRsyncCommand($config, $sourceFilePath, $targetFilePath);
+
+        // Use a generous timeout for large file transfers
+        $result = Process::timeout(300)->run($command);
+
+        if ($result->failed()) {
+            Log::error('RsyncService: Rsync from unscanned to clean file server failed', [
+                'exit_code' => $result->exitCode(),
+                'error' => $result->errorOutput(),
+                'output' => $result->output(),
+            ]);
+
+            throw new RuntimeException('Rsync from unscanned to clean file server failed. Check logs for details.');
+        }
+
+        Log::info('RsyncService: Rsync from unscanned to clean file server completed', [
+            'target_path' => $targetFilePath,
+        ]);
+
+        return $targetFilePath;
+    }
+
+    /**
+     * Build the rsync command to transfer files from unscanned server to clean server.
+     * This command runs on the unscanned server and pushes files to the clean server via private IP.
+     */
+    protected function buildUnscannedToCleanRsyncCommand(array $config, string $sourceFilePath, string $targetFilePath): array
+    {
+        // SSH command to connect to the unscanned file server
+        $sshToSource = sprintf(
+            'ssh -o StrictHostKeyChecking=no -p %d',
+            $config['port']
+        );
+
+        // The rsync command that will be executed on the unscanned server
+        // This command will push the file to the clean server using its private IP
+        $remoteRsyncCommand = sprintf(
+            'rsync -avz --no-g --no-perms -e "ssh -o StrictHostKeyChecking=no -p %d" %s %s@%s:%s',
+            $config['target_port'],
+            escapeshellarg($sourceFilePath),
+            $config['target_user'],
+            $config['target_host'],
+            escapeshellarg($targetFilePath)
+        );
+
+        // Execute the rsync command on the unscanned server via SSH
+        return [
+            'ssh',
+            '-o', 'StrictHostKeyChecking=no',
+            '-p', (string) $config['port'],
+            sprintf('%s@%s', $config['username'], $config['host']),
+            $remoteRsyncCommand,
+        ];
+    }
+
+    /**
      * Ensure the target directory exists and is writable.
      */
     protected function ensureDirectoryExists(string $directory): void

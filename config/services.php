@@ -60,4 +60,13 @@ return [
         'port'     => env('CLEAN_FILE_SERVER_PORT', 22),
     ],
 
+    'unscanned_file_server' => [
+        'host'        => env('UNSCANNED_FILE_SERVER_HOST', '34.81.79.232'),
+        'username'    => env('UNSCANNED_FILE_SERVER_USERNAME', 'rsyncbot'),
+        'port'        => env('UNSCANNED_FILE_SERVER_PORT', 22),
+        'target_host' => env('UNSCANNED_FILE_TARGET_HOST', '192.168.0.10'), // Private IP for second server
+        'target_user' => env('UNSCANNED_FILE_TARGET_USERNAME', 'rsyncbot'),
+        'target_port' => env('UNSCANNED_FILE_TARGET_PORT', 22),
+    ],
+
 ];
