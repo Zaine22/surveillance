@@ -194,12 +194,6 @@ class RsyncService
      */
     protected function buildUnscannedToCleanRsyncCommand(array $config, string $sourceFilePath, string $targetFilePath): array
     {
-        // SSH command to connect to the unscanned file server
-        $sshToSource = sprintf(
-            'ssh -o StrictHostKeyChecking=no -p %d',
-            $config['port']
-        );
-
         // The rsync command that will be executed on the unscanned server
         // This command will push the file to the clean server using its private IP
         $remoteRsyncCommand = sprintf(
@@ -211,14 +205,24 @@ class RsyncService
             escapeshellarg($targetFilePath)
         );
 
-        // Execute the rsync command on the unscanned server via SSH
-        return [
+        // Build SSH command with key authentication
+        $sshCommand = [
             'ssh',
             '-o', 'StrictHostKeyChecking=no',
             '-p', (string) $config['port'],
-            sprintf('%s@%s', $config['username'], $config['host']),
-            $remoteRsyncCommand,
         ];
+
+        // Add SSH key if specified
+        if (!empty($config['ssh_key'])) {
+            $sshCommand[] = '-i';
+            $sshCommand[] = $config['ssh_key'];
+        }
+
+        // Add the user@host and remote command
+        $sshCommand[] = sprintf('%s@%s', $config['username'], $config['host']);
+        $sshCommand[] = $remoteRsyncCommand;
+
+        return $sshCommand;
     }
 
     /**
