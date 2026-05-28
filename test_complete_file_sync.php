@@ -29,26 +29,30 @@ echo "  Final destination: MainWeb (220.130.187.241)\n";
 echo "  Final path: /mnt/task/[generated_filename].zip\n\n";
 
 try {
-    // Create a mock CrawlerTaskItem for testing
-    $item = new CrawlerTaskItem();
-    $item->id = 'test-' . uniqid();
-    $item->result_file = $testUrl;
-    $item->crawl_location = 'test-location.com';
-    $item->status = 'pending';
-
-    // Note: This is a mock item, not saved to database
-    // In production, you would fetch a real item from the database
-
     echo "Starting complete file sync...\n";
     echo "This will:\n";
     echo "  1. SSH into FileServer (34.81.79.232)\n";
     echo "  2. Execute rsync to push file to CleanFileServer (192.168.0.10)\n";
-    echo "  3. Transfer file from CleanFileServer to MainWeb\n";
-    echo "  4. Unzip the file on MainWeb\n";
-    echo "  5. Create AI task and update status\n\n";
+    echo "  3. Transfer file from CleanFileServer to MainWeb\n\n";
 
-    $service = app(DataSyncOrchestratorService::class);
-    $result = $service->syncUnscannedFileToMainWeb($item);
+    $rsyncService = app(\App\Services\RsyncService::class);
+
+    // Step 1: Transfer from FileServer to CleanFileServer
+    echo "Step 1: Syncing from FileServer to CleanFileServer...\n";
+    $sourcePath = '/home/rsyncbot/unscann-files/file.zip';
+    $cleanServerPath = '/home/rsyncbot/clean-files/file.zip';
+
+    $rsyncService->syncFromUnscannedToCleanFileServer($sourcePath, $cleanServerPath);
+    echo "✓ Step 1 completed: File transferred to CleanFileServer\n\n";
+
+    // Step 2: Transfer from CleanFileServer to MainWeb
+    echo "Step 2: Syncing from CleanFileServer to MainWeb...\n";
+    $mainWebPath = '/mnt/task/test_' . date('Y_m_d_His') . '.zip';
+
+    $rsyncService->syncFromCleanFileServer($cleanServerPath, $mainWebPath);
+    echo "✓ Step 2 completed: File transferred to MainWeb\n\n";
+
+    $result = $mainWebPath;
 
     echo "✓ Complete sync successful!\n\n";
     echo "File Details:\n";
