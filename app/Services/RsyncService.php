@@ -138,6 +138,8 @@ class RsyncService
         return [
             'rsync',
             '-avz',
+            '--no-g',  // Don't preserve group ownership (fixes permission errors)
+            '--no-perms',  // Don't preserve permissions
             '-e',
             $sshCommand,
             sprintf('%s@%s:%s', $config['username'], $config['host'], $remotePath),
