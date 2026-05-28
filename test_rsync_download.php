@@ -17,7 +17,8 @@ echo "=== Testing Rsync Download of test.zip ===\n\n";
 
 // The file you uploaded
 $remotePath = '/tmp/test.zip';
-$localPath = '/tmp/downloaded_test.zip';
+$filename = basename($remotePath);  // Gets 'test.zip'
+$localPath = '/mnt/task/' . $filename;  // Results in '/mnt/task/test.zip'
 
 echo "Configuration:\n";
 echo "  Remote file: {$remotePath}\n";
