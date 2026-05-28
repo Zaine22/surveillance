@@ -47,7 +47,7 @@ try {
 
     // Step 2: Transfer from CleanFileServer to MainWeb
     echo "Step 2: Syncing from CleanFileServer to MainWeb...\n";
-    $mainWebPath = '/mnt/task/test_' . date('Y_m_d_His') . '.zip';
+    $mainWebPath = '/mnt/task/file.zip';
 
     $rsyncService->syncFromCleanFileServer($cleanServerPath, $mainWebPath);
     echo "✓ Step 2 completed: File transferred to MainWeb\n\n";
