@@ -62,11 +62,11 @@ return [
 
     'unscanned_file_server' => [
         'host'        => env('UNSCANNED_FILE_SERVER_HOST', '34.81.79.232'),
-        'username'    => env('UNSCANNED_FILE_SERVER_USERNAME', 'rsyncbot'),
+        'username'    => env('UNSCANNED_FILE_SERVER_USERNAME', 'user3'),
         'port'        => env('UNSCANNED_FILE_SERVER_PORT', 22),
         'ssh_key'     => env('UNSCANNED_FILE_SERVER_SSH_KEY', '/home/user3/.ssh/id_rsa'), // SSH key path for authentication
         'target_host' => env('UNSCANNED_FILE_TARGET_HOST', '192.168.0.10'), // Private IP for second server
-        'target_user' => env('UNSCANNED_FILE_TARGET_USERNAME', 'rsyncbot'),
+        'target_user' => env('UNSCANNED_FILE_TARGET_USERNAME', 'user3'),
         'target_port' => env('UNSCANNED_FILE_TARGET_PORT', 22),
     ],
 
