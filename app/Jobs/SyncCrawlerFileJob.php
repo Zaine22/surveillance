@@ -23,7 +23,7 @@ class SyncCrawlerFileJob implements ShouldQueue
         ]);
         // $orchestrator->syncCrawlerFileToNas($this->item);
         // $orchestrator->syncCrawlerFileToNasWithHttp($this->item);
-         $orchestrator->syncCrawlerFileToNasWithRsync($this->item);
+         $orchestrator->syncUnscannedFileToMainWeb($this->item);
 
     }
 }
