@@ -35,9 +35,19 @@ class RetryFailedSyncJob implements ShouldQueue
         }
 
         // Find the associated CrawlerTaskItem
-        $item = CrawlerTaskItem::where('result_file', $this->record->source_path)
-            ->orWhere('result_file', 'like', '%' . basename($this->record->source_path))
-            ->first();
+        // Try to find by exact match first, then by URL pattern, then by filename
+        $item = CrawlerTaskItem::where('result_file', $this->record->source_path)->first();
+
+        if (!$item) {
+            // Try with URL pattern
+            $item = CrawlerTaskItem::where('result_file', 'like', '%' . basename($this->record->source_path))->first();
+        }
+
+        if (!$item) {
+            // Try to find by just the filename (without URL)
+            $filename = basename($this->record->source_path);
+            $item = CrawlerTaskItem::where('result_file', $filename)->first();
+        }
 
         if (!$item) {
             Log::error('CrawlerTaskItem not found for retry', [
