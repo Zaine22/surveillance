@@ -571,7 +571,7 @@ class DataSyncOrchestratorService
      * 1. Transfer from unscanned file server (34.81.79.232) to clean file server (35.194.240.94)
      * 2. Transfer from clean file server (35.194.240.94) to main web server (220.130.187.241)
      */
-    public function syncUnscannedFileToMainWeb(CrawlerTaskItem $item): string
+    public function syncUnscannedFileToMainWeb(CrawlerTaskItem $item, ?DataSyncRecord $existingRecord = null): string
     {
         $url = $item->result_file;
 
@@ -584,6 +584,7 @@ class DataSyncOrchestratorService
         Log::info('Complete file sync started (FileServer → CleanFileServer → MainWeb)', [
             'item_id' => $item->id,
             'url'     => $url,
+            'is_retry' => $existingRecord !== null,
         ]);
 
         // Generate file name
@@ -599,19 +600,27 @@ class DataSyncOrchestratorService
         // Final destination on main web server
         $mainWebPath = '/mnt/task/' . $fileName;
 
-        // 1. Create the sync record
-        $record = DB::transaction(function () use ($item, $mainWebPath) {
-            return DataSyncRecord::create([
-                'id'          => (string) Str::uuid(),
-                'source_path' => $item->result_file,
-                'target_path' => $mainWebPath,
-                'file_name'   => basename($mainWebPath),
-                'status'      => 'transferring',
-                'retry_count' => 0,
-                'max_retry'   => 3,
-                'started_at'  => now(),
+        // 1. Use existing record or create new one
+        if ($existingRecord) {
+            $record = $existingRecord;
+            $record->update([
+                'status' => 'transferring',
+                'started_at' => now(),
             ]);
-        });
+        } else {
+            $record = DB::transaction(function () use ($item, $mainWebPath) {
+                return DataSyncRecord::create([
+                    'id'          => (string) Str::uuid(),
+                    'source_path' => $item->result_file,
+                    'target_path' => $mainWebPath,
+                    'file_name'   => basename($mainWebPath),
+                    'status'      => 'transferring',
+                    'retry_count' => 0,
+                    'max_retry'   => 3,
+                    'started_at'  => now(),
+                ]);
+            });
+        }
 
         try {
             // Step 1: Transfer from FileServer to CleanFileServer

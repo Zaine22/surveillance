@@ -53,16 +53,18 @@ class RetryFailedSyncJob implements ShouldQueue
             'error_message' => null,
         ]);
 
-        // Update record status
+        // Update record status and increment retry count
         $this->record->update([
             'status' => 'retrying',
-            'retry_count' => $this->record->retry_count + 1,
             'started_at' => now(),
         ]);
 
+        // Increment retry count
+        $this->record->increment('retry_count');
+        $this->record->refresh();
+
         try {
-            // Retry the sync
-            $orchestrator->syncUnscannedFileToMainWeb($item);
+            $orchestrator->syncUnscannedFileToMainWeb($item, $this->record);
 
             Log::info('Retry successful', [
                 'record_id' => $this->record->id,
