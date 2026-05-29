@@ -8,16 +8,21 @@ use Illuminate\Console\Command;
 
 class RetryAllFailedSyncsCommand extends Command
 {
-    protected $signature = 'sync:retry-all {--force : Skip confirmation}';
+    protected $signature = 'sync:retry-all {--force : Skip confirmation} {--today : Only retry today\'s records}';
 
     protected $description = 'Retry all failed sync records that haven\'t exceeded max retries';
 
     public function handle(): int
     {
-        $failedRecords = DataSyncRecord::where('status', 'failed')
-            ->whereColumn('retry_count', '<', 'max_retry')
-            ->orderBy('created_at', 'asc')
-            ->get();
+        $query = DataSyncRecord::where('status', 'failed')
+            ->whereColumn('retry_count', '<', 'max_retry');
+
+        // Filter by today if --today option is provided
+        if ($this->option('today')) {
+            $query->whereDate('created_at', today());
+        }
+
+        $failedRecords = $query->orderBy('created_at', 'asc')->get();
 
         if ($failedRecords->isEmpty()) {
             $this->info('No failed sync records found to retry');

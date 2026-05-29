@@ -15,7 +15,8 @@ class DataSyncOrchestratorService
 {
     public function __construct(
         protected RsyncService $rsyncService,
-        protected AiTaskManagerService $aiTaskManagerService
+        protected AiTaskManagerService $aiTaskManagerService,
+        protected CleanFileServerPollingService $pollingService
     ) {}
 
     public function syncCrawlerFileToNas(CrawlerTaskItem $item): string
@@ -838,6 +839,183 @@ class DataSyncOrchestratorService
                 'status'        => 'error',
                 'error_message' => $e->getMessage(),
             ]);
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Sync file from CleanFileServer to MainWeb with polling
+     * This method waits for the file to appear on CleanFileServer (synced by cron)
+     * then downloads it to MainWeb
+     */
+    public function syncFromCleanFileServerWithPolling(CrawlerTaskItem $item, ?DataSyncRecord $existingRecord = null): string
+    {
+        $url = $item->result_file;
+
+        // If it's not a URL, construct it from the filename
+        if (! filter_var($url, FILTER_VALIDATE_URL)) {
+            $baseUrl = 'http://34.81.79.232/home/rsyncbot/unscann-files';
+            $url = $baseUrl . '/' . $url;
+        }
+
+        Log::info('Polling sync started (wait for CleanFileServer → download to MainWeb)', [
+            'item_id' => $item->id,
+            'url'     => $url,
+            'is_retry' => $existingRecord !== null,
+        ]);
+
+        // Use existing target path for retries, generate new one for first attempt
+        if ($existingRecord) {
+            $mainWebPath = $existingRecord->target_path;
+            $fileName = basename($mainWebPath);
+        } else {
+            $fileName = $this->generateFileName($item);
+            $mainWebPath = '/mnt/task/' . $fileName;
+        }
+
+        // Get the filename from the URL
+        $sourceFileName = basename(parse_url($url, PHP_URL_PATH));
+        $cleanServerPath = '/home/rsyncbot/clean-files/' . $sourceFileName;
+
+        // 1. Use existing record or create new one
+        if ($existingRecord) {
+            $record = $existingRecord;
+            $record->update([
+                'status' => 'waiting',
+                'started_at' => now(),
+            ]);
+        } else {
+            $record = DB::transaction(function () use ($item, $mainWebPath) {
+                return DataSyncRecord::create([
+                    'id'          => (string) Str::uuid(),
+                    'source_path' => $item->result_file,
+                    'target_path' => $mainWebPath,
+                    'file_name'   => basename($mainWebPath),
+                    'status'      => 'waiting',
+                    'retry_count' => 0,
+                    'max_retry'   => 3,
+                    'started_at'  => now(),
+                ]);
+            });
+        }
+
+        try {
+            // Step 1: Wait for file to appear on CleanFileServer (cron will sync it)
+            Log::info('Step 1: Waiting for file on CleanFileServer (cron sync)', [
+                'source_filename' => $sourceFileName,
+                'clean_server_path' => $cleanServerPath,
+            ]);
+
+            $fileExists = $this->pollingService->waitForFile($sourceFileName, 600, 30);
+
+            if (!$fileExists) {
+                throw new \RuntimeException("Timeout waiting for file on CleanFileServer: {$sourceFileName}");
+            }
+
+            Log::info('Step 1 completed: File found on CleanFileServer', [
+                'clean_server_path' => $cleanServerPath,
+            ]);
+
+            // Step 2: Download from CleanFileServer to MainWeb
+            $record->update(['status' => 'transferring']);
+
+            Log::info('Step 2: Downloading from CleanFileServer to MainWeb', [
+                'source_path' => $cleanServerPath,
+                'target_path' => $mainWebPath,
+            ]);
+
+            $this->rsyncService->syncFromCleanFileServer($cleanServerPath, $mainWebPath);
+
+            if (! file_exists($mainWebPath)) {
+                throw new \RuntimeException("File does not exist after rsync: {$mainWebPath}");
+            }
+
+            if (filesize($mainWebPath) === 0) {
+                throw new \RuntimeException("File is empty after rsync: {$mainWebPath}");
+            }
+
+            Log::info('Step 2 completed: File downloaded to MainWeb', [
+                'main_web_path' => $mainWebPath,
+                'size' => filesize($mainWebPath),
+            ]);
+
+            // Unzip the file if it's a ZIP archive
+            if (pathinfo($mainWebPath, PATHINFO_EXTENSION) === 'zip') {
+                $this->unzipFile($mainWebPath);
+            }
+
+            // 3. Update sync record status
+            $record->update([
+                'status'      => 'completed',
+                'finished_at' => now(),
+            ]);
+
+            $item->update([
+                'status'      => 'synced',
+                'result_file' => $mainWebPath,
+            ]);
+
+            $this->aiTaskManagerService->createFromCrawlerItem($item);
+
+            $item->task()->update([
+                'status' => 'completed',
+            ]);
+
+            Log::info('Polling sync successful', [
+                'item_id' => $item->id,
+                'final_path' => $mainWebPath,
+            ]);
+
+            return $mainWebPath;
+
+        } catch (Throwable $e) {
+            Log::error('Polling sync failed', [
+                'item_id' => $item->id,
+                'url'     => $url,
+                'error'   => $e->getMessage(),
+            ]);
+
+            // 5. Update sync record status on failure
+            $record->update([
+                'status'        => 'failed',
+                'retry_count'   => $record->retry_count + 1,
+                'error_message' => $e->getMessage(),
+                'finished_at'   => now(),
+            ]);
+
+            $item->update([
+                'status'        => 'error',
+                'error_message' => $e->getMessage(),
+            ]);
+
+            // 6. Auto-schedule retry if not exceeded max retries (only for new records, not retries)
+            if (!$existingRecord && $record->retry_count < $record->max_retry) {
+                // Exponential backoff: 5 min, 15 min, 45 min
+                $delayMinutes = 5 * pow(3, $record->retry_count);
+
+                Log::info('Auto-scheduling retry for failed polling sync', [
+                    'record_id' => $record->id,
+                    'retry_count' => $record->retry_count,
+                    'max_retry' => $record->max_retry,
+                    'delay_minutes' => $delayMinutes,
+                    'next_retry_at' => now()->addMinutes($delayMinutes),
+                ]);
+
+                \App\Jobs\RetryFailedSyncJob::dispatch($record)
+                    ->delay(now()->addMinutes($delayMinutes));
+            } elseif ($existingRecord) {
+                Log::info('Retry failed, will be handled by RetryFailedSyncJob', [
+                    'record_id' => $record->id,
+                    'retry_count' => $record->retry_count,
+                ]);
+            } else {
+                Log::warning('Max retries exceeded, not scheduling retry', [
+                    'record_id' => $record->id,
+                    'retry_count' => $record->retry_count,
+                    'max_retry' => $record->max_retry,
+                ]);
+            }
 
             throw $e;
         }

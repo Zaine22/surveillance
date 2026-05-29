@@ -2,7 +2,6 @@
 namespace App\Jobs;
 
 use App\Models\CrawlerTaskItem;
-use App\Services\AiTaskManagerService;
 use App\Services\DataSyncOrchestratorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -23,7 +22,9 @@ class SyncCrawlerFileJob implements ShouldQueue
         ]);
         // $orchestrator->syncCrawlerFileToNas($this->item);
         // $orchestrator->syncCrawlerFileToNasWithHttp($this->item);
-         $orchestrator->syncUnscannedFileToMainWeb($this->item);
+        //  $orchestrator->syncUnscannedFileToMainWeb($this->item);
+        $orchestrator->
+            syncFromCleanFileServerWithPolling($this->item);
 
     }
 }
