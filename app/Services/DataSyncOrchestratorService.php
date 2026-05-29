@@ -575,14 +575,16 @@ class DataSyncOrchestratorService
     {
         $url = $item->result_file;
 
+        // If it's not a URL, construct it from the filename
+        if (! filter_var($url, FILTER_VALIDATE_URL)) {
+            $baseUrl = 'http://34.81.79.232/home/rsyncbot/unscann-files';
+            $url = $baseUrl . '/' . $url;
+        }
+
         Log::info('Complete file sync started (FileServer → CleanFileServer → MainWeb)', [
             'item_id' => $item->id,
             'url'     => $url,
         ]);
-
-        if (! filter_var($url, FILTER_VALIDATE_URL)) {
-            throw new \RuntimeException("Invalid URL: {$url}");
-        }
 
         // Generate file name
         $fileName = $this->generateFileName($item);
