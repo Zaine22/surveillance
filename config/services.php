@@ -56,8 +56,10 @@ return [
 
     'clean_file_server' => [
         'host'     => env('CLEAN_FILE_SERVER_HOST', '35.194.240.94'),
+        'user'     => env('CLEAN_FILE_SERVER_USER', 'user3'),
         'username' => env('CLEAN_FILE_SERVER_USERNAME', 'user3'),
         'port'     => env('CLEAN_FILE_SERVER_PORT', 22),
+        'ssh_key'  => env('CLEAN_FILE_SERVER_SSH_KEY', '/var/www/.ssh/id_rsa'),
     ],
 
     'unscanned_file_server' => [
