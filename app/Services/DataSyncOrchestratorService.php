@@ -587,8 +587,14 @@ class DataSyncOrchestratorService
             'is_retry' => $existingRecord !== null,
         ]);
 
-        // Generate file name
-        $fileName = $this->generateFileName($item);
+        // Use existing target path for retries, generate new one for first attempt
+        if ($existingRecord) {
+            $mainWebPath = $existingRecord->target_path;
+            $fileName = basename($mainWebPath);
+        } else {
+            $fileName = $this->generateFileName($item);
+            $mainWebPath = '/mnt/task/' . $fileName;
+        }
 
         // Extract the source path from the URL
         // Example: http://34.81.79.232/home/rsyncbot/unscann-files/file.zip -> /home/rsyncbot/unscann-files/file.zip
@@ -596,9 +602,6 @@ class DataSyncOrchestratorService
 
         // Target path on the clean file server
         $cleanServerPath = '/home/rsyncbot/clean-files/' . basename($sourcePath);
-
-        // Final destination on main web server
-        $mainWebPath = '/mnt/task/' . $fileName;
 
         // 1. Use existing record or create new one
         if ($existingRecord) {
