@@ -696,6 +696,29 @@ class DataSyncOrchestratorService
                 'error_message' => $e->getMessage(),
             ]);
 
+            // 6. Auto-schedule retry if not exceeded max retries
+            if ($record->retry_count < $record->max_retry) {
+                // Exponential backoff: 5 min, 15 min, 45 min
+                $delayMinutes = 5 * pow(3, $record->retry_count);
+
+                Log::info('Auto-scheduling retry for failed sync', [
+                    'record_id' => $record->id,
+                    'retry_count' => $record->retry_count,
+                    'max_retry' => $record->max_retry,
+                    'delay_minutes' => $delayMinutes,
+                    'next_retry_at' => now()->addMinutes($delayMinutes),
+                ]);
+
+                \App\Jobs\RetryFailedSyncJob::dispatch($record)
+                    ->delay(now()->addMinutes($delayMinutes));
+            } else {
+                Log::warning('Max retries exceeded, not scheduling retry', [
+                    'record_id' => $record->id,
+                    'retry_count' => $record->retry_count,
+                    'max_retry' => $record->max_retry,
+                ]);
+            }
+
             throw $e;
         }
     }
