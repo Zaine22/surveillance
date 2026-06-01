@@ -24,7 +24,12 @@ class RegisterUserRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8',
+            'password' => [
+                'required',
+                'string',
+                'min:12',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]+$/'
+            ],
             'department' => 'nullable|string',
         ];
     }
@@ -40,7 +45,8 @@ class RegisterUserRequest extends FormRequest
             'email.unique' => '電子郵件已被註冊',
             'password.required' => '密碼不能為空',
             'password.string' => '密碼必須為字串',
-            'password.min' => '密碼至少需要8個字元',
+            'password.min' => '密碼至少需要12個字元',
+            'password.regex' => '密碼必須包含大小寫英文字母、數字及符號(@$!%*?&#)',
             'department.string' => '部門必須為字串',
         ];
     }

@@ -27,6 +27,8 @@ class UpdateLexiconKeywordRequest extends FormRequest
             'translations' => 'sometimes|nullable|array',
             'translations.zh' => 'sometimes|nullable|array',
             'translations.zh.*' => 'string|max:255',
+            'translations.cn' => 'sometimes|nullable|array',
+            'translations.cn.*' => 'string|max:255',
             'translations.en' => 'sometimes|nullable|array',
             'translations.en.*' => 'string|max:255',
             'translations.ja' => 'sometimes|nullable|array',
@@ -41,6 +43,9 @@ class UpdateLexiconKeywordRequest extends FormRequest
             'translations.zh.array'  => '中文翻譯必須是陣列格式',
             'translations.zh.*.string'   => '每個中文翻譯關鍵字必須是字串格式',
             'translations.zh.*.max'      => '每個中文翻譯關鍵字不能超過 :max 個字元',
+            'translations.cn.array'  => '簡體中文翻譯必須是陣列格式',
+            'translations.cn.*.string'   => '每個簡體中文翻譯關鍵字必須是字串格式',
+            'translations.cn.*.max'      => '每個簡體中文翻譯關鍵字不能超過 :max 個字元',
             'translations.en.array'  => '英文翻譯必須是陣列格式',
             'translations.en.*.string'   => '每個英文翻譯關鍵字必須是字串格式',
             'translations.en.*.max'      => '每個英文翻譯關鍵字不能超過 :max 個字元',
@@ -95,6 +100,7 @@ class UpdateLexiconKeywordRequest extends FormRequest
                                     if (in_array($normalizedKeyword, $existingKeywords)) {
                                         $languageNames = [
                                             'zh' => '中文',
+                                            'cn' => '簡體中文',
                                             'en' => '英文',
                                             'ja' => '日文'
                                         ];

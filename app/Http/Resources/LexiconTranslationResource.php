@@ -23,6 +23,7 @@ class LexiconTranslationResource extends JsonResource
             'keywords'     => $this->keywords,
             'translations' => [
                 'zh' => $translations->get('zh')?->keywords ?? ($parentLanguage === 'zh' ? $parentKeywords : null),
+                'cn' => $translations->get('cn')?->keywords ?? ($parentLanguage === 'cn' ? $parentKeywords : null),
                 'en' => $translations->get('en')?->keywords ?? ($parentLanguage === 'en' ? $parentKeywords : null),
                 'ja' => $translations->get('ja')?->keywords ?? ($parentLanguage === 'ja' ? $parentKeywords : null),
             ],

@@ -91,8 +91,8 @@ class LexiconKeywordService
                     $updateData['keywords'] = $data['translations']['zh'];
                 }
 
-                // Update en and ja as translation records
-                foreach (['en', 'ja'] as $language) {
+                // Update en, ja, and cn as translation records
+                foreach (['en', 'ja', 'cn'] as $language) {
                     if (isset($data['translations'][$language]) && is_array($data['translations'][$language])) {
                         $this->upsertTranslation(
                             $lexiconKeyword->id,

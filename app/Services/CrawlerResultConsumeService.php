@@ -14,9 +14,9 @@ class CrawlerResultConsumeService
     protected string $consumer;
 
     public function __construct(
-        protected TaskManagerService $taskManagerService
+        protected TaskManagerService $taskManagerService,
+        protected ?CrawlerApiClient $apiClient = null
     ) {
-
         $this->consumer = 'backend_' . gethostname() . '_' . uniqid();
     }
 
@@ -318,6 +318,93 @@ class CrawlerResultConsumeService
                     'redis_id' => $id,
                     'data'     => $data,
                     'error'    => $e->getMessage(),
+                ]);
+            }
+        }
+    }
+
+    /**
+     * NEW: Consume results via API Gateway (for surveillance app)
+     * Use this method when you want to use the HTTPS API instead of direct Redis
+     */
+    public function consumeViaApi(): void
+    {
+        if (!$this->apiClient) {
+            $this->apiClient = app(CrawlerApiClient::class);
+        }
+
+        Log::info('CrawlerResultConsumeService (API) started');
+
+        while (true) {
+            try {
+                $response = $this->apiClient->getResults(10, 5000);
+
+                if (empty($response['results'])) {
+                    continue;
+                }
+
+                $this->processApiResults($response['results']);
+
+            } catch (\Throwable $e) {
+                Log::error('Crawler API stream read failed', [
+                    'error' => $e->getMessage(),
+                ]);
+                sleep(2);
+            }
+        }
+    }
+
+    /**
+     * Process results from API Gateway
+     */
+    protected function processApiResults(array $results): void
+    {
+        $messageIds = [];
+
+        foreach ($results as $result) {
+            try {
+                $taskItemId = $result['task_item_id'] ?? null;
+
+                if (!$taskItemId) {
+                    throw new \RuntimeException('task_item_id missing');
+                }
+
+                if (!empty($result['error_message'])) {
+                    $this->taskManagerService->crawlerFailed(
+                        (string) $taskItemId,
+                        (string) $result['error_message'],
+                        (string) ($result['crawler_machine'] ?? '')
+                    );
+                } elseif (!empty($result['no_result'])) {
+                    $this->taskManagerService->crawlerGoogleNoResult(
+                        (string) $taskItemId,
+                        (string) ($result['crawler_machine'] ?? '')
+                    );
+                } else {
+                    $this->taskManagerService->crawlerCompleted(
+                        (string) $taskItemId,
+                        (string) ($result['result_file'] ?? 'not found'),
+                        (string) ($result['crawler_machine'] ?? '')
+                    );
+                }
+
+                $messageIds[] = $result['message_id'];
+
+            } catch (\Throwable $e) {
+                Log::error('Crawler API result processing failed', [
+                    'result' => $result,
+                    'error'  => $e->getMessage(),
+                ]);
+            }
+        }
+
+        // Acknowledge all processed messages
+        if (!empty($messageIds)) {
+            try {
+                $this->apiClient->acknowledgeResults($messageIds);
+            } catch (\Throwable $e) {
+                Log::error('Failed to acknowledge API results', [
+                    'error' => $e->getMessage(),
                 ]);
             }
         }

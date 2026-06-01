@@ -166,12 +166,12 @@ class AuthService
 
         $daysSinceChange = $user->password_last_changed->diffInDays(now());
 
-        if ($daysSinceChange >= 180) {
+        if ($daysSinceChange >= 60) {
             $password_expired = true;
         }
 
         if ($password_expired && $user->last_login !== null && $isValidate) {
-            $randomPassword = Str::random(10);
+            $randomPassword = $this->generateSecurePassword();
             $hashedPassword = Hash::make($randomPassword);
 
             $user->update([
@@ -407,7 +407,7 @@ class AuthService
 
     public function createUserByAdmin(array $data): array
     {
-        $plainPassword = Str::random(10);
+        $plainPassword = $this->generateSecurePassword();
         $user          = User::create([
             'name'                  => $data['name'],
             'email'                 => $data['email'],
@@ -447,7 +447,7 @@ class AuthService
                 ];
             }
 
-            $plainPassword  = Str::random(10);
+            $plainPassword  = $this->generateSecurePassword();
             $hashedPassword = Hash::make($plainPassword);
 
             $user->update([
@@ -480,6 +480,35 @@ class AuthService
                 'error' => '重置密碼失敗，請稍後再試',
             ];
         }
+    }
+
+    /**
+     * Generate a secure random password that meets the password policy requirements
+     * - Minimum 12 characters
+     * - Contains uppercase letters, lowercase letters, numbers, and special characters
+     */
+    private function generateSecurePassword(): string
+    {
+        $uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $lowercase = 'abcdefghijklmnopqrstuvwxyz';
+        $numbers = '0123456789';
+        $special = '@$!%*?&#';
+
+        // Ensure at least one character from each required set
+        $password = '';
+        $password .= $uppercase[random_int(0, strlen($uppercase) - 1)];
+        $password .= $lowercase[random_int(0, strlen($lowercase) - 1)];
+        $password .= $numbers[random_int(0, strlen($numbers) - 1)];
+        $password .= $special[random_int(0, strlen($special) - 1)];
+
+        // Fill the rest with random characters from all sets
+        $allChars = $uppercase . $lowercase . $numbers . $special;
+        for ($i = 4; $i < 12; $i++) {
+            $password .= $allChars[random_int(0, strlen($allChars) - 1)];
+        }
+
+        // Shuffle the password to avoid predictable patterns
+        return str_shuffle($password);
     }
 }
 

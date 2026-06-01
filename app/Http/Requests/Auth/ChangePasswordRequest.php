@@ -23,7 +23,12 @@ class ChangePasswordRequest extends FormRequest
     {
         return [
             'current_password' => 'required',
-            'new_password' => 'required|string|min:8',
+            'new_password' => [
+                'required',
+                'string',
+                'min:12',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]+$/'
+            ],
         ];
     }
 
@@ -33,7 +38,8 @@ class ChangePasswordRequest extends FormRequest
             'current_password.required' => '当前密碼不能為空',
             'new_password.required' => '新密碼不能為空',
             'new_password.string' => '新密碼必須為字串',
-            'new_password.min' => '新密碼至少需要8個字元',
+            'new_password.min' => '新密碼至少需要12個字元',
+            'new_password.regex' => '新密碼必須包含大小寫英文字母、數字及符號(@$!%*?&#)',
         ];
     }
 }
