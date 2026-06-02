@@ -25,7 +25,7 @@ class StoreLexiconKeywordTranslationRequest extends FormRequest
         return [
             'keywords'   => ['required', 'array', 'min:1'],
             'keywords.*' => ['required', 'string', 'max:255'],
-            'lang'       => ['required', 'in:zh,en,ja'],
+            'lang'       => ['required', 'in:zh,en,ja,cn'],
         ];
     }
 
@@ -39,7 +39,7 @@ class StoreLexiconKeywordTranslationRequest extends FormRequest
             'keywords.*.string'   => '每個關鍵字必須是字串。',
             'keywords.*.max'      => '每個關鍵字不得超過 255 個字元。',
             'lang.required'       => '語言為必填項。',
-            'lang.in'             => '語言必須是以下其中之一：zh, en, ja。',
+            'lang.in'             => '語言必須是以下其中之一：zh, en, ja, cn。',
         ];
     }
 
