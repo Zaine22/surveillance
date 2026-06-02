@@ -221,16 +221,15 @@ class LexiconKeywordService
             return null;
         }
 
-        // Get all existing keywords in this lexicon (including parent and other translations)
+        // Get all existing keywords in this lexicon (excluding ALL translations of current parent)
         $existingKeywords = LexiconKeyword::where('lexicon_id', $parent->lexicon_id)
-            ->where(function($query) use ($parent, $language) {
-                // Exclude the current translation being updated
-                $query->where('parent_id', '!=', $parent->id)
-                      ->orWhere(function($q) use ($parent, $language) {
-                          $q->where('parent_id', $parent->id)
-                            ->where('language', '!=', $language);
-                      })
-                      ->orWhereNull('parent_id');
+            ->where(function($query) use ($parent) {
+                // Exclude the current parent and ALL its translations
+                $query->where('id', '!=', $parent->id)
+                      ->where(function($q) use ($parent) {
+                          $q->where('parent_id', '!=', $parent->id)
+                            ->orWhereNull('parent_id');
+                      });
             })
             ->get()
             ->pluck('keywords')
