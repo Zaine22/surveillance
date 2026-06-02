@@ -126,6 +126,9 @@ class LexiconKeywordService
         $rows        = $sheet->toArray(null, true, true, true);
 
         DB::transaction(function () use ($rows) {
+            // Track existing keywords per lexicon to prevent duplicates during import
+            $existingKeywordsByLexicon = [];
+
             foreach ($rows as $index => $row) {
 
                 // Skip header row
@@ -137,14 +140,41 @@ class LexiconKeywordService
                     continue;
                 }
 
-                LexiconKeyword::create([
-                    'id'              => Str::uuid(),
-                    'lexicon_id'      => trim($row['A']),
-                    'keywords'        => $this->parseKeywords($row['B']),
-                    'crawl_hit_count' => (int) ($row['C'] ?? 0),
-                    'case_count'      => (int) ($row['D'] ?? 0),
-                    'status'          => $row['E'] ?? 'enabled',
-                ]);
+                $lexiconId = trim($row['A']);
+                $keywords = $this->parseKeywords($row['B']);
+
+                // Initialize existing keywords for this lexicon if not already loaded
+                if (!isset($existingKeywordsByLexicon[$lexiconId])) {
+                    $existingKeywordsByLexicon[$lexiconId] = LexiconKeyword::where('lexicon_id', $lexiconId)
+                        ->get()
+                        ->pluck('keywords')
+                        ->flatten()
+                        ->map(fn($k) => strtolower(trim($k)))
+                        ->toArray();
+                }
+
+                // Filter out keywords that already exist in the lexicon
+                $filteredKeywords = array_filter($keywords, function($keyword) use (&$existingKeywordsByLexicon, $lexiconId) {
+                    $lowerKeyword = strtolower($keyword);
+                    if (in_array($lowerKeyword, $existingKeywordsByLexicon[$lexiconId])) {
+                        return false;
+                    }
+                    // Add to tracking array to prevent duplicates within the same import
+                    $existingKeywordsByLexicon[$lexiconId][] = $lowerKeyword;
+                    return true;
+                });
+
+                // Only create if there are keywords remaining after filtering
+                if (!empty($filteredKeywords)) {
+                    LexiconKeyword::create([
+                        'id'              => Str::uuid(),
+                        'lexicon_id'      => $lexiconId,
+                        'keywords'        => array_values($filteredKeywords),
+                        'crawl_hit_count' => (int) ($row['C'] ?? 0),
+                        'case_count'      => (int) ($row['D'] ?? 0),
+                        'status'          => $row['E'] ?? 'enabled',
+                    ]);
+                }
             }
         });
     }
@@ -221,16 +251,8 @@ class LexiconKeywordService
             return null;
         }
 
-        // Get all existing keywords in this lexicon (excluding ALL translations of current parent)
+        // Get ALL existing keywords in this lexicon (no exclusions - check against everything)
         $existingKeywords = LexiconKeyword::where('lexicon_id', $parent->lexicon_id)
-            ->where(function($query) use ($parent) {
-                // Exclude the current parent and ALL its translations
-                $query->where('id', '!=', $parent->id)
-                      ->where(function($q) use ($parent) {
-                          $q->where('parent_id', '!=', $parent->id)
-                            ->orWhereNull('parent_id');
-                      });
-            })
             ->get()
             ->pluck('keywords')
             ->flatten()
@@ -241,9 +263,10 @@ class LexiconKeywordService
         $normalizedKeywords = array_map(fn($k) => trim($k), $keywords);
         $uniqueKeywords = array_values(array_unique($normalizedKeywords, SORT_STRING));
 
-        // Filter out keywords that already exist in the lexicon
+        // Filter out keywords that already exist ANYWHERE in the lexicon
         $filteredKeywords = array_filter($uniqueKeywords, function($keyword) use ($existingKeywords) {
             $lowerKeyword = strtolower($keyword);
+            // Reject if exists anywhere in the lexicon
             return !in_array($lowerKeyword, $existingKeywords);
         });
 
