@@ -22,12 +22,20 @@ class EncryptionProcessTest
 
     public function __construct()
     {
-        $this->testDir = sys_get_temp_dir() . '/encryption_db_test_' . time();
+        // Use /mnt/tmpzip as configured in the application
+        $tmpBasePath = '/mnt/tmpzip';
+
+        // Fallback to /tmp if /mnt/tmpzip doesn't exist or isn't writable
+        if (!is_dir($tmpBasePath) || !is_writable($tmpBasePath)) {
+            $tmpBasePath = sys_get_temp_dir();
+        }
+
+        $this->testDir = $tmpBasePath . '/encryption_db_test_' . time();
 
         // Create test directory with error handling
         if (!is_dir($this->testDir)) {
             if (!@mkdir($this->testDir, 0777, true)) {
-                // If /tmp fails, try current directory
+                // If that fails, try current directory
                 $this->testDir = __DIR__ . '/encryption_test_' . time();
                 if (!@mkdir($this->testDir, 0777, true)) {
                     throw new Exception("Failed to create test directory. Please check permissions.");
