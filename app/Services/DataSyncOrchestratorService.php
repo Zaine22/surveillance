@@ -712,7 +712,7 @@ class DataSyncOrchestratorService
             // 6. Auto-schedule retry if not exceeded max retries (only for new records, not retries)
             if (!$existingRecord && $record->retry_count < $record->max_retry) {
                 // Exponential backoff: 5 min, 15 min, 45 min
-                $delayMinutes = 5 * pow(3, $record->retry_count);
+                $delayMinutes = (int) (5 * pow(3, $record->retry_count));
 
                 Log::info('Auto-scheduling retry for failed sync', [
                     'record_id' => $record->id,
@@ -1030,18 +1030,6 @@ class DataSyncOrchestratorService
     {
         $url = $item->result_file;
 
-        // If it's not a URL, construct it from the filename
-        if (! filter_var($url, FILTER_VALIDATE_URL)) {
-            $baseUrl = 'http://34.81.79.232/home/rsyncbot/unscann-files';
-            $url = $baseUrl . '/' . $url;
-        }
-
-        Log::info('Polling sync with encryption started', [
-            'item_id' => $item->id,
-            'url'     => $url,
-            'is_retry' => $existingRecord !== null,
-        ]);
-
         // Use existing target path for retries, generate new one for first attempt
         if ($existingRecord) {
             $finalZipPath = $existingRecord->target_path;
@@ -1051,13 +1039,28 @@ class DataSyncOrchestratorService
             $finalZipPath = '/mnt/task/' . $fileName;
         }
 
+        // Extract just the filename from result_file if it's a path
+        $sourceFileName = basename($url);
+
+        // If it's not a URL, construct it from the filename
+        if (! filter_var($url, FILTER_VALIDATE_URL)) {
+            $baseUrl = 'http://34.81.79.232/home/rsyncbot/unscann-files';
+            $url = $baseUrl . '/' . $sourceFileName;
+        }
+
+        Log::info('Polling sync with encryption started', [
+            'item_id' => $item->id,
+            'url'     => $url,
+            'source_filename' => $sourceFileName,
+            'is_retry' => $existingRecord !== null,
+        ]);
+
         // Tmp paths - use configured tmpzip path
         $tmpBasePath = config('app.tmp_zip_path', '/mnt/tmpzip');
         $tmpZipPath = $tmpBasePath . '/' . $fileName;
         $tmpFolderPath = $tmpBasePath . '/' . pathinfo($fileName, PATHINFO_FILENAME);
 
-        // Get the filename from the URL
-        $sourceFileName = basename(parse_url($url, PHP_URL_PATH));
+        // Clean server path uses the original source filename
         $cleanServerPath = '/home/rsyncbot/clean-files/' . $sourceFileName;
 
         // 1. Use existing record or create new one
