@@ -42,7 +42,7 @@ class CrawlerTaskService extends BaseFilterService
             if (is_array($filters['status'])) {
                 // Map frontend status to database status
                 $statuses = array_map(function ($status) {
-                    return match ($status) {
+                    return match($status) {
                         'error' => 'failed',
                         default => $status,
                     };
@@ -50,7 +50,7 @@ class CrawlerTaskService extends BaseFilterService
                 $query->whereIn('status', $statuses);
             } else {
                 // Map frontend status to database status
-                $status = match ($filters['status']) {
+                $status = match($filters['status']) {
                     'failed' => 'error',
                     default  => $filters['status'],
                 };
@@ -343,7 +343,8 @@ class CrawlerTaskService extends BaseFilterService
                 ->get();
 
             foreach ($items as $item) {
-                $this->dispatchService->dispatch($item);
+                // $this->dispatchService->dispatch($item);
+                $this->dispatchService->dispatchViaApi($item);
                 $item->update(['status' => 'crawling']);
             }
 
@@ -375,7 +376,8 @@ class CrawlerTaskService extends BaseFilterService
                 ->get();
 
             foreach ($items as $item) {
-                $this->dispatchService->dispatchPauseItems($item);
+                // $this->dispatchService->dispatchPauseItems($item);
+                $this->dispatchService->dispatchPauseItemsViaApi($item);
                 $item->update(['status' => 'pending']);
             }
 
@@ -407,7 +409,8 @@ class CrawlerTaskService extends BaseFilterService
                 ->get();
 
             foreach ($items as $item) {
-                $this->dispatchService->dispatch($item);
+                // $this->dispatchService->dispatch($item);
+                $this->dispatchService->dispatchViaApi($item);
                 $item->update(['status' => 'crawling']);
             }
 
@@ -427,7 +430,8 @@ class CrawlerTaskService extends BaseFilterService
         DB::transaction(function () use ($task) {
 
             foreach ($task->items as $item) {
-                $this->dispatchService->dispatchPauseItems($item);
+                // $this->dispatchService->dispatchPauseItems($item);
+                $this->dispatchService->dispatchPauseItemsViaApi($item);
             }
 
             $task->forceDelete();

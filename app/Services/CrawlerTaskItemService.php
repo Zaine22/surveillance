@@ -53,7 +53,8 @@ class CrawlerTaskItemService
                     'error_message'  => null,
                 ]);
 
-                $this->dispatchService->dispatch($item);
+                // $this->dispatchService->dispatch($item);
+                $this->dispatchService->dispatchViaApi($item);
 
             }
         }
@@ -75,7 +76,8 @@ class CrawlerTaskItemService
             'error_message' => null,
         ]);
 
-        $this->dispatchService->dispatch($item);
+        // $this->dispatchService->dispatch($item);
+        $this->dispatchService->dispatchViaApi($item);
 
         return [
             'success'      => true,
@@ -96,7 +98,8 @@ class CrawlerTaskItemService
             ];
         }
 
-        $this->dispatchService->dispatchPauseItems($item);
+        // $this->dispatchService->dispatchPauseItems($item);
+        $this->dispatchService->dispatchPauseItemsViaApi($item);
 
         $item->update([
             'status' => 'paused',
@@ -126,7 +129,9 @@ class CrawlerTaskItemService
             'result_file'   => null,
         ]);
 
-        $this->dispatchService->dispatch($item);
+        // $this->dispatchService->dispatch($item);
+        $this->dispatchService->dispatchViaApi($item);
+
 
         return [
             'success'      => true,
@@ -138,7 +143,8 @@ class CrawlerTaskItemService
     }
     public function delete($item): array
     {
-        $this->dispatchService->dispatchPauseItems($item);
+        // $this->dispatchService->dispatchPauseItems($item);
+        $this->dispatchService->dispatchPauseItemsViaApi($item);
         $id = $item->id;
 
         try {
