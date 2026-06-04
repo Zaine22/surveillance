@@ -43,10 +43,12 @@ class AiTaskManagerService
             $fileName           = basename($filePath);
             $fileNameWithoutZip = pathinfo($fileName, PATHINFO_FILENAME);
 
+            // AI will receive the folder name and dynamic key for two-layer decryption
+            // AI already knows the base URL and will construct URLs themselves
             $params = [
-                'dir_path'   => $fileNameWithoutZip,
-                // 'image_type' => 'element',
-                'image_type' => 'element',
+                'dir_path'    => $fileNameWithoutZip,
+                'image_type'  => 'element',
+                'dynamic_key' => $item->dynamic_key,
             ];
 
 

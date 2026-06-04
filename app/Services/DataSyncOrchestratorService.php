@@ -1021,6 +1021,504 @@ class DataSyncOrchestratorService
         }
     }
 
+    /**
+     * Sync file from CleanFileServer to MainWeb with polling and encryption
+     * This method waits for the file to appear on CleanFileServer (synced by cron),
+     * downloads it to tmpzip/, unzips, encrypts, and saves to /mnt/task/
+     */
+    public function syncFromCleanFileServerWithPollingAndEncryption(CrawlerTaskItem $item, ?DataSyncRecord $existingRecord = null): string
+    {
+        $url = $item->result_file;
+
+        // If it's not a URL, construct it from the filename
+        if (! filter_var($url, FILTER_VALIDATE_URL)) {
+            $baseUrl = 'http://34.81.79.232/home/rsyncbot/unscann-files';
+            $url = $baseUrl . '/' . $url;
+        }
+
+        Log::info('Polling sync with encryption started', [
+            'item_id' => $item->id,
+            'url'     => $url,
+            'is_retry' => $existingRecord !== null,
+        ]);
+
+        // Use existing target path for retries, generate new one for first attempt
+        if ($existingRecord) {
+            $finalZipPath = $existingRecord->target_path;
+            $fileName = basename($finalZipPath);
+        } else {
+            $fileName = $this->generateFileName($item);
+            $finalZipPath = '/mnt/task/' . $fileName;
+        }
+
+        // Tmp paths - use configured tmpzip path
+        $tmpBasePath = config('app.tmp_zip_path', '/mnt/tmpzip');
+        $tmpZipPath = $tmpBasePath . '/' . $fileName;
+        $tmpFolderPath = $tmpBasePath . '/' . pathinfo($fileName, PATHINFO_FILENAME);
+
+        // Get the filename from the URL
+        $sourceFileName = basename(parse_url($url, PHP_URL_PATH));
+        $cleanServerPath = '/home/rsyncbot/clean-files/' . $sourceFileName;
+
+        // 1. Use existing record or create new one
+        if ($existingRecord) {
+            $record = $existingRecord;
+            $record->update([
+                'status' => 'waiting',
+                'started_at' => now(),
+            ]);
+        } else {
+            $record = DB::transaction(function () use ($item, $finalZipPath) {
+                return DataSyncRecord::create([
+                    'id'          => (string) Str::uuid(),
+                    'source_path' => $item->result_file,
+                    'target_path' => $finalZipPath,
+                    'file_name'   => basename($finalZipPath),
+                    'status'      => 'waiting',
+                    'retry_count' => 0,
+                    'max_retry'   => 3,
+                    'started_at'  => now(),
+                ]);
+            });
+        }
+
+        try {
+            // Step 1: Wait for file to appear on CleanFileServer (cron will sync it)
+            Log::info('Step 1: Waiting for file on CleanFileServer (cron sync)', [
+                'source_filename' => $sourceFileName,
+                'clean_server_path' => $cleanServerPath,
+            ]);
+
+            $fileExists = $this->pollingService->waitForFile($sourceFileName, 600, 30);
+
+            if (!$fileExists) {
+                throw new \RuntimeException("Timeout waiting for file on CleanFileServer: {$sourceFileName}");
+            }
+
+            Log::info('Step 1 completed: File found on CleanFileServer', [
+                'clean_server_path' => $cleanServerPath,
+            ]);
+
+            // Step 2: Download from CleanFileServer to /tmp/
+            $record->update(['status' => 'transferring']);
+
+            Log::info('Step 2: Downloading from CleanFileServer to /tmp/', [
+                'source_path' => $cleanServerPath,
+                'tmp_path' => $tmpZipPath,
+            ]);
+
+            $this->rsyncService->syncFromCleanFileServer($cleanServerPath, $tmpZipPath);
+
+            if (! file_exists($tmpZipPath)) {
+                throw new \RuntimeException("File does not exist after rsync: {$tmpZipPath}");
+            }
+
+            if (filesize($tmpZipPath) === 0) {
+                throw new \RuntimeException("File is empty after rsync: {$tmpZipPath}");
+            }
+
+            Log::info('Step 2 completed: File downloaded to /tmp/', [
+                'tmp_path' => $tmpZipPath,
+                'size' => filesize($tmpZipPath),
+            ]);
+
+            // Step 3: Unzip in /tmp/ directory
+            if (pathinfo($tmpZipPath, PATHINFO_EXTENSION) === 'zip') {
+                $this->unzipFile($tmpZipPath);
+            }
+
+            Log::info('Step 3 completed: Unzipped to tmp folder', [
+                'tmp_folder' => $tmpFolderPath,
+            ]);
+
+            // Step 4: Create two-layer encrypted zip and save to /mnt/task/
+            $encryptionResult = $this->createTwoLayerEncryptedZip($tmpFolderPath, $finalZipPath);
+            $encryptedZipPath = $encryptionResult['zip_path'];
+            $dynamicKey = $encryptionResult['dynamic_key'];
+
+            Log::info('Step 4 completed: Two-layer encrypted zip created', [
+                'source_folder' => $tmpFolderPath,
+                'encrypted_zip' => $encryptedZipPath,
+                'dynamic_key' => $dynamicKey,
+            ]);
+
+            // Step 5: Schedule cleanup job for 30 days later
+            $retentionDays = config('app.tmp_file_retention_days', 30);
+            $cleanupDate = now()->addDays($retentionDays);
+
+            \App\Jobs\CleanupTmpFilesJob::dispatch(
+                pathinfo($fileName, PATHINFO_FILENAME),
+                $cleanupDate
+            )->delay($cleanupDate);
+
+            Log::info('Step 5 completed: Scheduled tmp cleanup', [
+                'folder_name' => pathinfo($fileName, PATHINFO_FILENAME),
+                'cleanup_date' => $cleanupDate,
+            ]);
+
+            // 3. Update sync record status
+            $record->update([
+                'status'      => 'completed',
+                'finished_at' => now(),
+            ]);
+
+            $item->update([
+                'status'      => 'synced',
+                'result_file' => $encryptedZipPath,
+                'dynamic_key' => $dynamicKey,
+            ]);
+
+            $this->aiTaskManagerService->createFromCrawlerItem($item);
+
+            $item->task()->update([
+                'status' => 'completed',
+            ]);
+
+            Log::info('Polling sync with encryption successful', [
+                'item_id' => $item->id,
+                'final_path' => $encryptedZipPath,
+            ]);
+
+            return $encryptedZipPath;
+
+        } catch (Throwable $e) {
+            Log::error('Polling sync with encryption failed', [
+                'item_id' => $item->id,
+                'url'     => $url,
+                'error'   => $e->getMessage(),
+            ]);
+
+            // Clean up tmp files on error
+            if (isset($tmpZipPath) && file_exists($tmpZipPath)) {
+                @unlink($tmpZipPath);
+            }
+            if (isset($tmpFolderPath) && is_dir($tmpFolderPath)) {
+                $this->recursiveRemoveDirectory($tmpFolderPath);
+            }
+
+            // 5. Update sync record status on failure
+            $record->update([
+                'status'        => 'failed',
+                'retry_count'   => $record->retry_count + 1,
+                'error_message' => $e->getMessage(),
+                'finished_at'   => now(),
+            ]);
+
+            $item->update([
+                'status'        => 'error',
+                'error_message' => $e->getMessage(),
+            ]);
+
+            // 6. Auto-schedule retry if not exceeded max retries (only for new records, not retries)
+            if (!$existingRecord && $record->retry_count < $record->max_retry) {
+                // Exponential backoff: 5 min, 15 min, 45 min
+                $delayMinutes = 5 * pow(3, $record->retry_count);
+
+                Log::info('Auto-scheduling retry for failed polling sync with encryption', [
+                    'record_id' => $record->id,
+                    'retry_count' => $record->retry_count,
+                    'max_retry' => $record->max_retry,
+                    'delay_minutes' => $delayMinutes,
+                    'next_retry_at' => now()->addMinutes($delayMinutes),
+                ]);
+
+                \App\Jobs\RetryFailedSyncJob::dispatch($record)
+                    ->delay(now()->addMinutes($delayMinutes));
+            } elseif ($existingRecord) {
+                Log::info('Retry failed, will be handled by RetryFailedSyncJob', [
+                    'record_id' => $record->id,
+                    'retry_count' => $record->retry_count,
+                ]);
+            } else {
+                Log::warning('Max retries exceeded, not scheduling retry', [
+                    'record_id' => $record->id,
+                    'retry_count' => $record->retry_count,
+                    'max_retry' => $record->max_retry,
+                ]);
+            }
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Create a two-layer encrypted zip file (dynamic key + static key)
+     *
+     * @param string $sourceFolderPath Path to the folder to zip
+     * @param string $finalZipPath Path where the final encrypted zip should be saved
+     * @return array ['zip_path' => string, 'dynamic_key' => string, 'static_key' => string]
+     * @throws \RuntimeException
+     */
+    private function createTwoLayerEncryptedZip(string $sourceFolderPath, string $finalZipPath): array
+    {
+        // Static key (from config)
+        $staticKey = config('app.zip_encryption_password', 'surveillance123@#');
+
+        // Dynamic key (generated per file)
+        $dynamicKey = $this->generateDynamicKey($finalZipPath);
+
+        Log::info('Creating two-layer encrypted zip', [
+            'source_folder' => $sourceFolderPath,
+            'final_zip' => $finalZipPath,
+            'dynamic_key' => $dynamicKey,
+        ]);
+
+        // Layer 1: Encrypt with dynamic key
+        $tempZip = sys_get_temp_dir() . '/' . uniqid('layer1_') . '.zip';
+        $this->createEncryptedZipWithPassword($sourceFolderPath, $tempZip, $dynamicKey);
+
+        Log::info('Layer 1 encryption completed', [
+            'temp_zip' => $tempZip,
+            'key_type' => 'dynamic',
+        ]);
+
+        // Layer 2: Encrypt with static key
+        // Use {dir_path}_encrypted.zip naming for clarity
+        $dirPath = pathinfo($finalZipPath, PATHINFO_FILENAME);
+        $tempFolder = sys_get_temp_dir() . '/' . uniqid('layer2_');
+        mkdir($tempFolder, 0755, true);
+        rename($tempZip, $tempFolder . '/' . $dirPath . '_encrypted.zip');
+
+        $this->createEncryptedZipWithPassword($tempFolder, $finalZipPath, $staticKey);
+
+        Log::info('Layer 2 encryption completed', [
+            'final_zip' => $finalZipPath,
+            'key_type' => 'static',
+            'inner_name' => $dirPath . '_encrypted.zip',
+        ]);
+
+        // Cleanup
+        unlink($tempFolder . '/' . $dirPath . '_encrypted.zip');
+        rmdir($tempFolder);
+
+        return [
+            'zip_path' => $finalZipPath,
+            'dynamic_key' => $dynamicKey,
+            'static_key' => $staticKey,
+        ];
+    }
+
+    /**
+     * Generate a dynamic encryption key based on filename and timestamp
+     *
+     * @param string $filePath Path to the file
+     * @return string Generated dynamic key
+     */
+    private function generateDynamicKey(string $filePath): string
+    {
+        $fileName = basename($filePath);
+        $timestamp = now()->timestamp;
+        $salt = config('app.encryption_salt', 'surveillance_salt_2024');
+
+        // Generate unique key: hash(filename + timestamp + salt)
+        return hash('sha256', $fileName . $timestamp . $salt);
+    }
+
+    /**
+     * Create an encrypted (password-protected) zip file from a folder with specific password
+     *
+     * @param string $sourceFolderPath Path to the folder to zip
+     * @param string $targetZipPath Path where the encrypted zip should be saved
+     * @param string $password Password to use for encryption
+     * @return string Path to the created encrypted zip file
+     * @throws \RuntimeException
+     */
+    private function createEncryptedZipWithPassword(string $sourceFolderPath, string $targetZipPath, string $password): string
+    {
+        $zip = new ZipArchive();
+
+        Log::info('Creating encrypted zip with custom password', [
+            'source_folder' => $sourceFolderPath,
+            'target_zip' => $targetZipPath,
+        ]);
+
+        // Ensure target directory exists
+        $targetDir = dirname($targetZipPath);
+        if (!is_dir($targetDir)) {
+            mkdir($targetDir, 0755, true);
+        }
+
+        $result = $zip->open($targetZipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+
+        if ($result !== true) {
+            throw new \RuntimeException("Failed to create ZIP file: {$targetZipPath}");
+        }
+
+        try {
+            // Set password for the archive
+            $zip->setPassword($password);
+
+            // Recursively add files from the folder
+            $files = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($sourceFolderPath),
+                \RecursiveIteratorIterator::LEAVES_ONLY
+            );
+
+            $fileCount = 0;
+            foreach ($files as $file) {
+                if (!$file->isDir()) {
+                    $filePath = $file->getRealPath();
+                    $relativePath = substr($filePath, strlen($sourceFolderPath) + 1);
+
+                    // Add file to zip
+                    $zip->addFile($filePath, $relativePath);
+
+                    // Encrypt this file with AES-256
+                    $zip->setEncryptionName($relativePath, ZipArchive::EM_AES_256);
+
+                    $fileCount++;
+                }
+            }
+
+            $zip->close();
+
+            if (!file_exists($targetZipPath)) {
+                throw new \RuntimeException("Encrypted ZIP file was not created: {$targetZipPath}");
+            }
+
+            Log::info('Encrypted zip created successfully', [
+                'zip_file' => $targetZipPath,
+                'file_count' => $fileCount,
+                'size' => filesize($targetZipPath),
+            ]);
+
+            return $targetZipPath;
+
+        } catch (Throwable $e) {
+            $zip->close();
+
+            // Clean up partial zip file
+            if (file_exists($targetZipPath)) {
+                @unlink($targetZipPath);
+            }
+
+            Log::error('Failed to create encrypted zip', [
+                'source_folder' => $sourceFolderPath,
+                'target_zip' => $targetZipPath,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw new \RuntimeException("Failed to create encrypted zip: {$e->getMessage()}", 0, $e);
+        }
+    }
+
+    /**
+     * Create an encrypted (password-protected) zip file from a folder
+     *
+     * @param string $sourceFolderPath Path to the folder to zip
+     * @param string $targetZipPath Path where the encrypted zip should be saved
+     * @return string Path to the created encrypted zip file
+     * @throws \RuntimeException
+     */
+    private function createEncryptedZip(string $sourceFolderPath, string $targetZipPath): string
+    {
+        $zip = new ZipArchive();
+
+        // Get password from config
+        $password = config('app.zip_encryption_password', 'default_secure_password_2024');
+
+        Log::info('Creating encrypted zip', [
+            'source_folder' => $sourceFolderPath,
+            'target_zip' => $targetZipPath,
+        ]);
+
+        // Ensure target directory exists
+        $targetDir = dirname($targetZipPath);
+        if (!is_dir($targetDir)) {
+            mkdir($targetDir, 0755, true);
+        }
+
+        $result = $zip->open($targetZipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+
+        if ($result !== true) {
+            throw new \RuntimeException("Failed to create ZIP file: {$targetZipPath}");
+        }
+
+        try {
+            // Set password for the archive
+            $zip->setPassword($password);
+
+            // Recursively add files from the folder
+            $files = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($sourceFolderPath),
+                \RecursiveIteratorIterator::LEAVES_ONLY
+            );
+
+            $fileCount = 0;
+            foreach ($files as $file) {
+                if (!$file->isDir()) {
+                    $filePath = $file->getRealPath();
+                    $relativePath = substr($filePath, strlen($sourceFolderPath) + 1);
+
+                    // Add file to zip
+                    $zip->addFile($filePath, $relativePath);
+
+                    // Encrypt this file with AES-256
+                    $zip->setEncryptionName($relativePath, ZipArchive::EM_AES_256);
+
+                    $fileCount++;
+                }
+            }
+
+            $zip->close();
+
+            if (!file_exists($targetZipPath)) {
+                throw new \RuntimeException("Encrypted ZIP file was not created: {$targetZipPath}");
+            }
+
+            Log::info('Encrypted zip created successfully', [
+                'zip_file' => $targetZipPath,
+                'file_count' => $fileCount,
+                'size' => filesize($targetZipPath),
+            ]);
+
+            return $targetZipPath;
+
+        } catch (Throwable $e) {
+            $zip->close();
+
+            // Clean up partial zip file
+            if (file_exists($targetZipPath)) {
+                @unlink($targetZipPath);
+            }
+
+            Log::error('Failed to create encrypted zip', [
+                'source_folder' => $sourceFolderPath,
+                'target_zip' => $targetZipPath,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw new \RuntimeException("Failed to create encrypted zip: {$e->getMessage()}", 0, $e);
+        }
+    }
+
+    /**
+     * Recursively remove a directory and all its contents
+     *
+     * @param string $dir Directory path to remove
+     * @return void
+     */
+    private function recursiveRemoveDirectory(string $dir): void
+    {
+        if (!is_dir($dir)) {
+            return;
+        }
+
+        $files = array_diff(scandir($dir), ['.', '..']);
+
+        foreach ($files as $file) {
+            $path = $dir . '/' . $file;
+
+            if (is_dir($path)) {
+                $this->recursiveRemoveDirectory($path);
+            } else {
+                unlink($path);
+            }
+        }
+
+        rmdir($dir);
+    }
+
     private function getNameFromCrawlLocation(?string $value): string
     {
         $value = trim((string) $value);

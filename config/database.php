@@ -177,10 +177,16 @@ return [
         ],
 
         'ai'      => [
+            'scheme'   => env('REDIS_AI_SCHEME', 'tcp'),
             'host'     => env('REDIS_AI_HOST'),
             'password' => env('REDIS_AI_PASSWORD'),
             'port'     => env('REDIS_AI_PORT'),
             'database' => env('REDIS_AI_DB', 0),
+            'ssl'      => [
+                'cafile'           => env('REDIS_AI_SSL_CA_CERT'),
+                'verify_peer'      => env('REDIS_AI_SSL_VERIFY_PEER', true),
+                'verify_peer_name' => env('REDIS_AI_SSL_VERIFY_PEER_NAME', true),
+            ],
         ],
 
         'crawler' => [

@@ -56,6 +56,13 @@ return [
     'api_key' => env('API_KEY'),
     'ai_media_base_url' => env('AI_MEDIA_BASE_URL', 'http://220.130.187.241:9680/mnt'),
 
+    // ZIP Encryption Configuration
+    'zip_encryption_password' => env('ZIP_ENCRYPTION_PASSWORD', 'default_secure_password_2024'),
+    'tmp_file_retention_days' => env('TMP_FILE_RETENTION_DAYS', 30),
+    'auto_extract_on_demand' => env('AUTO_EXTRACT_ON_DEMAND', true),
+    'reset_cleanup_timer_on_access' => env('RESET_CLEANUP_TIMER_ON_ACCESS', false),
+    'tmp_zip_path' => env('TMP_ZIP_PATH', '/mnt/tmpzip'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

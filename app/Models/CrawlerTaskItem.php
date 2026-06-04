@@ -20,6 +20,7 @@ class CrawlerTaskItem extends Model
         'crawl_location',
         'status',
         'error_message',
+        'dynamic_key',
     ];
     protected $casts = [
         'keywords' => 'array',
