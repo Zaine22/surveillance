@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 use App\Models\OperationLog;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 class OperationLogger
@@ -90,8 +91,8 @@ class OperationLogger
         $isLogout = str_contains($path, 'logout');
 
         if ($user || $isLogin || $isLogout) {
-
-            OperationLog::create([
+            try {
+                OperationLog::create([
                 'user_id'         => $user?->id,
                 'operator_name'   => $user?->name ?? $request->input('email'),
                 'operator_email'  => $user?->email ?? $request->input('email'),
@@ -136,7 +137,15 @@ class OperationLogger
                         'otp',
                     ]),
                 ],
-            ]);
+                ]);
+            } catch (\Exception $e) {
+                // Log the error but don't break the request
+                Log::error('OperationLogger failed to log operation', [
+                    'error' => $e->getMessage(),
+                    'path' => $path,
+                    'user_id' => $user?->id,
+                ]);
+            }
         }
 
         return $response;
