@@ -23,7 +23,17 @@ class EncryptionProcessTest
     public function __construct()
     {
         $this->testDir = sys_get_temp_dir() . '/encryption_db_test_' . time();
-        mkdir($this->testDir, 0755, true);
+
+        // Create test directory with error handling
+        if (!is_dir($this->testDir)) {
+            if (!@mkdir($this->testDir, 0777, true)) {
+                // If /tmp fails, try current directory
+                $this->testDir = __DIR__ . '/encryption_test_' . time();
+                if (!@mkdir($this->testDir, 0777, true)) {
+                    throw new Exception("Failed to create test directory. Please check permissions.");
+                }
+            }
+        }
 
         // Load static key from config (simulated)
         $this->staticKey = 'surveillance123@#'; // config('app.zip_encryption_password')
@@ -132,20 +142,34 @@ class EncryptionProcessTest
     private function createTestFiles(): string
     {
         $folder = $this->testDir . '/source_files';
-        mkdir($folder, 0755, true);
+
+        // Create folder with error handling
+        if (!is_dir($folder)) {
+            if (!@mkdir($folder, 0777, true)) {
+                throw new Exception("Failed to create source files directory: {$folder}");
+            }
+        }
 
         // Create test files simulating crawler results
-        file_put_contents($folder . '/image1.jpg', str_repeat('JPEG_IMAGE_DATA_', 1000));
-        file_put_contents($folder . '/image2.jpg', str_repeat('JPEG_IMAGE_DATA_', 1000));
-        file_put_contents($folder . '/image3.jpg', str_repeat('JPEG_IMAGE_DATA_', 1000));
+        if (file_put_contents($folder . '/image1.jpg', str_repeat('JPEG_IMAGE_DATA_', 1000)) === false) {
+            throw new Exception("Failed to create test file: image1.jpg");
+        }
+        if (file_put_contents($folder . '/image2.jpg', str_repeat('JPEG_IMAGE_DATA_', 1000)) === false) {
+            throw new Exception("Failed to create test file: image2.jpg");
+        }
+        if (file_put_contents($folder . '/image3.jpg', str_repeat('JPEG_IMAGE_DATA_', 1000)) === false) {
+            throw new Exception("Failed to create test file: image3.jpg");
+        }
 
-        file_put_contents($folder . '/metadata.json', json_encode([
+        if (file_put_contents($folder . '/metadata.json', json_encode([
             'task_id' => $this->dbData['task_id'],
             'keywords' => json_decode($this->dbData['keywords']),
             'crawl_location' => $this->dbData['crawl_location'],
             'timestamp' => $this->dbData['created_at'],
             'images' => ['image1.jpg', 'image2.jpg', 'image3.jpg']
-        ], JSON_PRETTY_PRINT));
+        ], JSON_PRETTY_PRINT)) === false) {
+            throw new Exception("Failed to create test file: metadata.json");
+        }
 
         return $folder;
     }
