@@ -22,15 +22,15 @@ class EncryptionProcessTest
 
     public function __construct()
     {
-        // Use /mnt/tmpzip as configured in the application
-        $tmpBasePath = '/mnt/tmpzip';
+        // Use /mnt/task for test directory (only writable location)
+        $tmpBasePath = '/mnt/task';
 
-        // Fallback to /tmp if /mnt/tmpzip doesn't exist or isn't writable
+        // Fallback to system temp if /mnt/task doesn't exist or isn't writable
         if (!is_dir($tmpBasePath) || !is_writable($tmpBasePath)) {
             $tmpBasePath = sys_get_temp_dir();
         }
 
-        $this->testDir = $tmpBasePath . '/encryption_db_test_' . time();
+        $this->testDir = $tmpBasePath . '/encryption_test_' . time();
 
         // Create test directory with error handling
         if (!is_dir($this->testDir)) {
