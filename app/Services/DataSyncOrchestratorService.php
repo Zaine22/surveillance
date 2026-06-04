@@ -1143,7 +1143,7 @@ class DataSyncOrchestratorService
             ]);
 
             // Step 5: Schedule cleanup job for 30 days later
-            $retentionDays = config('app.tmp_file_retention_days', 30);
+            $retentionDays = (int) config('app.tmp_file_retention_days', 30);
             $cleanupDate = now()->addDays($retentionDays);
 
             \App\Jobs\CleanupTmpFilesJob::dispatch(
