@@ -28,6 +28,9 @@ class CrawlerApiClient
                 'X-API-Key' => $this->apiKey,
                 'Accept' => 'application/json',
             ])
+                ->withOptions([
+                    'verify' => false, // Disable SSL verification for self-signed certificates
+                ])
                 ->timeout($this->timeout)
                 ->post("{$this->baseUrl}/crawler/dispatch", $data);
 
@@ -59,6 +62,9 @@ class CrawlerApiClient
                 'X-API-Key' => $this->apiKey,
                 'Accept' => 'application/json',
             ])
+                ->withOptions([
+                    'verify' => false, // Disable SSL verification for self-signed certificates
+                ])
                 ->timeout($this->timeout)
                 ->get("{$this->baseUrl}/crawler/results", [
                     'limit' => $limit,
@@ -92,6 +98,9 @@ class CrawlerApiClient
                 'X-API-Key' => $this->apiKey,
                 'Accept' => 'application/json',
             ])
+                ->withOptions([
+                    'verify' => false, // Disable SSL verification for self-signed certificates
+                ])
                 ->timeout($this->timeout)
                 ->post("{$this->baseUrl}/crawler/acknowledge", [
                     'message_ids' => $messageIds,
@@ -121,7 +130,10 @@ class CrawlerApiClient
     public function healthCheck(): array
     {
         try {
-            $response = Http::timeout(5)
+            $response = Http::withOptions([
+                    'verify' => false, // Disable SSL verification for self-signed certificates
+                ])
+                ->timeout(5)
                 ->get("{$this->baseUrl}/health");
 
             if ($response->failed()) {

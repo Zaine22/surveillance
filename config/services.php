@@ -73,7 +73,7 @@ return [
     ],
 
     'crawler_api' => [
-        'url'     => env('CRAWLER_API_URL', 'https://34.80.34.114/api/v1'),
+        'url'     => env('CRAWLER_API_URL', 'http://34.80.34.114/api/v1'),
         'key'     => env('CRAWLER_API_KEY'),
         'timeout' => env('CRAWLER_API_TIMEOUT', 30),
     ],
